@@ -1,0 +1,23 @@
+{
+  "name": "Curvy",
+  "version": "0.0.1",
+  "description": "An experimental framework based on 1.x Angular",
+  "main": "builds/curvy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mvvm",
+    "mvcmv",
+    "mvc",
+    "angular",
+    "javascript"
+  ],
+  "author": "DataDink",
+  "license": "ISC",
+  "devDependencies": {
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-uglify": "^0.9.1"
+  }
+}
