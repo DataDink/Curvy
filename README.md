@@ -1,5 +1,5 @@
 # Curvy JS
-An experimental micro MVVM framework based on AngularJS
+An experimental micro MVVM framework inspired by AngularJS
 
 Curious about Curvy?
 
