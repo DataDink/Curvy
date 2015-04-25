@@ -6715,11 +6715,18 @@ nav > ul {
   margin: 0px;
 }
 /* A68660 7F6649 */
+html {
+  min-width: 800px;
+}
 body {
   background: url('default/images/layout-bg.jpg') 50% 50% no-repeat transparent;
   background-size: 100% 100%;
   font-family: 'Open Sans', sans-serif;
-  color: #7f6649;
+  color: #7F6649;
+  min-width: 800px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 header {
   padding: 10px 0px 10px;
@@ -6749,9 +6756,8 @@ article:not(:last-child) {
   margin-right: 25px;
 }
 footer {
-  color: #A68660;
-  opacity: .5;
-  padding: 25px;
+  opacity: .3;
+  padding: 50px 25px;
   margin: 0px auto;
 }
 footer:before,
@@ -6845,4 +6851,5 @@ pre {
   box-shadow: inset 0px 0px 7px 0px rgba(255, 200, 0, 0.3);
   border: none;
   color: inherit;
+  overflow: auto;
 }
