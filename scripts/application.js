@@ -1,0 +1,28 @@
+window.app = new Application();
+window.app.viewmodel('root', ['route', function(route) {
+	route.register('', 'views/getting-started.html');
+	route.register('downloads', 'views/downloads.html');
+	route.register('getting-started', 'views/getting-started.html');
+	route.register('why-mvvm', 'views/why-mvvm.html');
+	route.register('core', 'views/core.html');
+	route.register('bindings', 'views/bindings.html');
+	route.register('viewmodels', 'views/view-models.html');
+	route.register('broadcast', 'views/broadcast.html');
+	route.register('http', 'views/http.html');
+	route.register('route', 'views/route.html');
+	route.register('data-bind', 'views/data-bind.html');
+	route.register('data-bind', 'views/data-bind.html');
+	route.register('data-class', 'views/data-class.html');
+	route.register('data-click', 'views/data-click.html');
+	route.register('data-format', 'views/data-format.html');
+	route.register('data-hide', 'views/data-hide.html');
+	route.register('data-href', 'views/data-href.html');
+	route.register('data-html', 'views/data-html.html');
+	route.register('data-routed', 'views/data-routed.html');
+	route.register('data-show', 'views/data-show.html');
+	route.register('data-src', 'views/data-src.html');
+	route.register('data-submit', 'views/data-submit.html');
+	route.register('data-template', 'views/data-template.html');
+	route.register('data-title', 'views/data-title.html');
+	route.register('data-view', 'views/data-view.html');
+}]);

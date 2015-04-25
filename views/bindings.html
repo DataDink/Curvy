@@ -1,0 +1,101 @@
+<h3>Bindings</h3>
+<p>
+	Bindings are what connect the view to the view-model. As elements are added and removed
+	from the view they will be scanned by the framework and bound appropriately based
+	on their attributes and location in the document. The view-model an element is
+	bound to is determined by where it is placed in the document or if it has a view-model
+	binding on it.
+</p>
+<p>
+	New or custom bindings should be added before app creation directly on the Application
+	constructor's "Application.extend.binding(name, constructor, prescan)" function.
+</p>
+<pre>
+	&lt;div my-binding="pew pew"&gt;&lt;/div&gt;
+</pre>
+<pre>
+	Application.extend.binding('my-binding', ['view', function(view) {
+		console.log(view.element.getAttribute('my-binding'));
+	}]);
+</pre>
+<p>
+	Any element with a binding on it is considered a view or partial view and can be accessed via 
+	dependency injection with the name "view". Be careful when adding and removing elements
+	from the dom. Remember that adding a single element more than once to the DOM will rebind it
+	if it maintains the same bindings.
+</p>
+<p>
+	A good way to avoid memory leaks created by your bindings is to add a "dispose" method to your
+	binding like so:
+</p>
+<pre>
+	Application.extend.binding('my-binding', ['view', function(view) {
+		var handler = function() { console.log('clicked!'); };
+		view.element.addEventListener('click', handler);
+		this.dispose() { view.element.removeEventListener('click', handler); }
+	}]);
+</pre>
+<p>
+	A binding can also add to the injection scope of descendant views by exposing a "scope"
+	object.
+</p>
+<pre>
+	Application.extend.binding('my-binding', function() {
+		this.scope = {
+			secretPassword: 'opensaysme'
+		};
+	});
+</pre>
+<p>
+	In the example and nested bindings can request "secretPassword" as a dependency and will
+	receive the string 'opensaysme'.
+</p>
+<p>
+	A binding can also postpone the binding of a view and its descendants until a later time.
+	This is useful when a binding is crucial to the operation of sibling and descendant 
+	bindings (like the view-model binding).
+</p>
+<pre>
+	var registry = []
+
+	Application.extend.binding('my-binding', ['view', function(view) {
+		var key = view.getAttribute('my-binding');
+		var value = registry[key];
+		this.scope = {
+			importantValue: value
+		};
+	], function(view) { // If this returns false binding will not occur
+		var binding = view.element.getAttribute('my-binding');
+		for (var key in registry) {
+			if (binding === key) { return true; }
+		}
+		return false;
+	});
+</pre>
+<p>
+	In the above example binding on any element with a "my-binding" attribute will not occur
+	until a matching key has been added to "registry". The second function is a prescan function.
+	The prescan function will only receive the view and can't receive injection since the scope
+	of the view can't be determined until all prescans pass inspection.
+</p>
+<p>
+	A prescan passes inspection by not having a prescan function or <em>not</em> returning false.
+	Returning true is not required.
+</p>
+<p>
+	If a service is required for the prescan you can resolve it using the 
+	"view.application.resolve(name)" method. You can force a rescan of views with failed prescans
+	via the rescan function on the "binding manager".
+<p>
+<pre>
+	Application.extend.binding('my-binding', function() {
+		// Empty binding that does nothing
+	}, function(view) {
+		console.log('attempted rescan');
+		return false;
+	});
+	
+	Application.extend(['binding manager', function(bmgr) {
+		setInterval(bmgr.rescan, 5000);
+	}]);
+</pre>

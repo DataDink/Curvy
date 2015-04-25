@@ -1,0 +1,46 @@
+@aside-width: 250px;
+
+* { box-sizing: border-box; }
+html { overflow-y: scroll; }
+body {
+	position: relative;
+	min-width: 100%; 
+	min-height: 100%;
+	padding-bottom: 100px;
+	
+	& > * {
+		width: 1000px;
+		margin: 0px auto;
+	}
+}
+
+footer {
+	position: absolute;
+	left: 0px; right: 0px;
+	top: auto; bottom: 0px;
+	height: 100px;
+}
+
+section {
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: space-around;
+	align-items: stretch;
+	align-content: stretch;
+	
+	& > aside, & > article {
+		padding: 25px;
+	}
+	
+	& > aside {
+		flex-grow: 0;
+		width: @aside-width;
+		min-width: @aside-width;
+		max-width: @aside-width;
+	}
+	
+	& > article {
+		flex-grow: 1;
+	}
+}
+

@@ -1,0 +1,44 @@
+/* A68660 7F6649 */
+body {
+	background: url('default/images/layout-bg.jpg') 50% 50% no-repeat transparent;
+	background-size: 100% 100%;
+	font-family: 'Open Sans', sans-serif;
+	color: #7F6649
+}
+
+header {
+	padding: 10px 0px;
+
+	& > h1, > h2, > h3, > h4, > h5, > h6 {
+		overflow: hidden;
+		vertical-align: top;
+		display: inline-block;
+		text-indent: -99999px;
+		background: url('default/images/brand.png') 50% 50% no-repeat transparent;
+		background-size: contain;
+		width: 300px;
+		margin: 0px; padding: 0px;
+	}
+	
+	& > .navbar {
+		display: inline-block;
+		margin: 0px;
+	}
+}
+
+aside, article {
+	background: rgba(166, 134, 96, .1);
+}
+
+footer {
+	color: #A68660;
+	opacity: .5;
+	&:before, &:after {
+		content: '';
+		height: 1px;
+		display: block;
+		border-bottom: 1px solid #A68660;
+		margin: 15px -10px;
+		width: 1020px;
+	}
+}

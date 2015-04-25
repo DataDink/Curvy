@@ -1,0 +1,28 @@
+<h3>Broadcast Service</h3>
+<p>
+	The broadcast service is used for communicating global state to other 
+	services, viewmodels, and bindings. Anything asking for "broadcast" as
+	a dependency can broadcast on a channel that other services can then
+	subscribe to in order to respond.
+</p>
+<p>
+	This is mostly used for global application state such as when a user
+	logs in or out of the application. In such a case various view models 
+	may want to update their state to trigger the view to show or hide
+	various parts of the UI.
+</p>
+<pre>
+	app.viewmodel('user-login', ['broadcast', 'someLoginService', function(bcast, service) {
+		var broadcastChannel = 'User.Login';
+		this.login = function() {
+			var data = service.login();
+			bcast.send('User.Login', data);
+		}
+	}]);
+	
+	app.viewmodel('some-viewmodel', ['broadcast', function(bcast) {
+		bcast.subscribe('User.Login', function(data) {
+			console.log(data);
+		});
+	}]);
+</pre>

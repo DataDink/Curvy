@@ -1,0 +1,38 @@
+nav > ul > li, .nav > li {
+	& > *, > a:hover, > a:visited, > a:focus, > a:active {
+		background-color: transparent;
+		transition: all ease .2s;
+		position: relative;
+		overflow: hidden;
+		white-space: nowrap;
+		
+		&:after {
+			content: '';
+			display: inline-block;
+			height: 1px;
+			width: 0px;
+			margin: 10px 0px 0px 10px;
+			border-bottom: 1px solid #A88761;
+			transition: all ease .2s;
+			position: absolute;
+		}
+	}
+	
+	& > a:hover {
+		/*background-color: rgba(180, 130, 40, .1);*/
+		
+		&:after {
+			width: 100%;
+		}
+	}
+}
+
+aside > nav > .nav > li > a {
+	padding: 3px 15px;
+}
+
+header > nav.navbar > ul.nav > li > a:after {
+	display: block;
+	margin: 5px auto 0px;
+	left: 0px; right: 0px;
+}

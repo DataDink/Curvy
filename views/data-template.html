@@ -1,0 +1,19 @@
+<h3>data-template</h3>
+<p>
+	Similar to Angular's ng-repeat this converts an element into a template
+	and binds it to a value or collection of values on the view-model.
+</p>
+<pre>
+	&lt;div data-template="searchResults"&gt;
+		&lt;span data-format="{{name}}"&gt;&lt;/span&gt;
+	&lt;/div&gt;
+</pre>
+<pre>
+	app.viewmodel('my-vm', function() {
+		this.searchResults = [];
+			
+		for (var i = 0; i < 10; i++) {
+			this.searchResults.push({name: 'item #' + i});
+		}
+	});
+</pre>
