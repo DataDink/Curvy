@@ -7,7 +7,7 @@ It's pretty small and simple.
 I made it for the fun of making. 
 There is SOME small amount of documentation available at https://DataDink.github.io/Curvy
 
-If you want to toy with it or use it in something feel free.
+If you want to toy with it or use it in something please let me know how it works!
 If you would like something changed send me a pull request.
 
 # Getting Started:
