@@ -6792,6 +6792,8 @@ nav > ul > li > a:active,
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+  outline: none;
+  highlight: none;
 }
 nav > ul > li > *:after,
 .nav > li > *:after,
@@ -6809,27 +6811,19 @@ nav > ul > li > a:active:after,
   width: 0px;
   margin: 10px 0px 0px 10px;
   border-bottom: 1px solid #A88761;
-  transition: all ease .2s;
+  transition: all ease .25s;
   position: absolute;
 }
 nav > ul > li > a:hover,
 .nav > li > a:hover,
-nav > ul > li > a:visited,
-.nav > li > a:visited,
 nav > ul > li > a:focus,
-.nav > li > a:focus,
-nav > ul > li > a:active,
-.nav > li > a:active {
+.nav > li > a:focus {
   /*background-color: rgba(180, 130, 40, .1);*/
 }
 nav > ul > li > a:hover:after,
 .nav > li > a:hover:after,
-nav > ul > li > a:visited:after,
-.nav > li > a:visited:after,
 nav > ul > li > a:focus:after,
-.nav > li > a:focus:after,
-nav > ul > li > a:active:after,
-.nav > li > a:active:after {
+.nav > li > a:focus:after {
   width: 100%;
 }
 aside > nav > .nav > li > a {

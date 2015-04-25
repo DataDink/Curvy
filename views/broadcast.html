@@ -13,7 +13,6 @@
 </p>
 <pre>
 	app.viewmodel('user-login', ['broadcast', 'someLoginService', function(bcast, service) {
-		var broadcastChannel = 'User.Login';
 		this.login = function() {
 			var data = service.login();
 			bcast.send('User.Login', data);
