@@ -5,7 +5,7 @@ Curious about Curvy?
 
 It's pretty small and simple. 
 I made it for the fun of making. 
-There is SOME small amount of documentation available at https://github.com/datadink/curvy
+There is SOME small amount of documentation available at https://DataDink.github.io/Curvy
 
 If you want to toy with it or use it in something feel free.
 If you would like something changed send me a pull request.
@@ -35,7 +35,7 @@ Lastly you'll need to wire it to your page:
 </div>
 ```
 
-Please visit the docs or take a dive into the code for more info: https://github.com/DataDink/Curvy
+Please visit the docs or take a dive into the code for more info: https://DataDink.github.io/Curvy
 
 # Additional Infoz
 
