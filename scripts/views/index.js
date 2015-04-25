@@ -1347,6 +1347,7 @@ Application.extend.binding('data-click', ['view', 'viewmodel', 'utilities', func
 window.app = new Application();
 window.app.viewmodel('root', ['route', function(route) {
 	route.register('', 'views/getting-started.html');
+	route.register('downloads', 'views/downloads.html');
 	route.register('getting-started', 'views/getting-started.html');
 	route.register('why-mvvm', 'views/why-mvvm.html');
 	route.register('core', 'views/core.html');
