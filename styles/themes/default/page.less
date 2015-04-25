@@ -7,17 +7,18 @@ body {
 }
 
 header {
-	padding: 10px 0px;
+	padding: 10px 0px 10px;
 
-	& > h1, > h2, > h3, > h4, > h5, > h6 {
+	& .brand {
 		overflow: hidden;
-		vertical-align: top;
+		vertical-align: bottom;
 		display: inline-block;
 		text-indent: -99999px;
 		background: url('default/images/brand.png') 50% 50% no-repeat transparent;
 		background-size: contain;
 		width: 300px;
-		margin: 0px; padding: 0px;
+		margin: 0px 25px; padding: 0px;
+		height: 150px;
 	}
 	
 	& > .navbar {
@@ -28,6 +29,9 @@ header {
 
 aside, article {
 	background: rgba(166, 134, 96, .1);
+	&:not(:last-child) {
+		margin-right: 25px;
+	}
 }
 
 footer {

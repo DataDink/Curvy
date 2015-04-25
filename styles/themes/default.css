@@ -6679,7 +6679,6 @@ body {
   padding-bottom: 100px;
 }
 body > * {
-  width: 1000px;
   margin: 0px auto;
 }
 footer {
@@ -6723,23 +6722,19 @@ body {
   color: #7f6649;
 }
 header {
-  padding: 10px 0px;
+  padding: 10px 0px 10px;
 }
-header > h1,
-header > h2,
-header > h3,
-header > h4,
-header > h5,
-header > h6 {
+header .brand {
   overflow: hidden;
-  vertical-align: top;
+  vertical-align: bottom;
   display: inline-block;
   text-indent: -99999px;
   background: url('default/images/brand.png') 50% 50% no-repeat transparent;
   background-size: contain;
   width: 300px;
-  margin: 0px;
+  margin: 0px 25px;
   padding: 0px;
+  height: 150px;
 }
 header > .navbar {
   display: inline-block;
@@ -6748,6 +6743,10 @@ header > .navbar {
 aside,
 article {
   background: rgba(166, 134, 96, 0.1);
+}
+aside:not(:last-child),
+article:not(:last-child) {
+  margin-right: 25px;
 }
 footer {
   color: #A68660;
