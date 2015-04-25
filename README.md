@@ -40,7 +40,9 @@ Please visit the docs or take a dive into the code for more info: https://github
 # Additional Infoz
 
 Compat: IE9+, Chrome, FireFox, Opera
+
 Unknown: IOS/Safari
+
 Version: 0.0.1
 
 -- Cheers!
