@@ -189,17 +189,21 @@
 			utils.distinct(removed); remove(removed);
 			utils.distinct(added); add(added);
 		}
-		if (!window.MutationObserver) {
-			root.addEventListener('DOMNodeInserted', function(e) {
-				handler([{addedNodes: [e.target]}]);
-			});
-			root.addEventListener('DOMNodeRemoved', function(e) {
-				handler([{removedNodes: [e.target]}]);
-			});
-			if (('all' in document) && !('atob' in window)) { // IE9 jumpstart
-				document.addEventListener('DOMContentLoaded', function() {
-					handler([{addedNodes: [root]}]);
+		if (!window.MutationObserver && document.addEventListener) {
+			function wireup() {
+				root.addEventListener('DOMNodeInserted', function(e) {
+					handler([{addedNodes: [e.target]}]);
 				});
+				root.addEventListener('DOMNodeRemoved', function(e) {
+					handler([{removedNodes: [e.target]}]);
+				});
+				handler([{addedNodes: [root]}]);
+			}
+			if (document.readyState === 'complete') { wireup(); }
+			else {
+				document.onreadystatechange = function() {
+					if (this.readyState === 'complete') { wireup(); }
+				}
 			}
 		} else {
 			(new MutationObserver(handler)).observe(root, { childList: true, subtree: true });
