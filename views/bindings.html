@@ -32,7 +32,7 @@
 	Application.extend.binding('my-binding', ['view', function(view) {
 		var handler = function() { console.log('clicked!'); };
 		view.element.addEventListener('click', handler);
-		this.dispose() { view.element.removeEventListener('click', handler); }
+		this.dispose = function() { view.element.removeEventListener('click', handler); }
 	}]);
 </pre>
 <p>
@@ -47,7 +47,7 @@
 	});
 </pre>
 <p>
-	In the example and nested bindings can request "secretPassword" as a dependency and will
+	In the example <em>nested</em> bindings can request "secretPassword" as a dependency and will
 	receive the string 'opensaysme'.
 </p>
 <p>
@@ -56,27 +56,21 @@
 	bindings (like the view-model binding).
 </p>
 <pre>
-	var registry = []
 
 	Application.extend.binding('my-binding', ['view', function(view) {
-		var key = view.getAttribute('my-binding');
-		var value = registry[key];
-		this.scope = {
-			importantValue: value
-		};
+		console.log(view.element.getAttribute('my-binding'));
+		
 	], function(view) { // If this returns false binding will not occur
-		var binding = view.element.getAttribute('my-binding');
-		for (var key in registry) {
-			if (binding === key) { return true; }
-		}
-		return false;
+		return view.element.getAttribute('my-binding') === 'bind-me';
 	});
 </pre>
+<pre>
+	&lt;div my-binding="dont-bind-me"&gt;&lt;/div&gt;
+	&lt;div my-binding="bind-me"&gt;&lt;/div&gt;
+</pre>	
 <p>
-	In the above example binding on any element with a "my-binding" attribute will not occur
-	until a matching key has been added to "registry". The second function is a prescan function.
-	The prescan function will only receive the view and can't receive injection since the scope
-	of the view can't be determined until all prescans pass inspection.
+	In the above example binding on any element with a "my-binding" attribute on it will only
+	construct a binding if the value is 'bind-me'.
 </p>
 <p>
 	A prescan passes inspection by not having a prescan function or <em>not</em> returning false.
