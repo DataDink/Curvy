@@ -46,3 +46,22 @@
 		view.dispose = function() { bcast.unsubscribe(subscription); }
 	}]);
 </pre>
+<p>
+	The route service is also responsible for registering paths to views.
+	Routes <em>should</em> be configured after the Application has been instantiated
+	but realistically it probably will never matter.
+</p>
+<p>
+	Here is one way to get routes configured for your application:
+</p>
+<pre>
+	var app = new Application();
+	app.resolve(['route', function(route) {
+		route.register('home', 'views/home.html');
+		route.register('docs', 'views/documents.html');
+		route.register('profile', 'views/profiles.html');
+	}]);
+</pre>
+<p>
+	You can access configured views via the ".routes" member on the route service.
+</p>
