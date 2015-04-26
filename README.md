@@ -1,11 +1,10 @@
 # Curvy JS
 An experimental micro MVVM framework inspired by AngularJS
 
-Curious about Curvy?
-
-It's pretty small and simple. 
-I made it for the fun of making. 
+AS IF we need another framework. Curvy is small and simple and was made for the fun of making. 
 There is SOME small amount of documentation available at https://DataDink.github.io/Curvy
+
+Curious about Curvy?
 
 If you want to toy with it or use it in something please let me know how it works!
 If you would like something changed send me a pull request.
@@ -20,9 +19,9 @@ window.myApp = new Application(document);
 Next you'll need a view-model:
 ```javascript
 window.myApp.viewmodel('my-viewmodel', function() {
-  this.value = '0 Clicks';
+  this.value = 0;
   this.update = function() {
-    this.value = (parseInt(this.value) + 1) + ' Clicks';
+    this.value++;
   }
 });
 ```
@@ -30,8 +29,8 @@ window.myApp.viewmodel('my-viewmodel', function() {
 Lastly you'll need to wire it to your page:
 ```html
 <div view-model="my-viewmodel">
-  <span data-format="You've given {{value}}"></span>
-  <button data-click="update">Give To Me Clicks!!!</button>
+  <span data-format="There have been {{value}} clicks given"></span>
+  <button data-click="update">Give clicks</button>
 </div>
 ```
 
