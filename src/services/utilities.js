@@ -139,9 +139,9 @@
 			return !searcher.contains || searcher.contains(element);
 		};
 		// OBSERVABLE converts an existing object to an observable and then locks it down
-		utilities.observable = function(model) { observable.convert(model); };
+		utilities.observable = function(model) { return observable.convert(model); };
 		// SURROGATE creates a proxy observable class for the model.
-		utilities.surrogate = function(model, surrogate) { observable.proxy(model, surrogate); };
+		utilities.surrogate = function(model, surrogate) { return observable.proxy(model, surrogate); };
 		Object.freeze(utilities);
 		
 	
@@ -181,6 +181,7 @@
 				utilities.observe(model, member, model.notify);
 			}
 			Object.freeze(model);
+			return model;
 		};
 		observable.proxy = function(model, proxy) {
 			proxy = proxy || {};
@@ -190,6 +191,7 @@
 				utilities.proxy(proxy, model, member);
 			}
 			Object.freeze(proxy);
+			return proxy;
 		};
 	}]);
 })();
