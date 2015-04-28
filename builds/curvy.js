@@ -793,17 +793,32 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 		
 		// REMOVECLASS: removes a class from the element
 		service.removeClass = function(element, cls) {
+			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
 			var value = element.getAttribute('class') || '';
-			value = value.replace(new RegExp('\\b' + cls + '\\b\\s*', 'gi'), '');
+			value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
 			element.setAttribute('class', value.trim());
 		};
 		
 		// ADDCLASS: adds a class to the element
 		service.addClass = function(element, cls) {
+			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
 			var value = element.getAttribute('class') || '';
-			value = value.replace(new RegExp('\\b' + cls + '\\b\\s*', 'gi'), '');
+			value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
 			value = value + ' ' + cls;
 			element.setAttribute('class', value.trim());
+		};
+		
+		// HASCLASS: determines if a class exists
+		service.hasClass = function(element, cls) {
+			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
+			var value = element.getAttribute('class') || '';
+			return !!value.match(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'));
+		};
+		
+		// TOGGLECLASS: toggles a class on the element
+		service.toggleClass = function(element, cls) {
+			if (service.hasClass(element, cls)) { service.removeClass(element, cls); }
+			else { service.addClass(element, cls); }
 		};
 		
 		// INDOM: See utilities
