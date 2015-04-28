@@ -74,6 +74,7 @@
 		service.removeClass = function(element, cls) {
 			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
 			var value = element.getAttribute('class') || '';
+			value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
 			element.setAttribute('class', value.trim());
 		};
 		
@@ -81,6 +82,7 @@
 		service.addClass = function(element, cls) {
 			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
 			var value = element.getAttribute('class') || '';
+			value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
 			value = value + ' ' + cls;
 			element.setAttribute('class', value.trim());
 		};
