@@ -604,20 +604,24 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 	var globalHeaders = {};
 	var globalConfig = {};
 	var globalParams = {};
+	var globalQuery = {};
 	
 	// Not singleton. Allows a service to configure its own common headers/parameters without affecting other services
 	app.register.perResolve('http', ['html', function(html) {
 		var persistHeaders = {};
 		var persistConfig = {};
 		var persistParams = {};
+		var persistQuery = {};
 		
 		this.setGlobalHeader = function(key, value) { globalHeaders[key] = value; }
 		this.setGlobalConfig = function(key, value) { globalConfig[key] = value; }
 		this.setGlobalParam = function(key, value) { globalParams[key] = value; }
+		this.setGlobalQuery = function(key, value) { globalQuery[key] = value; }
 		
 		this.setHeader = function(key, value) { persistHeaders[key] = value; }
 		this.setConfig = function(key, value) { persistConfig[key] = value; }
 		this.setParam = function(key, value) { persistParams[key] = value; }
+		this.setQuery = function(key, value) { persistQuery[key] = value; }
 		
 		function combine(source, persist, global) {
 			var result = {};
@@ -638,26 +642,30 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 		function applyParams(params) {
 			return combine(params, persistParams, globalParams);
 		}
+		
+		function applyQuery(params) {
+			return combine(params, persistValues, globalValues);
+		}
 	
 		// REST methods
 		this.get = function(uri, params, success, error, headers, config) {
-			return send('get', html.formatUri(uri, applyParams(params)), success, error, false, applyHeaders(headers), applyConfig(config));
+			return send('get', html.formatUri(uri, applyParams(applyQuery(params))), success, error, false, applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.delete = function(uri, params, success, error, headers, config) {
-			return send('delete', html.formatUri(uri, applyParams(params)), success, error, false, applyHeaders(headers), applyConfig(config));
+			return send('delete', html.formatUri(uri, applyParams(applyQuery(params))), success, error, false, applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.post = function(uri, body, success, error, headers, config) {
-			return send('post', uri, success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+			return send('post', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.patch = function(uri, body, success, error, headers, config) {
-			return send('patch', uri, success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+			return send('patch', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.put = function(uri, body, success, error, headers, config) {
-			return send('put', uri, success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+			return send('put', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
 		};
 		
 		Object.freeze(this);
