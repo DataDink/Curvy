@@ -644,7 +644,7 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 		}
 		
 		function applyQuery(params) {
-			return combine(params, persistValues, globalValues);
+			return combine(params, persistQuery, globalValues);
 		}
 	
 		// REST methods
