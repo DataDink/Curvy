@@ -9,8 +9,8 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 	app.register.perResolve('http', ['html', function(html) {
 		var persistHeaders = {};
 		var persistConfig = {};
-		var persistParams = {};
-		var persistQuery = {};
+		var persistParams = {}; // body or query
+		var persistQuery = {}; // query only
 		
 		this.setGlobalHeader = function(key, value) { globalHeaders[key] = value; }
 		this.setGlobalConfig = function(key, value) { globalConfig[key] = value; }
