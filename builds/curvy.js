@@ -640,6 +640,7 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 		}
 		
 		function applyParams(params) {
+			if (typeof(params) === 'string') { return params; } // single value call only
 			return combine(params, persistParams, globalParams);
 		}
 		
@@ -649,11 +650,11 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 	
 		// REST methods
 		this.get = function(uri, params, success, error, headers, config) {
-			return send('get', html.formatUri(uri, applyParams(applyQuery(params))), success, error, false, applyHeaders(headers), applyConfig(config));
+			return send('get', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.delete = function(uri, params, success, error, headers, config) {
-			return send('delete', html.formatUri(uri, applyParams(applyQuery(params))), success, error, false, applyHeaders(headers), applyConfig(config));
+			return send('delete', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.post = function(uri, body, success, error, headers, config) {
