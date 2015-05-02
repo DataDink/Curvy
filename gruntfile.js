@@ -4,7 +4,7 @@ module.exports = function(grunt) {
 			index: {
 				compress: true,
 				files: {
-					'styles/themes/default.css' : 'styles/themes/default.less'
+					'styles/site.css' : 'styles/site.less'
 				}
 			}
 		},
@@ -13,14 +13,14 @@ module.exports = function(grunt) {
 			curvy: {
 				src: [
 					'builds/curvy.js',
-					'scripts/application.js',
+					'scripts/services/*.js',
 					'scripts/viewmodels/*.js'
 				],
-				dest: 'scripts/views/index.js'
+				dest: 'scripts/index.js'
 			}
 		},
 		uglify: {
-			index: { src: 'scripts/views/index.js', dest: 'scripts/views/index.min.js' }
+			index: { src: 'scripts/index.js', dest: 'scripts/index.min.js' }
 		}
 	});
 	

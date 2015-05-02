@@ -287,9 +287,9 @@
 			return !searcher.contains || searcher.contains(element);
 		};
 		// OBSERVABLE converts an existing object to an observable and then locks it down
-		utilities.observable = function(model) { observable.convert(model); };
+		utilities.observable = function(model) { return observable.convert(model); };
 		// SURROGATE creates a proxy observable class for the model.
-		utilities.surrogate = function(model, surrogate) { observable.proxy(model, surrogate); };
+		utilities.surrogate = function(model, surrogate) { return observable.proxy(model, surrogate); };
 		Object.freeze(utilities);
 		
 	
@@ -329,6 +329,7 @@
 				utilities.observe(model, member, model.notify);
 			}
 			Object.freeze(model);
+			return model;
 		};
 		observable.proxy = function(model, proxy) {
 			proxy = proxy || {};
@@ -338,6 +339,7 @@
 				utilities.proxy(proxy, model, member);
 			}
 			Object.freeze(proxy);
+			return proxy;
 		};
 	}]);
 })();
@@ -602,20 +604,24 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 	var globalHeaders = {};
 	var globalConfig = {};
 	var globalParams = {};
+	var globalQuery = {};
 	
 	// Not singleton. Allows a service to configure its own common headers/parameters without affecting other services
 	app.register.perResolve('http', ['html', function(html) {
 		var persistHeaders = {};
 		var persistConfig = {};
-		var persistParams = {};
+		var persistParams = {}; // body or query
+		var persistQuery = {}; // query only
 		
 		this.setGlobalHeader = function(key, value) { globalHeaders[key] = value; }
 		this.setGlobalConfig = function(key, value) { globalConfig[key] = value; }
 		this.setGlobalParam = function(key, value) { globalParams[key] = value; }
+		this.setGlobalQuery = function(key, value) { globalQuery[key] = value; }
 		
 		this.setHeader = function(key, value) { persistHeaders[key] = value; }
 		this.setConfig = function(key, value) { persistConfig[key] = value; }
 		this.setParam = function(key, value) { persistParams[key] = value; }
+		this.setQuery = function(key, value) { persistQuery[key] = value; }
 		
 		function combine(source, persist, global) {
 			var result = {};
@@ -634,28 +640,33 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 		}
 		
 		function applyParams(params) {
+			if (typeof(params) === 'string') { return params; } // single value call only
 			return combine(params, persistParams, globalParams);
+		}
+		
+		function applyQuery(params) {
+			return combine(params, persistQuery, globalQuery);
 		}
 	
 		// REST methods
 		this.get = function(uri, params, success, error, headers, config) {
-			return send('get', html.formatUri(uri, applyParams(params)), success, error, false, applyHeaders(headers), applyConfig(config));
+			return send('get', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.delete = function(uri, params, success, error, headers, config) {
-			return send('delete', html.formatUri(uri, applyParams(params)), success, error, false, applyHeaders(headers), applyConfig(config));
+			return send('delete', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.post = function(uri, body, success, error, headers, config) {
-			return send('post', uri, success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+			return send('post', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.patch = function(uri, body, success, error, headers, config) {
-			return send('patch', uri, success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+			return send('patch', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
 		};
 		
 		this.put = function(uri, body, success, error, headers, config) {
-			return send('put', uri, success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+			return send('put', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
 		};
 		
 		Object.freeze(this);
@@ -793,17 +804,32 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 		
 		// REMOVECLASS: removes a class from the element
 		service.removeClass = function(element, cls) {
+			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
 			var value = element.getAttribute('class') || '';
-			value = value.replace(new RegExp('\\b' + cls + '\\b\\s*', 'gi'), '');
+			value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
 			element.setAttribute('class', value.trim());
 		};
 		
 		// ADDCLASS: adds a class to the element
 		service.addClass = function(element, cls) {
+			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
 			var value = element.getAttribute('class') || '';
-			value = value.replace(new RegExp('\\b' + cls + '\\b\\s*', 'gi'), '');
+			value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
 			value = value + ' ' + cls;
 			element.setAttribute('class', value.trim());
+		};
+		
+		// HASCLASS: determines if a class exists
+		service.hasClass = function(element, cls) {
+			cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
+			var value = element.getAttribute('class') || '';
+			return !!value.match(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'));
+		};
+		
+		// TOGGLECLASS: toggles a class on the element
+		service.toggleClass = function(element, cls) {
+			if (service.hasClass(element, cls)) { service.removeClass(element, cls); }
+			else { service.addClass(element, cls); }
 		};
 		
 		// INDOM: See utilities
@@ -1348,31 +1374,77 @@ Application.extend.binding('data-click', ['view', 'viewmodel', 'utilities', func
 	});
 }]);;
 
-window.app = new Application();
-window.app.viewmodel('root', ['route', function(route) {
-	route.register('', 'views/getting-started.html');
-	route.register('downloads', 'views/downloads.html');
-	route.register('getting-started', 'views/getting-started.html');
-	route.register('why-mvvm', 'views/why-mvvm.html');
-	route.register('core', 'views/core.html');
-	route.register('bindings', 'views/bindings.html');
-	route.register('viewmodels', 'views/view-models.html');
-	route.register('broadcast', 'views/broadcast.html');
-	route.register('http', 'views/http.html');
-	route.register('route', 'views/route.html');
-	route.register('data-bind', 'views/data-bind.html');
-	route.register('data-bind', 'views/data-bind.html');
-	route.register('data-class', 'views/data-class.html');
-	route.register('data-click', 'views/data-click.html');
-	route.register('data-format', 'views/data-format.html');
-	route.register('data-hide', 'views/data-hide.html');
-	route.register('data-href', 'views/data-href.html');
-	route.register('data-html', 'views/data-html.html');
-	route.register('data-routed', 'views/data-routed.html');
-	route.register('data-show', 'views/data-show.html');
-	route.register('data-src', 'views/data-src.html');
-	route.register('data-submit', 'views/data-submit.html');
-	route.register('data-template', 'views/data-template.html');
-	route.register('data-title', 'views/data-title.html');
-	route.register('data-view', 'views/data-view.html');
+Application.extend.register.perApp('nav-service', ['route', function(route) {
+	var service = this;
+	service.navs = {
+		'': [
+			{name: 'Docs', uri: '#', view: 'views/getting-started.html'},
+			{name: 'Downloads', uri: '#downloads', view: 'views/downloads.html'},
+			{name: 'Source', uri: 'https://github.com/datadink/curvy'}
+		],
+		'First Things First': [
+			{name: 'Getting started', uri: '#getting-started', view: 'views/getting-started.html'},
+			{name: 'Why I made this', uri: '#why-curvy', view: 'views/why-curvy.html'},
+			{name: 'Why I chose MVVM', uri: '#why-mvvm', view: 'views/why-mvvm.html'}
+		],
+		'The Framework': [
+			{name: 'Application', uri: '#application', view: 'views/application.html'},
+			{name: 'Bindings', uri: '#bindings', view: 'views/bindings.html'},
+			{name: 'View Models', uri: '#viewmodels', view: 'views/view-models.html'}
+		],
+		'Services': [
+			{name: 'broadcast', uri: '#broadcast', view: 'views/broadcast.html'},
+			{name: 'http', uri: '#http', view: 'views/http.html'},
+			{name: 'route', uri: '#route', view: 'views/route.html'}
+		],
+		'Utilities': [
+			{name: 'utilities', uri: '#utilities', view: 'views/utilities.html'},
+			{name: 'html', uri: '#html', view: 'views/html.html'},
+			{name: 'broadcast', uri: '#broadcast', view: 'views/broadcast.html'}
+		],
+		'Bindings': [
+			{name: 'data-bind', uri: '#data-bind', view: 'views/data-bind.html'},
+			{name: 'data-class', uri: '#data-class', view: 'views/data-class.html'},
+			{name: 'data-click', uri: '#data-click', view: 'views/data-click.html'},
+			{name: 'data-format', uri: '#data-format', view: 'views/data-format.html'},
+			{name: 'data-hide', uri: '#data-hide', view: 'views/data-hide.html'},
+			{name: 'data-href', uri: '#data-href', view: 'views/data-href.html'},
+			{name: 'data-html', uri: '#data-html', view: 'views/data-html.html'},
+			{name: 'data-routed', uri: '#data-routed', view: 'views/data-routed.html'},
+			{name: 'data-show', uri: '#data-show', view: 'views/data-show.html'},
+			{name: 'data-src', uri: '#data-src', view: 'views/data-src.html'},
+			{name: 'data-submit', uri: '#data-submit', view: 'views/data-submit.html'},
+			{name: 'data-template', uri: '#data-template', view: 'views/data-template.html'},
+			{name: 'data-title', uri: '#data-title', view: 'views/data-title.html'},
+			{name: 'data-view', uri: '#data-view', view: 'views/data-view.html'}
+		]
+	};
+
+	for (var section in service.navs) {
+		for (var i = 0; i < service.navs[section].length; i++) {
+			var item = service.navs[section][i]; 
+			if (item.view) { route.register(item.uri.replace(/^#/g, ''), item.view); }
+		}
+	}
+	
+	service.navigate = route.navigate;
+	
 }]);
+;
+
+Application.extend.viewmodel('app', ['nav-service', function(nav) {
+	var viewmodel = this;
+	
+	viewmodel.navs = {main: [], left: []};
+	
+	for (var group in nav.navs) {
+		if (!group) { viewmodel.navs.main = nav.navs[group]; }
+		else {
+			viewmodel.navs.left.push({
+				title: group,
+				items: nav.navs[group]
+			});
+		}
+	}
+}]);
+window.app = new Application(document);

@@ -1,0 +1,84 @@
+<h3>Application</h3>
+<p>
+	If you're curious about Curvy and just getting started you will probably want to know
+	a little bit about how it is structured.
+</p>
+<p>
+	When adding Curvy to your page you are given a single global constructor: "Application".
+	The Application constructor allows you to pre-configure your application if you would
+	like or you can wait until after construction to load in your client code. The only thing
+	you are required to preload are your custom bindings. <small><em>see <a href="#bindings">Bindings</a></em></small>
+</p>
+<h3>Pre-Configuration</h3>
+<p>
+	Your application will likely be comprised of a number of <strong>services</strong>, 
+	<strong>view-models</strong>, <strong>custom bindings</strong>, and
+	<strong>configurations</strong>. These can all be configured directly from the
+	<em>extend</em> function on the "Application" constructor.
+</p>
+<p class="container-fluid">
+	<strong class="col-sm-3">Configurations</strong>
+	<span class="col-sm-9">
+		The "Application.extend(<em>constructor</em>)" method accepts an injection constructor 
+		that will be run when the "Application" is instantiated. You are provided normal injection 
+		service for this constructor but constructed configuration object will be inaccessible to
+		the rest of the application.
+	</span>
+</p>
+<p class="container-fluid">
+	<strong class="col-sm-3">Services</strong>
+	<span class="col-sm-9">
+		Services can be added as dependencies for the rest of your applications by using the 
+		registration functions located on the "Application.extend.register" object. All services
+		added here are added by name as injection contructors except when added as an instance.
+	</span><br />
+</p>
+<div>
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>Injection Constructor</strong><br />
+		An injection constructor is a function which asks for dependencies by name. If a service
+		exists that matches a parameter name in the function's declaration it will be passed when
+		the injection constructor is being instantiated. Injection constructors are treated as
+		javascript class definitions and are constructed using the "new" keyword. <br />
+		An injection constructor can also be wrapped in an array which precedes the constructor
+		function with dependency names as strings to avoid minification issues.
+	</p>
+	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>Application.extend.register.instance(name, object)</strong><br /> registers a pre-constructed
+		object as a named dependency.
+	</p>
+	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>Application.extend.register.perApp(name, constructor)</strong><br /> registers an
+		injection constructor as a named dependency. This will not be constructed until it is needed
+		for the first time as a dependency in the application. PerApp dependencies are constructed
+		once per application and re-used for all other dependency requirements.
+	</p>
+	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>Application.extend.register.perScope(name, constructor)</strong><br /> registers an
+		injection constructor as a named dependency. This will not be constructed until it is needed
+		for the first time as a dependency in the application. PerScope dependencies are constructed
+		once per resolution scope and re-used for all descendant dependency requirements.
+	</p>
+	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>Application.extend.register.perResolve(name, constructor)</strong><br /> registers an
+		injection constructor as a named dependency. This will not be constructed until it is needed
+		for the first time as a dependency in the application. PerResolve dependencies are always
+		re-constructed every time they are required as a dependency.
+	</p>
+</div>
+<p class="container-fluid">
+	<strong class="col-sm-3">Bindings</strong>
+	<span class="col-sm-9">
+		Custom bindings can be added to the application using the "Application.extend.binding(<em>attribute, constructor</em>)"
+		registration function. Bindings are similar to perResolve services in that they are newly
+		constructed each time they are needed, but bindings can't be asked for as dependencies
+		and are only triggered when the specified attribute name is found in the DOM.
+	</span>
+</p>
+<p class="container-fluid">
+	
+</p>

@@ -7,79 +7,44 @@
 		<meta name="viewport" content="width=device-width" />
 		<meta name="Keywords" content="HTML,CSS,XML,JavaScript,DOM,jQuery,ASP.NET,PHP,SQL,colors,tutorial,programming,development,training,learning,quiz,primer,lessons,reference,examples,source code,demos,tips,color table,w3c,cascading style sheets,active server pages,Web building,Webmaster" />
 		<meta name="Description" content="An experimental micro MVVM framework based on AngularJS" />
-		<link href="styles/themes/default.css" rel="stylesheet" type="text/css" />
-		<link href='http://fonts.googleapis.com/css?family=Comfortaa|Open+Sans' rel='stylesheet' type='text/css'>
-		<script src="scripts/views/index.js"></script>
+		<link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="styles/site.css" rel="stylesheet" />
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>		
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>		
+		<script src="scripts/index.js"></script>
 	</head>
-	<body view-model="root">
-		<header class="header">
-			<h1 class="brand"><a href="#">CurvyJS</a></h1>
-			<nav class="navbar">
-				<ul class="nav navbar-nav">
-					<li><a href="#">Documentation</a></li>
-					<li><a href="#downloads">Download</a></li>
-					<li><a href="https://github.com/datadink/curvy">Source</a></li>
-				</ul>
-			</nav>
-		</header>	
+	<body view-model="app">
+		<nav class="navbar navbar-default navbar-fixed-top">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="#">
+						<img alt="Curvy JS" src="" />
+					</a>
+				</div>
+				<div class="collapse navbar-collapse" id="main-nav-navbar">
+					<ul class="nav navbar-nav">
+						<li data-template="navs.main">
+							<a data-href="uri" data-format="{{name}}"></a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<main class="container">
+			<aside>
+				<div data-template="navs.left">
+					<h3 data-format="{{title}}"></h3>
+					<ul class="nav nav-pills nav-stacked">
+						<li data-template="items">
+							<a data-href="uri" data-format="{{name}}"></a>
+						</li>
+					</ul>
+				</div>
+			</aside>
+			<article class="col-md-9 col-md-offset-3" data-routed><article>
+		</main>
 		<footer>
 			curvy.js | version 0.0.1 | DataDink
 		</footer>
-		<main>
-			<section>
-				<aside>
-					<nav>
-						<ul class="nav">
-							<li><strong>First Things First</strong></li>
-							<li><a href="#getting-started">Getting Started</a></li>
-							<li><a href="#why-mvvm">Why I chose MVVM</a></li>
-							<li><strong>The Framework</strong></li>
-							<li><a href="#bindings">Bindings</a></li>
-							<li><a href="#viewmodels">View Models</a></li>
-							<li><a href="#broadcast">broadcast service</a></li>
-							<li><a href="#http">http service</a></li>
-							<li><a href="#route">route service</a></li>
-							<li><a href="#data-bind">data-bind</a></li>
-							<li><a href="#data-class">data-class</a></li>
-							<li><a href="#data-click">data-click</a></li>
-							<li><a href="#data-format">data-format</a></li>
-							<li><a href="#data-hide">data-hide</a></li>
-							<li><a href="#data-href">data-href</a></li>
-							<li><a href="#data-html">data-html</a></li>
-							<li><a href="#data-routed">data-routed</a></li>
-							<li><a href="#data-show">data-show</a></li>
-							<li><a href="#data-src">data-src</a></li>
-							<li><a href="#data-submit">data-submit</a></li>
-							<li><a href="#data-template">data-template</a></li>
-							<li><a href="#data-title">data-title</a></li>
-							<li><a href="#data-view">data-view</a></li>
-						</ul>	
-					</nav>
-				</aside>
-				<article data-routed>
-				
-				</article>
-			</section>
-		</main>
-		<!-- IE9 ain't gunna do flex -->
-		<!--[if IE 9]>
-			<style>
-				main > section > * {
-					display: table-cell;
-				}
-				main > section > article {
-					width: 900px;
-				}
-				main > section > aside {
-					float: left;
-				}
-				main:after {
-					content: '';
-					display: block;
-					clear: both;
-				}
-			</style>
-		<![endif]-->
-		<!-- aaaaaand of course there isn't an IE 10 conditional. Why would we ever need to support broken stuff in IE10? -->
 	</body>
 </html>
