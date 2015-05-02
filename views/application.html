@@ -7,19 +7,22 @@
 	When adding Curvy to your page you are given a single global constructor: "Application".
 	The Application constructor allows you to pre-configure your application if you would
 	like or you can wait until after construction to load in your client code. The only thing
-	you are required to preload are your custom bindings. <small><em>see <a href="#bindings">Bindings</a></em></small>
+	you are required to preload are your 
+	custom bindings <small><em>(see <a href="#bindings">bindings</a>)</em></small>
+	and configurations.
 </p>
 <h3>Pre-Configuration</h3>
 <p>
-	Your application will likely be comprised of a number of <strong>services</strong>, 
-	<strong>view-models</strong>, <strong>custom bindings</strong>, and
-	<strong>configurations</strong>. These can all be configured directly from the
-	<em>extend</em> function on the "Application" constructor.
+	Your application will likely be comprised of a number of <strong>configurations</strong>,
+	<strong>services</strong>, <strong>custom bindings</strong>, and <strong>view-models</strong>.
+	These can all be configured directly from the <em>extend</em> function on the 
+	"Application" constructor.
 </p>
 <p class="container-fluid">
 	<strong class="col-sm-3">Configurations</strong>
 	<span class="col-sm-9">
-		The "Application.extend(<em>constructor</em>)" method accepts an injection constructor 
+		<strong>Application.extend(<em>constructor</em>)</strong><br />
+		accepts an injection constructor 
 		that will be run when the "Application" is instantiated. You are provided normal injection 
 		service for this constructor but constructed configuration object will be inaccessible to
 		the rest of the application.
@@ -28,9 +31,8 @@
 <p class="container-fluid">
 	<strong class="col-sm-3">Services</strong>
 	<span class="col-sm-9">
-		Services can be added as dependencies for the rest of your applications by using the 
-		registration functions located on the "Application.extend.register" object. All services
-		added here are added by name as injection contructors except when added as an instance.
+		<strong>Application.extend.register...</strong><br />
+		offers multiple methods for registering services as dependencies for your application.
 	</span><br />
 </p>
 <div>
@@ -45,26 +47,29 @@
 	</p>
 	
 	<p class="col-sm-9 col-sm-offset-3">
-		<strong>Application.extend.register.instance(name, object)</strong><br /> registers a pre-constructed
-		object as a named dependency.
+		<strong>Application.extend.register.instance(name, object)</strong><br /> 
+		Registers a pre-constructed object as a named dependency.
 	</p>
 	
 	<p class="col-sm-9 col-sm-offset-3">
-		<strong>Application.extend.register.perApp(name, constructor)</strong><br /> registers an
+		<strong>Application.extend.register.perApp(name, constructor)</strong><br /> 
+		Registers an
 		injection constructor as a named dependency. This will not be constructed until it is needed
 		for the first time as a dependency in the application. PerApp dependencies are constructed
 		once per application and re-used for all other dependency requirements.
 	</p>
 	
 	<p class="col-sm-9 col-sm-offset-3">
-		<strong>Application.extend.register.perScope(name, constructor)</strong><br /> registers an
+		<strong>Application.extend.register.perScope(name, constructor)</strong><br /> 
+		Registers an
 		injection constructor as a named dependency. This will not be constructed until it is needed
 		for the first time as a dependency in the application. PerScope dependencies are constructed
 		once per resolution scope and re-used for all descendant dependency requirements.
 	</p>
 	
 	<p class="col-sm-9 col-sm-offset-3">
-		<strong>Application.extend.register.perResolve(name, constructor)</strong><br /> registers an
+		<strong>Application.extend.register.perResolve(name, constructor)</strong><br /> 
+		Registers an
 		injection constructor as a named dependency. This will not be constructed until it is needed
 		for the first time as a dependency in the application. PerResolve dependencies are always
 		re-constructed every time they are required as a dependency.
@@ -73,12 +78,72 @@
 <p class="container-fluid">
 	<strong class="col-sm-3">Bindings</strong>
 	<span class="col-sm-9">
-		Custom bindings can be added to the application using the "Application.extend.binding(<em>attribute, constructor</em>)"
-		registration function. Bindings are similar to perResolve services in that they are newly
-		constructed each time they are needed, but bindings can't be asked for as dependencies
-		and are only triggered when the specified attribute name is found in the DOM.
+		<strong>Application.extend.binding(attributeName, constructor)</strong><br />
+		Provides a method to add custom bindings to your application. Registration of bindings
+		is similar to perResolve services in that they are newly created each time they are needed,
+		but bindings can't be asked for as dependencies. Bindings are registered by their attribute
+		name and will only be triggered with a matching attribute in the DOM.
 	</span>
 </p>
 <p class="container-fluid">
+	<strong class="col-sm-3">View Models</strong>
+	<span class="col-sm-9">
+		<strong>Application.extend.viewmodel(name, constructor)</strong><br />
+		Provides a method to register view models for your application. Registration of view models
+		is similar to perResolve services, but like bindings can't be asked for as dependencies.
+		View models can only be triggered when a "view-model" attribute is added to the DOM
+		with a value matching the registered name.
+	</span>
+</p>
+<h3>Post-Configuration</h3>
+<p>
+	After the application has been instantiated it is still possible for additional services and
+	view models to be added to your application "on the fly".
+</p>
+<p class="container-fluid">
+	<strong class="col-sm-3">Services</strong>
+	<span class="col-sm-9">
+		The constructed application <em>(new Application())</em> provides instance, perApp, perScope,
+		and perResolve functions for late registration of services.
+	</span>
+</p>
+<div>
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>(new Application()).instance(name, object)</strong><br />
+		registers a pre-constructed object as a named dependency.
+	</p>
 	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>(new Application()).perApp(name, constructor)</strong><br /> 
+		Registers an
+		injection constructor as a named dependency. This will not be constructed until it is needed
+		for the first time as a dependency in the application. PerApp dependencies are constructed
+		once per application and re-used for all other dependency requirements.
+	</p>
+	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>(new Application()).perScope(name, constructor)</strong><br /> 
+		Registers an
+		injection constructor as a named dependency. This will not be constructed until it is needed
+		for the first time as a dependency in the application. PerScope dependencies are constructed
+		once per resolution scope and re-used for all descendant dependency requirements.
+	</p>
+	
+	<p class="col-sm-9 col-sm-offset-3">
+		<strong>(new Application()).perResolve(name, constructor)</strong><br /> 
+		Registers an
+		injection constructor as a named dependency. This will not be constructed until it is needed
+		for the first time as a dependency in the application. PerResolve dependencies are always
+		re-constructed every time they are required as a dependency.
+	</p>
+</div>
+<p class="container-fluid">
+	<strong class="col-sm-3">View Models</strong>
+	<span class="col-sm-9">
+		<strong>(new Application()).viewmodel(name, constructor)</strong><br />
+		Provides a method to register view models for your application. Registration of view models
+		is similar to perResolve services, but like bindings can't be asked for as dependencies.
+		View models can only be triggered when a "view-model" attribute is added to the DOM
+		with a value matching the registered name.
+	</span>
 </p>
