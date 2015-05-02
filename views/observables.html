@@ -1,0 +1,39 @@
+<h3>Observables</h3>
+<p>
+	One of my deviations from the way Angular does things is that Curvy monitors 
+	changes in view models and objects by listening to change notification events
+	instead of scanning objects for changes when various events in the framework
+	occur. This, however, means that the objects it is listening for 
+	value changes on must be wrapped with or converted into an observable object.
+</p>
+<p>
+	Observables take advantage of javascript's Property functionality. Properties, while
+	appearing to work just like normal members on an object, actually fire off methods
+	when you are getting or settings their values. This allows Curvy to react to changes
+	made by intercepting value changes on your models and view models.
+</p>
+<p>
+	View models will be auto-converted into observables after they have been constructed.
+	This is done by replacing any values you set on the "this" object during construction 
+	with matching notification properties.
+</p>
+<p>
+	There are both advantages and disadvantages to doing things this way:
+</p>
+<em>Disadvantages</em>
+<ul>
+	<li>
+		You must convert or proxy any child-objects of your view-model if you want the 
+		descendant members to trigger UI updates when changed.
+	</li>
+	<li>
+		New members can not be added to an observable after it has been converted.
+	</li>
+</ul>
+<em>Advantages</em>
+<ul>
+	<li>Change responses are triggered by a change to the value instead of framework events</li>
+	<li>You are not required to wrap base javascript services such as setTimeout or setInterval</li>
+	<li>Your UI doesn't get out of sync with your view-model</li>
+</ul>	
+<h3>Making Observables</h3>

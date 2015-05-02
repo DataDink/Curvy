@@ -14,7 +14,8 @@ Application.extend.register.perApp('nav-service', ['route', function(route) {
 		'The Framework': [
 			{name: 'Application', uri: '#application', view: 'views/application.html'},
 			{name: 'Bindings', uri: '#bindings', view: 'views/bindings.html'},
-			{name: 'View Models', uri: '#viewmodels', view: 'views/view-models.html'}
+			{name: 'View Models', uri: '#viewmodels', view: 'views/view-models.html'},
+			{name: 'Observables', uri: '#observables', view: 'views/observables.html'}
 		],
 		'Services': [
 			{name: 'broadcast', uri: '#broadcast', view: 'views/broadcast.html'},
