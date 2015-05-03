@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>DOM Tests</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			Application.extend(function(utilities) {
+				QUnit.test('Depth', function(assert) {
+					var top = document.createElement('div');
+					var child = document.createElement('div');
+					top.appendChild(child);
+					document.body.appendChild(top);
+					assert.strictEqual(utilities.domdepth(child), 5, 'Child is child');
+					assert.strictEqual(utilities.domdepth(top), 4, 'Parent is parent');
+				});
+				
+				QUnit.test('Sort', function(assert) {
+					var topA = document.createElement('div');
+					var childA = document.createElement('div');
+					topA.appendChild(childA);
+					document.body.appendChild(topA);
+					var topB = document.createElement('div');
+					var childB = document.createElement('div');
+					topB.appendChild(childB);
+					document.body.appendChild(topB);
+					var topC = document.createElement('div');
+					var childC = document.createElement('div');
+					topC.appendChild(childC);
+					document.body.appendChild(topC);
+					
+					var arr = [childA, childB, childC, topA, topC, topB];
+					var sort = utilities.domsort(arr);
+					assert.strictEqual(sort[0], topA, 'topA is topA');
+					assert.strictEqual(sort[1], topC, 'topC is topC');
+					assert.strictEqual(sort[2], topB, 'topB is topB');
+					assert.strictEqual(sort[3], childA, 'childA is childA');
+					assert.strictEqual(sort[4], childB, 'childB is childB');
+					assert.strictEqual(sort[5], childC, 'childC is childC');
+				});
+				
+				QUnit.test('Query', function(assert) {
+					var top = document.createElement('div');
+					var child = document.createElement('div');
+					top.appendChild(child);
+					document.body.appendChild(top);
+					
+					var find = utilities.domquery(top, 'div');
+					assert.strictEqual(find.length, 2, 'Correct');
+					assert.ok(find[0] === top, 'Top is top');
+					assert.ok(find[1] === child, 'Child is child');
+				});
+				
+				QUnit.test('Exists', function(assert) {
+					var top = document.createElement('div');
+					var child = document.createElement('div');
+					top.appendChild(child);
+					document.body.appendChild(top);
+					
+					assert.ok(utilities.indom(child), "There when it's there");
+					top.parentElement.removeChild(top);
+					assert.ok(!utilities.indom(child), "Not when it's not");
+				});
+			});
+			new Application();
+		</script>
+	</body>
+</html>

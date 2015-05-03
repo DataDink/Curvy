@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Injection Pre-Registration</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			Application.extend.register.instance('inst', {name: 'pre-inst'});
+			Application.extend.register.perApp('app', function() { this.name = 'pre-app'; });
+			Application.extend.register.perScope('scp', function() { this.name = 'pre-scp'; });
+			Application.extend.register.perResolve('res', function() { this.name = 'pre-res'; });
+			Application.extend(['inst', 'app', 'scp', 'res', function(inst, app, scp, res) {
+				QUnit.test('Array Constructor', function(assert) { 
+					assert.ok(true, 'Created'); 
+					assert.ok(inst.name === 'pre-inst', 'Instance Injected'); 
+					assert.ok(app.name === 'pre-app', 'Instance Injected'); 
+					assert.ok(scp.name === 'pre-scp', 'Instance Injected'); 
+					assert.ok(res.name === 'pre-res', 'Instance Injected'); 
+				});
+			}]);
+			Application.extend(function(inst, app, scp, res) {
+				QUnit.test('Function Constructor', function(assert) { 
+					assert.ok(true, 'Created'); 
+					assert.ok(inst.name === 'pre-inst', 'Instance Injected'); 
+					assert.ok(app.name === 'pre-app', 'Instance Injected'); 
+					assert.ok(scp.name === 'pre-scp', 'Instance Injected'); 
+					assert.ok(res.name === 'pre-res', 'Instance Injected'); 
+				});
+			});
+			var app = new Application();
+		</script>
+	</body>
+</html>
