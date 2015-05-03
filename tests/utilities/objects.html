@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Value Tests</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			Application.extend(function(utilities) {
+				QUnit.test('Copy', function(assert) {
+					var original = { a: { b: {} } };
+					var copy = utilities.copy(original);
+					assert.ok(copy !== original, 'Different');
+					assert.ok(copy.a === original.a, '... but equal');
+				});
+				
+				QUnit.test('Merge', function(assert) {
+					var from = { a: {}, b: {} };
+					var to = { a: {}, c: {} };
+					var merge = utilities.merge(from, to);
+					assert.ok(from !== merge, 'Not from');
+					assert.ok(to !== merge, 'Not to');
+					assert.ok(from.a !== merge.a, 'From A');
+					assert.ok(to.a === merge.a, 'To A');
+					assert.ok(from.b === merge.b, 'From B');
+					assert.ok(to.c === merge.c, 'To C');
+				});
+				
+				QUnit.test('Array', function(assert) {
+					var arr = [1, 2, 3];
+					var obj = {0: 1, 1: 2, 2: 3};
+					var fromArr = utilities.toarray(arr);
+					var fromObj = utilities.toarray(obj);
+					
+					assert.ok(utilities.is(fromArr, Array), 'Arr is array');
+					assert.ok(utilities.is(fromObj, Array), 'Obj is array');
+					assert.strictEqual(fromArr.length, 3, 'Arr has three');
+					assert.strictEqual(fromObj.length, 3, 'Obj has three');
+					assert.ok(arr !== fromArr, 'Not arr');
+					assert.ok(obj !== fromObj, 'Not obj');
+				});
+			});
+			new Application();
+		</script>
+	</body>
+</html>
