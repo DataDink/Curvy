@@ -273,6 +273,7 @@ Application.extend(['application', 'utilities', function(app, utils) {
 		for (var i = 0; i < dependencies.length; i++) {
 			dependencies[i] = app.resolve(dependencies[i]);
 		}
+		constructor = utils.is(constructor, Array) ? constructor.pop() : constructor;
 		constructor = constructor.apply(this, dependencies);
 		writeObserver(constructor);
 		writeProperties(constructor);
