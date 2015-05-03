@@ -70,7 +70,7 @@
 		container.registered = function(name) { return (name in instances || name in singletons || name in scoped || name in transients); };
 		function get(name) { return singletons[name] || scoped[name] || transients[name]; }
 		
-		container.dependencies = function(constructor) { return params(ctr); }
+		container.dependencies = function(constructor) { return params(constructor); }
 		
 		// Creates a proxy constructor effectively allowing "apply" on a constructor
 		function construct(ctr, values) {
