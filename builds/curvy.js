@@ -269,7 +269,7 @@
 Application.extend(['application', 'utilities', function(app, utils) {
 
 	app.Observable = function(constructor) {
-		var dependencies = app.dependencies(constructor);
+		var dependencies = app.register.dependencies(constructor);
 		for (var i = 0; i < dependencies.length; i++) {
 			dependencies[i] = app.resolve(dependencies[i]);
 		}
