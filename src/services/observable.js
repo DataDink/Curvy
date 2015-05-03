@@ -20,11 +20,12 @@ Application.extend(['application', 'utilities', function(app, utils) {
 		return model;
 	}
 	app.Observable.surrogate = function(model, surrogate) {
-		if (!surrogate) { surrogate = new app.Observable({}); }
-		else { surrogate.__proto__ = {constructor: app.Observable} };
+		surrogate = surrogate || {};
+		surrogate.__proto__ = {constructor: app.Observable};
 		writeObserver(surrogate);
 		proxyProperties(model, surrogate);
 		Object.freeze(surrogate);
+		return surrogate;
 	}
 	Object.freeze(app.Observable);
 	
