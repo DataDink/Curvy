@@ -44,6 +44,16 @@
 					assert.ok(arr !== fromArr, 'Not arr');
 					assert.ok(obj !== fromObj, 'Not obj');
 				});
+				
+				QUnit.test('Distinct', function(assert) {
+					var arr = [0, 1, 1, 2, 2, 2, 3, 3, 3, 3];
+					utilities.distinct(arr);
+					assert.strictEqual(arr.length, 4, 'Shorter');
+					assert.ok(arr[0] === 0, 'Zero');
+					assert.ok(arr[1] === 1, 'One');
+					assert.ok(arr[2] === 2, 'Two');
+					assert.ok(arr[3] === 3, 'Three');
+				});
 			});
 			new Application();
 		</script>

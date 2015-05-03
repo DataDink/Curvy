@@ -210,16 +210,4 @@
 		}
 		function pushall(arr, from) { for (var i = 0; !!from && i < from.length; i++) { arr.push(from[i]); } }
 	}
-	
-	/*** Compat Fixes ***/
-	Element.prototype.matches = Element.prototype.matches 
-								|| Element.prototype.matchesSelector
-								|| function(selector) {
-									if (!this || !this.parentNode || !this.parentNode.querySelectorAll) { return; };
-									var matches = this.parentNode.querySelectorAll(selector);
-									for (var i = 0; matches && i < matches.length; i++) { 
-										if (matches[i] === this) { return true; } 
-									}
-									return false;
-								};
 })();
