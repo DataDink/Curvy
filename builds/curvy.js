@@ -34,7 +34,8 @@
 			instance: function(name, value) { container.instance(name, value); },
 			perApp: function(name, constructor) { container.perApp(name, constructor); },
 			perScope: function(name, constructor) { container.perScope(name, constructor); },
-			perResolve: function(name, constructor) { container.perResolve(name, constructor); }
+			perResolve: function(name, constructor) { container.perResolve(name, constructor); },
+			dependencies: function(constructor) { return container.dependencies(constructor); }
 		}, configurable: false, enumerable: true });
 		Object.freeze(application.register);
 		
