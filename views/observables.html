@@ -37,3 +37,24 @@
 	<li>Your UI doesn't get out of sync with your view-model</li>
 </ul>	
 <h3>Making Observables</h3>
+<p>
+	Observables can be created using methods provided on the application object during run time.
+	You can create new observables, convert existing objects, and create observable proxies.
+</p>
+<p class="container-fluid">
+	<strong class="col-sm-3">application.Observable(constructor)</strong>
+	<span class="col-sm-9">
+		Using the Observable constructor you can create a new observable with dependency
+		resolution.
+		
+		<pre>
+			var myApp = new Application();
+			var myObservable = new myApp.Observable(['dependency', function(dependency) {
+				this.observableProperty = 'initial value';
+			});
+			
+			myObservable.observe(function(member) { console.log(myObservable[member]); }
+			myObservable.observableProperty = 'changed value';
+			
+		</pre>
+	</span>
