@@ -14,9 +14,3 @@ Application.extend.viewmodel('app', ['nav-service', function(nav) {
 	}
 }]);
 var myApp = new Application();
-
-var myObservable = new window.myApp.Observable(['dependency', function(dependency) {
-	this.observableProperty = 'initial value';
-}]);
-myObservable.observe(function(member) { console.log(myObservable[member]); });
-myObservable.observableProperty = 'changed value';

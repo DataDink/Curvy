@@ -34,7 +34,8 @@
 			instance: function(name, value) { container.instance(name, value); },
 			perApp: function(name, constructor) { container.perApp(name, constructor); },
 			perScope: function(name, constructor) { container.perScope(name, constructor); },
-			perResolve: function(name, constructor) { container.perResolve(name, constructor); }
+			perResolve: function(name, constructor) { container.perResolve(name, constructor); },
+			dependencies: function(constructor) { return container.dependencies(constructor); }
 		}, configurable: false, enumerable: true });
 		Object.freeze(application.register);
 		
@@ -69,7 +70,7 @@
 		container.registered = function(name) { return (name in instances || name in singletons || name in scoped || name in transients); };
 		function get(name) { return singletons[name] || scoped[name] || transients[name]; }
 		
-		container.dependencies = function(constructor) { return params(ctr); }
+		container.dependencies = function(constructor) { return params(constructor); }
 		
 		// Creates a proxy constructor effectively allowing "apply" on a constructor
 		function construct(ctr, values) {
@@ -268,10 +269,11 @@
 Application.extend(['application', 'utilities', function(app, utils) {
 
 	app.Observable = function(constructor) {
-		var dependencies = app.dependencies(constructor);
+		var dependencies = app.register.dependencies(constructor);
 		for (var i = 0; i < dependencies.length; i++) {
 			dependencies[i] = app.resolve(dependencies[i]);
 		}
+		constructor = utils.is(constructor, Array) ? constructor.pop() : constructor;
 		constructor = constructor.apply(this, dependencies);
 		writeObserver(constructor);
 		writeProperties(constructor);
