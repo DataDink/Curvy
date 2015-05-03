@@ -6,6 +6,7 @@ module.exports = function(grunt) {
 				src: [
 					'src/core.js',
 					'src/services/utilities.js',
+					'src/services/observable.js',
 					'src/services/broadcast.js',
 					'src/services/bindings.js',
 					'src/services/http.js',
