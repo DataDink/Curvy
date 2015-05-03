@@ -6,10 +6,10 @@ Application.extend(['application', 'utilities', function(app, utils) {
 			dependencies[i] = app.resolve(dependencies[i]);
 		}
 		constructor = utils.is(constructor, Array) ? constructor.pop() : constructor;
-		constructor = constructor.apply(this, dependencies);
-		writeObserver(constructor);
-		writeProperties(constructor);
-		Object.freeze(constructor);
+		constructor.apply(this, dependencies);
+		writeObserver(this);
+		writeProperties(this);
+		Object.freeze(this);
 	}
 	
 	app.Observable.convert = function(model) {
