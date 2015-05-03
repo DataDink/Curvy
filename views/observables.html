@@ -39,22 +39,59 @@
 <h3>Making Observables</h3>
 <p>
 	Observables can be created using methods provided on the application object during run time.
-	You can create new observables, convert existing objects, and create observable proxies.
+	You can create new observables, convert existing objects, and create observable surrogates.
 </p>
 <p class="container-fluid">
-	<strong class="col-sm-3">application.Observable(constructor)</strong>
+	<strong class="col-sm-3">Create</strong>
 	<span class="col-sm-9">
-		Using the Observable constructor you can create a new observable with dependency
-		resolution.
-		
-		<pre>
-			var myApp = new Application();
-			var myObservable = new myApp.Observable(['dependency', function(dependency) {
-				this.observableProperty = 'initial value';
-			});
-			
-			myObservable.observe(function(member) { console.log(myObservable[member]); }
-			myObservable.observableProperty = 'changed value';
-			
-		</pre>
+		<strong>new application.Observable(constructor)</strong><br />
+		Using the Observable constructor you can create a new observable with an injection
+		constructor. Observables created this way have access to dependency resolution services.
 	</span>
+	<pre>
+		var myApp = new Application();
+		var myObservable = new myApp.Observable(['dependency', function(dependency) {
+			this.observableProperty = 'initial value';
+		});
+		
+		myObservable.observe(function(member) { console.log(myObservable[member]); }
+		myObservable.observableProperty = 'changed value';
+	</pre>
+</p>
+<p class="container-fluid">
+	<strong class="col-sm-3">Convert</strong>
+	<span class="col-sm-9">
+		<strong>application.Observable.convert(obj)</strong><br />
+		An existing object can be converted into an observable. Use this with caution as
+		the existing method will be manipulated and ultimately locked down from receiving
+		any new members. If this is not desireable then use a surrogate.
+	</span>
+	<pre>
+		var myApp = new Application();
+		var myObj = { myValue: 'initial value' };
+		myApp.Observable.convert(myObj);
+		
+		myObj.observe(function(member) { console.log(myObj[member]); }
+		myObj.myValue = 'changed value';
+	</pre>
+</p>
+<p class="container-fluid">
+	<strong class="col-sm-3">Surrogate</strong>
+	<span class="col-sm-9">
+		<strong>application.Observable.surrogate(obj)</strong><br />
+		An surrogate can be made for an existing object that will act as an observable proxy.
+		Any changes to values on the surrogate will be set on the object and will provide
+		notifications. The original object will be left untouched, but will not provide
+		notifications for changes made directly to it.
+	</span>
+	<pre>
+		var myApp = new Application();
+		var myObj = { myValue: 'initial value' };
+		var surrogate = myApp.Observable.convert(myObj);
+		
+		surrogate.observe(function(member) { console.log(surrogate[member]); }
+		surrogate.myValue = 'changed value';
+		
+		console.log(myObj.myValue);
+	</pre>
+</p>

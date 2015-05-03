@@ -274,10 +274,10 @@ Application.extend(['application', 'utilities', function(app, utils) {
 			dependencies[i] = app.resolve(dependencies[i]);
 		}
 		constructor = utils.is(constructor, Array) ? constructor.pop() : constructor;
-		constructor = constructor.apply(this, dependencies);
-		writeObserver(constructor);
-		writeProperties(constructor);
-		Object.freeze(constructor);
+		constructor.apply(this, dependencies);
+		writeObserver(this);
+		writeProperties(this);
+		Object.freeze(this);
 	}
 	
 	app.Observable.convert = function(model) {
@@ -1472,9 +1472,3 @@ Application.extend.viewmodel('app', ['nav-service', function(nav) {
 	}
 }]);
 var myApp = new Application();
-
-var myObservable = new window.myApp.Observable(['dependency', function(dependency) {
-	this.observableProperty = 'initial value';
-}]);
-myObservable.observe(function(member) { console.log(myObservable[member]); });
-myObservable.observableProperty = 'changed value';
