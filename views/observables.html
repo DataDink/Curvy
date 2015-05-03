@@ -48,16 +48,18 @@
 		Using the Observable constructor you can create a new observable with an injection
 		constructor. Observables created this way have access to dependency resolution services.
 	</span>
-	<pre>
-		var myApp = new Application();
-		var myObservable = new myApp.Observable(['dependency', function(dependency) {
-			this.observableProperty = 'initial value';
-		});
-		
-		myObservable.observe(function(member) { console.log(myObservable[member]); }
-		myObservable.observableProperty = 'changed value';
-	</pre>
 </p>
+<div class="container-fluid">
+	<pre class="col-sm-9 col-sm-offset-3">
+var myApp = new Application();
+var myObservable = new myApp.Observable(['dependency', function(dependency) {
+	this.observableProperty = 'initial value';
+});
+
+myObservable.observe(function(member) { console.log(myObservable[member]); }
+myObservable.observableProperty = 'changed value';
+	</pre>
+</div>
 <p class="container-fluid">
 	<strong class="col-sm-3">Convert</strong>
 	<span class="col-sm-9">
@@ -66,15 +68,17 @@
 		the existing method will be manipulated and ultimately locked down from receiving
 		any new members. If this is not desireable then use a surrogate.
 	</span>
-	<pre>
-		var myApp = new Application();
-		var myObj = { myValue: 'initial value' };
-		myApp.Observable.convert(myObj);
-		
-		myObj.observe(function(member) { console.log(myObj[member]); }
-		myObj.myValue = 'changed value';
-	</pre>
 </p>
+<div class="container-fluid">
+	<pre class="col-sm-9 col-sm-offset-3">
+var myApp = new Application();
+var myObj = { myValue: 'initial value' };
+myApp.Observable.convert(myObj);
+
+myObj.observe(function(member) { console.log(myObj[member]); }
+myObj.myValue = 'changed value';
+	</pre>
+</div>
 <p class="container-fluid">
 	<strong class="col-sm-3">Surrogate</strong>
 	<span class="col-sm-9">
@@ -84,14 +88,16 @@
 		notifications. The original object will be left untouched, but will not provide
 		notifications for changes made directly to it.
 	</span>
-	<pre>
-		var myApp = new Application();
-		var myObj = { myValue: 'initial value' };
-		var surrogate = myApp.Observable.convert(myObj);
-		
-		surrogate.observe(function(member) { console.log(surrogate[member]); }
-		surrogate.myValue = 'changed value';
-		
-		console.log(myObj.myValue);
-	</pre>
 </p>
+<div class="container-fluid">
+	<pre class="col-sm-9 col-sm-offset-3">
+var myApp = new Application();
+var myObj = { myValue: 'initial value' };
+var surrogate = myApp.Observable.convert(myObj);
+
+surrogate.observe(function(member) { console.log(surrogate[member]); }
+surrogate.myValue = 'changed value';
+
+console.log(myObj.myValue);
+	</pre>
+</div>

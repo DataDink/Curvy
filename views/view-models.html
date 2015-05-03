@@ -42,20 +42,68 @@
 </pre>
 <p>
 	After the viewmodel has been constructed it is converted to an "Observable" object.
-	An observable is given the following members:<br />
-	<strong>notify(propertyName):</strong> Calling this method will alert anything listening
-	to this object that the specified property has been updated.<br />
-	<strong>observe(callback):</strong> Adds a callback handler that will be called any time
-	the "notify" method is invoked.<br />
-	<strong>unobserve(callback):</strong> Removes a callback handler from the object's
-	notification pool.<br />
-	<strong>path(string):</strong> Navigates a dot(.) path from the view model and returns
-	the value or undefined if the path does not exist.<br />
-	<strong>watch(path, callback)</strong> Watches a chain of observables specified by a
-	dot(.) path. The first non-observable object in the dot(.) path will prevent further
-	observable members in the path from being observed.<br />
-	<strong>dispose()</strong> This method cleans up potential leaky references held by the
-	view model. This should never be called by your code.
+	An observable is given the following members:
+</p>
+<p>
+	<em class="col-sm-3">view</em>
+	<span class="col-sm-9">
+		Provides access to the View this view-model belongs to.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">parent</em>
+	<span class="col-sm-9">
+		Finds the first ancestor view model.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">children</em>
+	<span class="col-sm-9">
+		Scans all descendant elements for child view models
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">notify(propertyName)</em>
+	<span class="col-sm-9">
+		Calling this method will alert anything listening
+		to this object that the specified property has been updated.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">observe(callback)</em>
+	<span class="col-sm-9">
+		Adds a callback handler that will be called any time
+		the "notify" method is invoked.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">unobserve(callback)</em>
+	<span class="col-sm-9">
+		Removes a callback handler from the object's
+		notification pool.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">path(string)</em>
+	<span class="col-sm-9">
+		Navigates a dot(.) path from the view model and returns
+		the value or undefined if the path does not exist.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">watch(path, callback)</em>
+	<span class="col-sm-9">
+		Watches a chain of observables specified by a
+		dot(.) path. The first non-observable object in the dot(.) path will prevent further
+		observable members in the path from being observed.
+	</span>
+</p>
+<p>
+	<em class="col-sm-3">dispose()</em>
+	<span class="col-sm-9">
+		This method cleans up potential leaky references held by the
+		view model. This should never be called by your code.
+	</span>
 </p>
 <p>
 	Because observable members are added after the view model has been constructed there

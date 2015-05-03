@@ -39,3 +39,6 @@ aside * {
     width: 250px;
   }
 }
+pre {
+  overflow-x: auto;
+}
