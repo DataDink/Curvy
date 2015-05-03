@@ -1,5 +1,7 @@
 // Extends the application to support ViewModels
 (function() {
+	var bindingName = 'view-model';
+	
 	// Adds a registration extension to the Application constructor for pre-registration
 	var globals = {};
 	Object.defineProperty(Application.extend, 'viewmodel', { value: 
@@ -7,7 +9,6 @@
 		configurable: false, enumerable: true
 	});
 	
-	var bindingName = 'view-model';
 	// The "view-model" binding
 	Application.extend.binding(bindingName, ['viewmodel manager', 'view', function(mgr, view) {
 		// This will construct the view model and add it to the current binding scope (can be injected by asking for "viewmodel")
@@ -43,7 +44,7 @@
 			utils.readonly(model, 'parent', function() { return viewmodel.Parent(model); });
 			utils.readonly(model, 'children', function() { return viewmodel.Children(model); });
 			
-			var disposals = []; // disposals should always remove themselves from this array
+			var disposals = [];
 			utils.constant(model, 'watch', function(path, callback) {
 				var disposal = utils.watch(model, path, callback);
 				var wrap = function() {
@@ -54,18 +55,18 @@
 				return wrap;
 			});
 			view.dispose = function() { 
-				while (disposals.length) { disposals[0](); } 
+				while (disposals.length) { disposals.pop()(); } 
 			};
 		}
 		viewmodel.convert = function(view, model) {
 			viewmodel(view, model);
-			utils.observable(model);
+			view.application.Observable.convert(model);
 			return model;
 		};
 		viewmodel.surrogate = function(view, model) {
 			var surrogate = {};
 			viewmodel(view, surrogate)
-			utils.surrogate(model, surrogate);
+			view.application.Observable.surrogate(model, surrogate);
 			return surrogate;
 		};
 		viewmodel.Member = ' ViewModel ';
@@ -98,29 +99,29 @@
 		
 		/*** ViewModel Manager ***/
 		var vmmgr = new (function() {
-			var instance = this;
-			instance.exists = function(name) { return name in viewmodels; };
-			instance.ready = function(view) { return viewmodel.Ready(view.element); }
-			function resolvevm(view, name) {
+			var manager = this;
+			manager.exists = function(name) { return name in viewmodels; };
+			manager.ready = function(view) { return viewmodel.Ready(view.element); }
+			function resolve(view, name) {
 				if (viewmodel.Member in view.element) { return false; }
 				if (!viewmodel.Ready(view)) { return false; }
 				return app.resolve(viewmodels[name], view.scope);
 			}
-			instance.create = function(view, name) {
-				var model = resolvevm(view, name);
+			manager.create = function(view, name) {
+				var model = resolve(view, name);
 				if (!model) { return false; }
 				viewmodel.convert(view, model);
 				return model;
 			};
-			instance.surrogate = function(view, model) {
+			manager.surrogate = function(view, model) {
 				var surrogate = viewmodel.surrogate(view, model);
 				return surrogate;
 			};
-			instance.get = function(ref) {
+			manager.get = function(ref) {
 				return viewmodel.Get(ref) || viewmodel.Parent(ref);
 			};
-			instance.bound = function(element) { return viewmodel.Member in element; }
-			Object.freeze(instance);
+			manager.bound = function(element) { return viewmodel.Member in element; }
+			Object.freeze(manager);
 		})()
 		app.register.instance('viewmodel manager', vmmgr);
 	}]);

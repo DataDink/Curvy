@@ -13,10 +13,6 @@
 			if (value && value.constructor && value.constructor === type) { return true; }
 			return ((typeof(value) || '').toString().toLowerCase() === (type || '').toString().trim().toLowerCase());
 		};
-		// LOCKED determines if the member on an object can be edited
-		utilities.locked = function(target, member) { 
-			return !(Object.getOwnPropertyDescriptor(target, member) || {configurable: true}).configurable; 
-		};
 		// READONLY creates a reaonly property with a getter function
 		utilities.readonly = function(target, member, func) { Object.defineProperty(target, member, {
 			get: func, configurable: false, enumerable: true
@@ -25,29 +21,6 @@
 		utilities.constant = function(target, member, value) { Object.defineProperty(target, member, {
 			value: value, configurable: false, enumerable: true
 		});};
-		// PROXY creates a remote property on the 'target' that gets/sets from a member on the 'source'
-		utilities.proxy = function(target, source, member) { Object.defineProperty(target, member, {
-			get: function() { return source[member]; },
-			set: function(v) { source[member] = v; },
-			configurable: false, enumerable: true
-		});};
-		// OVERRIDE replaces a function member with a new function that will be called prior to the original function
-		utilities.override = function(target, member, func) {
-			var source = target[member] || function() { };
-			Object.defineProperty(target, member, { 
-				value: function() { func.apply(this, arguments); source.apply(this, arguments); }, 
-				configurable: false, enumerable: false 
-			});
-		};
-		// OBSERVE creates an observable property with a callback that is called when the property is set.
-		utilities.observe = function(target, member, callback) { 
-			var value = target[member];
-			Object.defineProperty(target, member, {
-				get: function() { return value; },
-				set: function(v) { value = v; callback.call(target, member); },
-				configurable: false, enumerable: true
-			});
-		};
 		// PATH navigates a dot(.) path from a source object. (undefined on fail)
 		utilities.path = function(source, path) { 
 			var parts = (path.split('.') || []);
@@ -59,7 +32,7 @@
 			var parts = (path || '').split('.'); if (!parts.length) { return function() {}; }
 			var member = parts.shift(); if (!member) { return function() {}; }
 			var childpath = parts.join('.');
-			function watchchild(child) { return (utilities.is(child, observable)) 
+			function watchchild(child) { return (utilities.is(child, app.Observable)) 
 				? child.watch(childpath, callback) 
 				: function() {}; 
 			} 
@@ -138,60 +111,6 @@
 			var searcher = (!!app.root.body && !!app.root.body.contains) ? app.root.body : app.root;
 			return !searcher.contains || searcher.contains(element);
 		};
-		// OBSERVABLE converts an existing object to an observable and then locks it down
-		utilities.observable = function(model) { return observable.convert(model); };
-		// SURROGATE creates a proxy observable class for the model.
-		utilities.surrogate = function(model, surrogate) { return observable.proxy(model, surrogate); };
 		Object.freeze(utilities);
-		
-	
-		/*** Observable ***/
-		function observable(model) {
-			model.__proto__ = {constructor: observable}; // This object is no longer whatever it was
-			var observers = [];
-			// NOTIFY called when a property change occurs (will call an existing notify function if one exists)
-			utilities.override(model, 'notify', function(member) {
-				for (var i = 0; i < observers.length; i++) { observers[i](member); }
-			});
-			// OBSERVE adds a callback handler to the observable (will call an existing "observe" function if one exists)
-			utilities.override(model, 'observe', function(callback) {
-				observers.push(callback);
-			});
-			// UNOBSERVE removes a previously added callback (will call an existing "unobserve" function if one exists)
-			utilities.override(model, 'unobserve', function(callback) {
-				observers = observers.filter(function(o) { return o !== callback; });
-			});
-			// PATH returns the remote value of the specified dot(.) path
-			utilities.constant(model, 'path', function(path) {
-				return utilities.path(model, path);
-			});
-			// WATCH sets a watch on the specified dot(.) path
-			if (!utilities.locked(model, 'watch')) {
-				utilities.constant(model, 'watch', function(path, callback) { 
-					return utilities.watch(model, path, callback); 
-				});
-			}
-			// DISPOSE removes reference to all callbacks
-			utilities.override(model, 'dispose', function() { observers = nothing; });
-		}
-		observable.convert = function(model) {
-			observable(model);
-			for (var member in model) {
-				if (utilities.locked(model, member)) { continue; }
-				utilities.observe(model, member, model.notify);
-			}
-			Object.freeze(model);
-			return model;
-		};
-		observable.proxy = function(model, proxy) {
-			proxy = proxy || {};
-			if (!utilities.is(model, observable)) { observable(proxy); }
-			for (var member in model) {
-				if (utilities.locked(proxy, member)) { continue; }
-				utilities.proxy(proxy, model, member);
-			}
-			Object.freeze(proxy);
-			return proxy;
-		};
 	}]);
 })();

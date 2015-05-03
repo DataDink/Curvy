@@ -69,6 +69,8 @@
 		container.registered = function(name) { return (name in instances || name in singletons || name in scoped || name in transients); };
 		function get(name) { return singletons[name] || scoped[name] || transients[name]; }
 		
+		container.dependencies = function(constructor) { return params(ctr); }
+		
 		// Creates a proxy constructor effectively allowing "apply" on a constructor
 		function construct(ctr, values) {
 			ctr = is(ctr, Array) ? ctr[ctr.length - 1] : ctr;
@@ -88,10 +90,9 @@
 				} return items;
 			} return parse(ctr);
 		}
-		
 		// Parses a function constructor and extracts parameter names to be
 		// used for dependency resolution
-		function parse(ctr, items) {
+		function parse(ctr) {
 			var values = (/^function[^\(]*\(([^\)]+)\)/gi).exec(ctr.toString());
 			if (!values) { return []; }
 			var items = values[1].split(',');
@@ -161,10 +162,6 @@
 			if (value && value.constructor && value.constructor === type) { return true; }
 			return ((typeof(value) || '').toString().toLowerCase() === (type || '').toString().trim().toLowerCase());
 		};
-		// LOCKED determines if the member on an object can be edited
-		utilities.locked = function(target, member) { 
-			return !(Object.getOwnPropertyDescriptor(target, member) || {configurable: true}).configurable; 
-		};
 		// READONLY creates a reaonly property with a getter function
 		utilities.readonly = function(target, member, func) { Object.defineProperty(target, member, {
 			get: func, configurable: false, enumerable: true
@@ -173,29 +170,6 @@
 		utilities.constant = function(target, member, value) { Object.defineProperty(target, member, {
 			value: value, configurable: false, enumerable: true
 		});};
-		// PROXY creates a remote property on the 'target' that gets/sets from a member on the 'source'
-		utilities.proxy = function(target, source, member) { Object.defineProperty(target, member, {
-			get: function() { return source[member]; },
-			set: function(v) { source[member] = v; },
-			configurable: false, enumerable: true
-		});};
-		// OVERRIDE replaces a function member with a new function that will be called prior to the original function
-		utilities.override = function(target, member, func) {
-			var source = target[member] || function() { };
-			Object.defineProperty(target, member, { 
-				value: function() { func.apply(this, arguments); source.apply(this, arguments); }, 
-				configurable: false, enumerable: false 
-			});
-		};
-		// OBSERVE creates an observable property with a callback that is called when the property is set.
-		utilities.observe = function(target, member, callback) { 
-			var value = target[member];
-			Object.defineProperty(target, member, {
-				get: function() { return value; },
-				set: function(v) { value = v; callback.call(target, member); },
-				configurable: false, enumerable: true
-			});
-		};
 		// PATH navigates a dot(.) path from a source object. (undefined on fail)
 		utilities.path = function(source, path) { 
 			var parts = (path.split('.') || []);
@@ -207,7 +181,7 @@
 			var parts = (path || '').split('.'); if (!parts.length) { return function() {}; }
 			var member = parts.shift(); if (!member) { return function() {}; }
 			var childpath = parts.join('.');
-			function watchchild(child) { return (utilities.is(child, observable)) 
+			function watchchild(child) { return (utilities.is(child, app.Observable)) 
 				? child.watch(childpath, callback) 
 				: function() {}; 
 			} 
@@ -286,64 +260,110 @@
 			var searcher = (!!app.root.body && !!app.root.body.contains) ? app.root.body : app.root;
 			return !searcher.contains || searcher.contains(element);
 		};
-		// OBSERVABLE converts an existing object to an observable and then locks it down
-		utilities.observable = function(model) { return observable.convert(model); };
-		// SURROGATE creates a proxy observable class for the model.
-		utilities.surrogate = function(model, surrogate) { return observable.proxy(model, surrogate); };
 		Object.freeze(utilities);
-		
-	
-		/*** Observable ***/
-		function observable(model) {
-			model.__proto__ = {constructor: observable}; // This object is no longer whatever it was
-			var observers = [];
-			// NOTIFY called when a property change occurs (will call an existing notify function if one exists)
-			utilities.override(model, 'notify', function(member) {
-				for (var i = 0; i < observers.length; i++) { observers[i](member); }
-			});
-			// OBSERVE adds a callback handler to the observable (will call an existing "observe" function if one exists)
-			utilities.override(model, 'observe', function(callback) {
-				observers.push(callback);
-			});
-			// UNOBSERVE removes a previously added callback (will call an existing "unobserve" function if one exists)
-			utilities.override(model, 'unobserve', function(callback) {
-				observers = observers.filter(function(o) { return o !== callback; });
-			});
-			// PATH returns the remote value of the specified dot(.) path
-			utilities.constant(model, 'path', function(path) {
-				return utilities.path(model, path);
-			});
-			// WATCH sets a watch on the specified dot(.) path
-			if (!utilities.locked(model, 'watch')) {
-				utilities.constant(model, 'watch', function(path, callback) { 
-					return utilities.watch(model, path, callback); 
-				});
-			}
-			// DISPOSE removes reference to all callbacks
-			utilities.override(model, 'dispose', function() { observers = nothing; });
-		}
-		observable.convert = function(model) {
-			observable(model);
-			for (var member in model) {
-				if (utilities.locked(model, member)) { continue; }
-				utilities.observe(model, member, model.notify);
-			}
-			Object.freeze(model);
-			return model;
-		};
-		observable.proxy = function(model, proxy) {
-			proxy = proxy || {};
-			if (!utilities.is(model, observable)) { observable(proxy); }
-			for (var member in model) {
-				if (utilities.locked(proxy, member)) { continue; }
-				utilities.proxy(proxy, model, member);
-			}
-			Object.freeze(proxy);
-			return proxy;
-		};
 	}]);
 })();
 ;
+
+Application.extend(['application', 'utilities', function(app, utils) {
+
+	app.Observable = function(constructor) {
+		var dependencies = app.dependencies(constructor);
+		for (var i = 0; i < dependencies.length; i++) {
+			dependencies[i] = app.resolve(dependencies[i]);
+		}
+		constructor = constructor.apply(this, dependencies);
+		writeObserver(constructor);
+		writeProperties(constructor);
+		Object.freeze(constructor);
+	}
+	
+	app.Observable.convert = function(model) {
+		model.__proto__ = {constructor: app.Observable};
+		writeObserver(model);
+		writeProperties(model);
+		Object.freeze(model);
+		return model;
+	}
+	app.Observable.surrogate = function(model, surrogate) {
+		if (!surrogate) { surrogate = new app.Observable({}); }
+		else { surrogate.__proto__ = {constructor: app.Observable} };
+		writeObserver(surrogate);
+		proxyProperties(model, surrogate);
+		Object.freeze(surrogate);
+	}
+	Object.freeze(app.Observable);
+	
+	function writeObserver(obj) {
+		var observers = [];
+		// NOTIFY called when a property change occurs (will call an existing notify function if one exists)
+		override(obj, 'notify', function(member) {
+			for (var i = 0; i < observers.length; i++) { observers[i](member); }
+		});
+		// OBSERVE adds a callback handler to the observable (will call an existing "observe" function if one exists)
+		override(obj, 'observe', function(callback) {
+			observers.push(callback);
+		});
+		// UNOBSERVE removes a previously added callback (will call an existing "unobserve" function if one exists)
+		override(obj, 'unobserve', function(callback) {
+			observers = observers.filter(function(o) { return o !== callback; });
+		});
+		// PATH returns the remote value of the specified dot(.) path
+		utils.constant(obj, 'path', function(path) {
+			return utils.path(obj, path);
+		});
+		// WATCH sets a watch on the specified dot(.) path
+		if (!locked(obj, 'watch')) {
+			utils.constant(obj, 'watch', function(path, callback) { 
+				return utils.watch(obj, path, callback); 
+			});
+		}
+		// DISPOSE removes reference to all callbacks
+		override(obj, 'dispose', function() { observers = nothing; });
+	}
+	
+	function writeProperties(model) {
+		for (var member in model) {
+			if (locked(model, member)) { continue; }
+			observe(model, member);
+		}
+	}
+	
+	function proxyProperties(model, surrogate) {
+		for (var member in model) {
+			if (locked(surrogate, member)) { continue; }
+			proxy(surrogate, model, member);
+		}
+	}
+	
+	function observe(model, member) {
+		var value = model[member]; delete model[member];
+		Object.defineProperty(model, member, {
+			get: function() { return value; },
+			set: function(v) { value = v; model.notify(member); },
+			configurable: false, enumerable: true 
+		});
+	}
+	
+	function proxy(model, source, member) {
+		Object.defineProperty(model, member, {
+			get: function() { return source[member]; },
+			set: function(v) { source[member] = v; model.notify(member); },
+			configurable: false, enumerable: true 
+		});
+	}
+	
+	function override(model, member, func) {
+		var source = model[member];
+		Object.defineProperty(model, member, {
+			value: function() { func.apply(this, arguments); if (source) { source.apply(this, arguments); } },
+			configurable: false, enumerable: true
+		});
+	}
+	
+	function locked(model, member) { return !(Object.getOwnPropertyDescriptor(model, member) || {configurable: true}).configurable; }
+	
+}]);;
 
 // Singleton service that manages global broadcasts
 Application.extend.register.perApp('broadcast', function() {
@@ -1056,6 +1076,8 @@ Application.extend.binding('data-view', ['html', function(html) {
 
 // Extends the application to support ViewModels
 (function() {
+	var bindingName = 'view-model';
+	
 	// Adds a registration extension to the Application constructor for pre-registration
 	var globals = {};
 	Object.defineProperty(Application.extend, 'viewmodel', { value: 
@@ -1063,7 +1085,6 @@ Application.extend.binding('data-view', ['html', function(html) {
 		configurable: false, enumerable: true
 	});
 	
-	var bindingName = 'view-model';
 	// The "view-model" binding
 	Application.extend.binding(bindingName, ['viewmodel manager', 'view', function(mgr, view) {
 		// This will construct the view model and add it to the current binding scope (can be injected by asking for "viewmodel")
@@ -1099,7 +1120,7 @@ Application.extend.binding('data-view', ['html', function(html) {
 			utils.readonly(model, 'parent', function() { return viewmodel.Parent(model); });
 			utils.readonly(model, 'children', function() { return viewmodel.Children(model); });
 			
-			var disposals = []; // disposals should always remove themselves from this array
+			var disposals = [];
 			utils.constant(model, 'watch', function(path, callback) {
 				var disposal = utils.watch(model, path, callback);
 				var wrap = function() {
@@ -1110,18 +1131,18 @@ Application.extend.binding('data-view', ['html', function(html) {
 				return wrap;
 			});
 			view.dispose = function() { 
-				while (disposals.length) { disposals[0](); } 
+				while (disposals.length) { disposals.pop()(); } 
 			};
 		}
 		viewmodel.convert = function(view, model) {
 			viewmodel(view, model);
-			utils.observable(model);
+			view.application.Observable.convert(model);
 			return model;
 		};
 		viewmodel.surrogate = function(view, model) {
 			var surrogate = {};
 			viewmodel(view, surrogate)
-			utils.surrogate(model, surrogate);
+			view.application.Observable.surrogate(model, surrogate);
 			return surrogate;
 		};
 		viewmodel.Member = ' ViewModel ';
@@ -1154,29 +1175,29 @@ Application.extend.binding('data-view', ['html', function(html) {
 		
 		/*** ViewModel Manager ***/
 		var vmmgr = new (function() {
-			var instance = this;
-			instance.exists = function(name) { return name in viewmodels; };
-			instance.ready = function(view) { return viewmodel.Ready(view.element); }
-			function resolvevm(view, name) {
+			var manager = this;
+			manager.exists = function(name) { return name in viewmodels; };
+			manager.ready = function(view) { return viewmodel.Ready(view.element); }
+			function resolve(view, name) {
 				if (viewmodel.Member in view.element) { return false; }
 				if (!viewmodel.Ready(view)) { return false; }
 				return app.resolve(viewmodels[name], view.scope);
 			}
-			instance.create = function(view, name) {
-				var model = resolvevm(view, name);
+			manager.create = function(view, name) {
+				var model = resolve(view, name);
 				if (!model) { return false; }
 				viewmodel.convert(view, model);
 				return model;
 			};
-			instance.surrogate = function(view, model) {
+			manager.surrogate = function(view, model) {
 				var surrogate = viewmodel.surrogate(view, model);
 				return surrogate;
 			};
-			instance.get = function(ref) {
+			manager.get = function(ref) {
 				return viewmodel.Get(ref) || viewmodel.Parent(ref);
 			};
-			instance.bound = function(element) { return viewmodel.Member in element; }
-			Object.freeze(instance);
+			manager.bound = function(element) { return viewmodel.Member in element; }
+			Object.freeze(manager);
 		})()
 		app.register.instance('viewmodel manager', vmmgr);
 	}]);
