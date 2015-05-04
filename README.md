@@ -42,6 +42,15 @@ Compat: IE9+, Chrome, FireFox, Opera
 
 Unknown: IOS/Safari
 
-Version: 0.0.1
+Version: 0.0.2
+
+# Version Notes
+
+* 0.0.2
+   * Added unit testing. Minimal coverage... for now.
+   * Cleaned up bindings. Performance refactor.
+   * Fixed issues discovered by unit test - yay!
+* 0.0.1
+   * It's all new
 
 -- Cheers!
