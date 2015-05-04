@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Creation</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div view-model="pre" data-binding>
+			<div view-model="pre-pre" data-binding></div>
+			<div view-model="pre-post" data-binding></div>
+			<div data-binding></div>
+		</div>
+		<div view-model="post" data-binding>
+			<div view-model="post-pre" data-binding></div>
+			<div view-model="post-post" data-binding></div>
+			<div data-binding></div>
+		</div>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			var order = [];
+			
+			var bindings = [];
+			Application.extend.binding('data-binding', function(viewmodel) {
+				bindings.push(viewmodel);
+			});
+
+			var pre = false;
+			Application.extend.viewmodel('pre', function(view, viewmodel) {
+				pre = {
+					viewmodel: this,
+					parent: viewmodel,
+					view: view
+				};
+				order.push(pre);
+			});
+			
+			var prepre = false;
+			Application.extend.viewmodel('pre-pre', function(view, viewmodel) {
+				prepre = {
+					viewmodel: this,
+					parent: viewmodel,
+					view: view
+				};
+				order.push(prepre);
+			});
+			
+			var postpre= false;
+			Application.extend.viewmodel('post-pre', function(view, viewmodel) {
+				postpre = {
+					viewmodel: this,
+					parent: viewmodel,
+					view: view
+				};
+				order.push(postpre);
+			});
+			
+			var app = new Application();
+		
+			QUnit.test('Pre Register', function(assert) {
+				assert.ok(pre !== false, 'Pre created');
+				assert.ok(prepre !== false, 'Prepre created');
+				assert.ok(postpre === false, 'Postpre not created');
+				assert.ok(order[0] === pre, 'Pre 1st');
+				assert.ok(order[1] === prepre, 'Prepre 2nd');
+			});
+		
+			setTimeout(function() { // Not sure why I have to do this yet.
+				
+				var prepost = false;
+				app.viewmodel('pre-post', function(view, viewmodel) {
+					prepost = {
+						viewmodel: this,
+						parent: viewmodel,
+						view: view
+					};
+					order.push(prepost);
+				});
+				
+				var post = false;
+				app.viewmodel('post', function(view, viewmodel) {
+					post = {
+						viewmodel: this,
+						parent: viewmodel,
+						view: view
+					};
+					order.push(post);
+				});
+				
+				var postpost = false;
+				app.viewmodel('post-post', function(view, viewmodel) {
+					postpost = {
+						viewmodel: this,
+						parent: viewmodel,
+						view: view
+					};
+					order.push(postpost);
+				});
+				
+				QUnit.test('Post Register', function(assert) {
+					assert.ok(prepost !== false, 'Prepost created');
+					assert.ok(post !== false, 'Post created');
+					assert.ok(postpre !== false, 'Postpre created');
+					assert.ok(postpost !== false, 'Postpost created');
+					assert.ok(order[2] === prepost, 'Prepost 3rd');
+					assert.ok(order[3] === post, 'Post 4th');
+					assert.ok(order[4] === postpre, 'Postpre 5th');
+					assert.ok(order[5] === postpost, 'Postpost 6th');
+				});
+				
+				QUnit.test('Parents', function(assert) {
+					assert.ok(!pre.parent, 'Pre parentless');
+					assert.ok(!post.parent, 'Post parentless');
+					assert.ok(prepre.parent === pre.viewmodel, 'Prepre parent');
+					assert.ok(prepost.parent === pre.viewmodel, 'Prepost parent');
+					assert.ok(postpre.parent === post.viewmodel, 'Postpre parent');
+					assert.ok(postpost.parent === post.viewmodel, 'Postpost parent');
+				});
+				
+				QUnit.test('Bindings', function(assert) {
+					assert.strictEqual(bindings.length, 8, 'Bindings all there');
+					assert.ok(bindings[0] === pre.viewmodel, '1st binding');
+					assert.ok(bindings[1] === prepre.viewmodel, '2nd binding');
+					assert.ok(bindings[2] === pre.viewmodel, '3rd binding');
+					assert.ok(bindings[3] === prepost.viewmodel, '4th binding');
+					assert.ok(bindings[4] === post.viewmodel, '5th binding');
+					assert.ok(bindings[5] === postpre.viewmodel, '6th binding');
+					assert.ok(bindings[6] === post.viewmodel, '7th binding');
+					assert.ok(bindings[7] === postpost.viewmodel, '8th binding');
+				});
+			}, 500);
+		</script>
+	</body>
+</html>

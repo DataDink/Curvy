@@ -63,14 +63,6 @@
 		
 		attach([app.root]);
 		
-		/*** Binding Manager ***/
-		app.register.instance('binding manager', new (function() { // Injectable service
-			var mgr = this;
-			mgr.exists = function(name) { return name in bindings; };
-			mgr.view = function(element) { return new View(element); }
-			Object.freeze(mgr);
-		})());
-		
 		/*** View ***/
 		function View(element) { // Represents a DOM node and keeps track of bindings.
 			if (View.Member in element) { return; }

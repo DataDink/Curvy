@@ -4,7 +4,6 @@ Application.extend.binding('data-template', [function() {
 }], function(view) { 
 	var html = view.application.resolve('html');
 	var utils = view.application.resolve('utilities');
-	var bmgr = view.application.resolve('binding manager');
 	var vmgr = view.application.resolve('viewmodel manager');
 	var viewmodel = vmgr.get(view);
 	
@@ -20,7 +19,7 @@ Application.extend.binding('data-template', [function() {
 	
 	function create(model, insert) { // Applies the model to the template and inserts a new copy at "insert"
 		var e = html.parse(template)[0];
-		var v = bmgr.view(e);
+		var v = view;
 		var vm = vmgr.surrogate(v, model);
 		v.bind({scope: {viewmodel: vm}});
 		marker.parentNode.insertBefore(e, insert || marker);
