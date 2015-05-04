@@ -5,7 +5,7 @@
 	document.head.appendChild(styleblock);
 	var styles = {};
 
-	Application.extend.register.perApp('html', ['utilities', 'application', 'binding manager', function(utils, app, mgr) {
+	Application.extend.register.perApp('html', ['utilities', 'application', function(utils, app) {
 		var service = this;
 		
 		// ENCODE: encodes HTML so that it can be displayed
