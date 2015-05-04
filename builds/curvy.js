@@ -1002,7 +1002,7 @@ Application.extend.binding('data-routed', ['view', 'route', function(view, route
 			var e = html.parse(template)[0];
 			e[memberName] = model;
 			marker.parentNode.insertBefore(e, insert || marker);
-			return model;
+			return { model: model, element: e };
 		}
 
 		var templateItems = [];
@@ -1011,9 +1011,9 @@ Application.extend.binding('data-routed', ['view', 'route', function(view, route
 			if (!utils.is(value, Array)) { value = [value]; }
 			
 			var i = 0; do {
-				while (i < templateItems.length && templateItems[i] !== value[i]) {
-					var e = templateItems.splice(i, 1)[0].view.element;
-					e.parentNode.removeChild(e);
+				while (i < templateItems.length && templateItems[i].model !== value[i]) {
+					var elem = templateItems.splice(i, 1)[0].element;
+					elem.parentNode.removeChild(elem);
 				}
 				if (i >= templateItems.length && i < value.length) { 
 					templateItems.push(create(value[i])); 
