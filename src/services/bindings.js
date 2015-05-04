@@ -22,7 +22,7 @@
 			var application = app;
 			utils.readonly(view, 'application', function() { return application; });
 			utils.readonly(view, 'element', function() { return element; });
-			utils.readonly(view, 'root', function() { return (function(v) { while(getParent(v.element)) { v = View.Parent(v.element); } return v; })(view); });
+			utils.readonly(view, 'root', function() { return (function(v) { while(getParent(v.element)) { v = getParent(v.element); } return v; })(view); });
 			utils.readonly(view, 'parent', function() { return getParent(element); });
 			utils.readonly(view, 'children', function() { return getChildren(view); });
 			
