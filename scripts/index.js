@@ -409,6 +409,8 @@ Application.extend.register.perApp('broadcast', function() {
 ;
 
 (function() {
+	var memberName = ' View ';
+
 	var globals = {};
 	Object.defineProperty(Application.extend, 'binding', { value: 
 		function(name, constructor, prescan) { globals[name] = { ctr: constructor, prescan: prescan}; },
@@ -418,105 +420,21 @@ Application.extend.register.perApp('broadcast', function() {
 	// Application extension that tracks DOM changes and manages DOM bindings
 	// TLDR: This manages/tracks data-attributes and keeps them wired to code
 	Application.extend(['application', 'utilities', 'broadcast', function(app, utils, bcast) {
-		// A "View" is any element with bindings on it
-		View.Member = ' View '; // WTB some kind of hashing or a hash code on elements
-		View.Unbound = []; // List of bindings being blocked by an "unready" ancestor
-		View.Get = function(e) { return e[View.Member]; };
-		View.Parent = function(e) {
-			e = ('element' in e) ? e.element : e;
-			while (e.parentNode && !(View.Member in e.parentNode)) { e = e.parentNode; }
-			return !e.parentNode ? utils.nothing : e.parentNode[View.Member];
-		};
-		View.Children = function(v) {
-			var element = ('element' in v) ? v.element : v;
-			var candidates = utils.toarray(element.querySelectorAll('*'));
-			return candidates.filter(function(c) { return c[View.Member].parent === element[View.Member]; });
-		};
-		View.Rescan = function() { // Go through blocked bindings and try again
-			View.Unbound = View.Unbound.filter(function(v) { 
-				if (!utils.indom(v.element)) { 
-					View.Dispose(v);
-					return false;
-				} 
-				v.scan(); return !v.bound; 
-			});
-		};
-		View.Dispose = function(ref) {
-			ref = ref.element || ref;
-			disposal = disposal.filter(function(d) {
-				if (d.element === ref) { d.dispose(); return false; }
-				return true;
-			});
-		}
-		
-		// Manages all disposals that must occur when an element is removed from the DOM
-		var disposal = []; 
-		var bindings = utils.copy(globals);
-		var root = new View(app.root);
-		var observer = new DomWatcher(app.root, attach, detach, utils);
-		
-		function registerDisposal(element, dispose) {
-			disposal.push({element: element, dispose: dispose}); 
-			return true;
-		}
-		
-		function search(element) { // Find elements with bindings
-			var all = [];
-			for (var binding in bindings) {
-				all = all.concat(utils.domquery(element, '[' + binding + ']'));
-			}
-			utils.distinct(all);
-			all = utils.domsort(all);
-			return all;
-		}
-		
-		function detach(nodes) { // Views will be disposed when their nodes are removed.
-			for (var n = 0; n < nodes.length; n++) {
-				if (!nodes[n].querySelectorAll) { continue; }
-				var elements = utils.toarray(nodes[n].querySelectorAll('*')).concat(nodes[n]);
-				for (var e = 0; e < elements.length; e++) {
-					View.Dispose(elements[e]);
-				}
-			}
-		}
-		
-		function attach(nodes) { // Handle configuring elements newly added to the DOM
-			for (var n = 0; n < nodes.length; n++) {
-				var node = nodes[n];
-				var elements = search(node, bindings);
-				for (var e = 0; e < elements.length; e++) {
-					var view = View.Get(elements[e]) || new View(elements[e]);
-					if (!view.bound) { View.Unbound.push(view); }
-				}
-			}
-			View.Rescan();
-		}
-		root.scan();
-		attach([app.root]);
-		
-		/*** Binding Manager ***/
-		app.register.instance('binding manager', new (function() { // Injectable service
-			var mgr = this;
-			mgr.root = root;
-			mgr.exists = function(name) { return name in bindings; };
-			mgr.disposal = function(element, dispose) { registerDisposal(element, dispose); }
-			mgr.rescan = function() { View.Rescan(); };
-			mgr.view = function(element) { return new View(element); }
-			Object.freeze(mgr);
-		})());
-		
-		/*** View ***/
-		function View(element) { // Represents a DOM node and keeps track of bindings.
-			if (View.Member in element) { return; }
+	
+		View = function(element) { // View constructor
+			if (memberName in element) { return; }
+			var parent = getParent(element);
+			if (parent && !parent.bound) { return; }
+			
 			var view = this;
-			utils.constant(element, View.Member, view);
+			element[memberName] = view;
 			
-			view.application = app;
-			view.element = element;
-			view.root = (function(v) { while(View.Parent(v.element)) { v = View.Parent(v.element); } return v; })(view);
-			
-			utils.readonly(view, 'parent', function() { return View.Parent(element); });
-			utils.readonly(view, 'children', function() { return View.Children(view); });
+			var application = app;
+			utils.readonly(view, 'application', function() { return application; });
+			utils.readonly(view, 'element', function() { return element; });
+			utils.readonly(view, 'root', function() { return (function(v) { while(getParent(v.element)) { v = getParent(v.element); } return v; })(view); });
+			utils.readonly(view, 'parent', function() { return getParent(element); });
+			utils.readonly(view, 'children', function() { return getChildren(view); });
 			
 			var bound = false; // Will not be bound until all bindings and parent bindings are "ready"
 			utils.readonly(view, 'bound', function() { return bound; });
@@ -524,30 +442,33 @@ Application.extend.register.perApp('broadcast', function() {
 			// Subscribes to a broadcast and will auto-unsubscribe when the view is disposed
 			view.listen = function(channel, callback) { 
 				bcast.subscribe(channel, callback);
-				registerDisposal(element, function() { bcast.unsubscribe(callback); });
+				view.dispose = function() { bcast.unsubscribe(callback); };
 			}
 			
 			// Marks this view as "bound" which will block further bindings to this element.
 			function setbound() { 
 				bound = true; 
-				View.Unbound = View.Unbound.filter(function(v) { return v !== view; }); 
+				attach([element]);
 			}
 			
-			// Disposes this view when the element is removed from the DOM
-			registerDisposal(element, function() { 
-				setbound(); element = utils.nothing; 
-				view = utils.nothing; dispose = utils.nothing; 
-			});
-			
+			function dispose() {
+				delete element[memberName];
+				application = utils.nothing;
+				element = utils.nothing;
+				view = utils.nothing;
+			};
 			// "Setting" dispose on the view will add to the disposal chain intead of replacing it
 			Object.defineProperty(view, 'dispose', {
-				get: function() { return; },
-				set: function(d) { registerDisposal(element, d); },
+				get: function() { return dispose; },
+				set: function(d) { 
+					if (!utils.is(d, 'function')) { throw 'dispose must be a function'; }
+					dispose = (function(orig) { return function() { d(); orig(); }; })(dispose); 
+				},
 				configurable: false, enumerable: true
 			});
 			
 			// Injection scope for views is based on their ancestors
-			var scope = {view: view};
+			var scope = { view: view };
 			utils.readonly(view, 'scope', function() {
 				return !view.parent ? utils.copy(scope) : utils.merge(view.parent.scope, scope);
 			});
@@ -568,13 +489,12 @@ Application.extend.register.perApp('broadcast', function() {
 					}
 				}
 				for (var b in names) {
-					view.bind(app.resolve(bindings[b].ctr, view.scope));
+					bind(app.resolve(bindings[b].ctr, view.scope));
 				}
 				setbound();
 			};
 			
-			// Wires up scope and disposal for bindings. (Exposed for adding logical bindings)
-			view.bind = function(binding) {
+			function bind(binding) {
 				if ('scope' in binding) {
 					for (name in binding.scope) {
 						if (!(name in scope)) { scope[name] = binding.scope[name]; }
@@ -584,7 +504,60 @@ Application.extend.register.perApp('broadcast', function() {
 			}
 			
 			Object.freeze(view);
+			view.scan();
 		}
+		function getParent(e) {
+			e = ('element' in e) ? e.element : e;
+			while (e.parentNode && !(memberName in e.parentNode)) { e = e.parentNode; }
+			return !e.parentNode ? utils.nothing : e.parentNode[memberName];
+		};
+		function getChildren(v) {
+			var element = ('element' in v) ? v.element : v;
+			var candidates = utils.toarray(element.querySelectorAll('*'));
+			return candidates.filter(function(c) { return c[memberName].parent === element[memberName]; });
+		};
+		function disposeView(e) {
+			var view = (memberName in e) ? e[memberName] : e;
+			if (!view || !view.dispose) { return; }
+			view.dispose();
+		};
+		
+		var bindings = utils.copy(globals);
+		var observer = new DomWatcher(app.root, attach, detach, utils);
+		
+		function detach(nodes) { // Views will be disposed when their nodes are removed.
+			for (var n = 0; n < nodes.length; n++) {
+				var elem = nodes[n];
+				if (!elem.querySelectorAll) { continue; }
+				var desc = utils.toarray(elem.querySelectorAll('*'))
+					.filter(function(c) { return !!c[memberName]; });
+				disposeView(elem);
+				for (var d = 0; d < desc.length; d++) {
+					disposeView(desc[d]);
+				}
+			}
+		}
+		
+		function attach(nodes) { // Handle configuring elements newly added to the DOM
+			var elements = searchBindings(nodes);
+			for (var e = 0; e < elements.length; e++) {
+				new View(elements[e]);
+			}
+		}
+		
+		function searchBindings(elements) { // Find elements with bindings
+			var all = [];
+			for (var e = 0; e < elements.length; e++) {
+				if (!elements[e].querySelectorAll) { continue; }
+				for (var binding in bindings) {
+					all = all.concat(utils.domquery(elements[e], '[' + binding + ']'));
+				}
+			}
+			utils.distinct(all);
+			return utils.domsort(all);
+		}
+		
+		attach([app.root]);
 	}]);
 	
 	/*** DomWatcher (IE9+) ***/ 
@@ -760,7 +733,7 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 	document.head.appendChild(styleblock);
 	var styles = {};
 
-	Application.extend.register.perApp('html', ['utilities', 'application', 'binding manager', function(utils, app, mgr) {
+	Application.extend.register.perApp('html', ['utilities', 'application', function(utils, app) {
 		var service = this;
 		
 		// ENCODE: encodes HTML so that it can be displayed
@@ -999,56 +972,62 @@ Application.extend.binding('data-routed', ['view', 'route', function(view, route
 	update(route.current);
 }]);;
 
-// Turns this element into a template that is bound to the specified value on the ViewModel
-Application.extend.binding('data-template', [function() {
-	throw 'templates cannot be instantiated';
-}], function(view) { 
-	var html = view.application.resolve('html');
-	var utils = view.application.resolve('utilities');
-	var bmgr = view.application.resolve('binding manager');
-	var vmgr = view.application.resolve('viewmodel manager');
-	var viewmodel = vmgr.get(view);
-	
-	var element = view.element; // Reconfigure the element attributes to have a view-model and not a data-template
-	var path = element.getAttribute('data-template');
-	element.removeAttribute('data-template');
-	element.setAttribute('view-model', '');
-	
-	var template = element.outerHTML; // Turn the template into a string
-	var marker = document.createComment('Template Content');
-	element.parentNode.insertBefore(marker, element);
-	element.parentNode.removeChild(element);
-	
-	function create(model, insert) { // Applies the model to the template and inserts a new copy at "insert"
-		var e = html.parse(template)[0];
-		var v = bmgr.view(e);
-		var vm = vmgr.surrogate(v, model);
-		v.bind({scope: {viewmodel: vm}});
-		marker.parentNode.insertBefore(e, insert || marker);
-		return { model: model, view: v };
-	}
+(function() {
+	var memberName = ' Template Model '
 
-	var templateItems = [];
-	var update = function() { // Keeps the view synced with the item(s) watched on the viewmodel
-		var value = viewmodel.path(path);
-		if (!utils.is(value, Array)) { value = [value]; }
+	Application.extend.binding('data-template', ['view', 'viewmodel manager', function(view, vmgr) {
+		var model = view.element[memberName];
+		var viewmodel = vmgr.surrogate(view, model);
+		this.scope = { viewmodel: viewmodel };
+		delete view.element[memberName];
+		view.element.removeAttribute('data-template');
+	}], function(view) { 
+		if (memberName in view.element) { return true; }
 		
-		var i = 0; do {
-			while (i < templateItems.length && templateItems[i].model !== value[i]) {
-				var e = templateItems.splice(i, 1)[0].view.element;
-				e.parentNode.removeChild(e);
-			}
-			if (i >= templateItems.length && i < value.length) { 
-				templateItems.push(create(value[i])); 
-			}
-		} while (++i < value.length);
-	}
-	// Sets a watch on the "path" on the view model
-	viewmodel.watch(path, update);
-	update();
-	
-	return false;
-});;
+		var html = view.application.resolve('html');
+		var utils = view.application.resolve('utilities');
+		var viewmodel = view.scope.viewmodel;
+		
+		var element = view.element; 
+		var path = element.getAttribute('data-template');
+		element.setAttribute('data-template', '');
+		element.removeAttribute('view-model');
+		
+		var template = element.outerHTML;
+		var marker = document.createComment('Template Content');
+		element.parentNode.insertBefore(marker, element);
+		element.parentNode.removeChild(element);
+		
+		function create(model, insert) { // Applies the model to the template and inserts a new copy at "insert"
+			var e = html.parse(template)[0];
+			e[memberName] = model;
+			marker.parentNode.insertBefore(e, insert || marker);
+			return { model: model, element: e };
+		}
+
+		var templateItems = [];
+		var update = function() { // Keeps the view synced with the item(s) watched on the viewmodel
+			var value = viewmodel.path(path);
+			if (!utils.is(value, Array)) { value = [value]; }
+			
+			var i = 0; do {
+				while (i < templateItems.length && templateItems[i].model !== value[i]) {
+					var elem = templateItems.splice(i, 1)[0].element;
+					elem.parentNode.removeChild(elem);
+				}
+				if (i >= templateItems.length && i < value.length) { 
+					templateItems.push(create(value[i])); 
+				}
+			} while (++i < value.length);
+		}
+		// Sets a watch on the "path" on the view model
+		viewmodel.watch(path, update);
+		update();
+		
+		return false;
+	});
+})();
+;
 
 // Blocks other bindings on this element and replaces this element with the view at the specified URI
 Application.extend.binding('data-view', ['html', function(html) {
@@ -1080,130 +1059,118 @@ Application.extend.binding('data-view', ['html', function(html) {
 // Extends the application to support ViewModels
 (function() {
 	var bindingName = 'view-model';
+	var memberName = ' ViewModel ';
 	
-	// Adds a registration extension to the Application constructor for pre-registration
-	var globals = {};
+	// Pre-registration
+	var preRegistration = {};
 	Object.defineProperty(Application.extend, 'viewmodel', { value: 
-		function(name, constructor) { globals[name] = constructor; },
+		function(name, constructor) { preRegistration[name] = { ctr: constructor }; },
 		configurable: false, enumerable: true
 	});
 	
-	// The "view-model" binding
-	Application.extend.binding(bindingName, ['viewmodel manager', 'view', function(mgr, view) {
-		// This will construct the view model and add it to the current binding scope (can be injected by asking for "viewmodel")
-		if (mgr.bound(view.element)) { return true; }
-		var name = view.element.getAttribute(bindingName);
-		if (!mgr.exists(name)) { throw 'viewmodel did not exist at time of construction'; }
-		var vm = mgr.create(view, name);
-		this.scope = {viewmodel: vm};
-	}], function(view) {
-		// This will block the current element and its descendants from completing the binding process until this view-model and its parent view models are ready
-		var mgr = view.application.resolve('viewmodel manager');
-		if (!mgr) { return false; }
-		if (mgr.bound(view.element)) { return true; }
-		var name = view.element.getAttribute(bindingName);
-		if (!mgr.exists(name)) { return false; }
-		return mgr.ready(view);
-	});
+	// Post-registration 
+	Application.extend(['viewmodel manager', 'application', function(mgr, app) {
+		app.viewmodel = function(name, constructor) { mgr.register(name, constructor); }
+		Object.freeze(app.viewmodel);
+	}]);
 	
-	// Adds the ".viewmodel" extension to the application to be used after the application has been constructed
-	// Adds the "viewmodel manager" which manages constructing and converting viewmodels
-	Application.extend(['utilities', 'application', 'binding manager', function(utils, app, bmgr) {
-		var viewmodels = utils.copy(globals);
-		app.viewmodel = function(name, constructor) { 
-			if (name in viewmodels) { return; }
-			viewmodels[name] = constructor;
-			bmgr.rescan();
+	Application.extend.register.perApp('viewmodel manager', ['utilities', 'application', function(utils, app) {
+		var manager = this;
+		var registrations = utils.copy(preRegistration);
+		function registered(name) { return (name in registrations); }
+		function exists(name) { return registered(name) && !!registrations[name].ctr; }
+		
+		manager.register = function(name, constructor) {
+			if (exists(name)) { throw 'View Model "' + name + '" already exists'; }
+			if (!registered(name)) { registrations[name] = {}; }
+			registrations[name].ctr = constructor;
+			while (registrations[name].postponed && registrations[name].postponed.length) {
+				registrations[name].postponed.shift()();
+			}
 		};
 		
-		/*** ViewModel ***/
-		function viewmodel(view, model) {
-			view.element[viewmodel.Member] = model;
-			model.view = view;
-			utils.readonly(model, 'parent', function() { return viewmodel.Parent(model); });
-			utils.readonly(model, 'children', function() { return viewmodel.Children(model); });
-			
-			var disposals = [];
-			utils.constant(model, 'watch', function(path, callback) {
-				var disposal = utils.watch(model, path, callback);
-				var wrap = function() {
-					disposals = disposals.filter(function(d) { return d !== wrap; });
-					disposal();
-				};
-				disposals.push(wrap);
-				return wrap;
-			});
-			view.dispose = function() { 
-				while (disposals.length) { disposals.pop()(); } 
-			};
-		}
-		viewmodel.convert = function(view, model) {
-			viewmodel(view, model);
-			view.application.Observable.convert(model);
+		manager.prescan = function(name, view) {
+			if (!exists(name)) {
+				if (!registered(name)) { registrations[name] = { postponed: [] }; }
+				registrations[name].postponed.push(view.scan);
+				return false;
+			}
+			return true;
+		};
+		
+		manager.init = function(name, view) {
+			if (!exists(name)) { throw 'View Model "' + name + '" not found'; }
+			var model = app.resolve(registrations[name].ctr, view.scope);
 			return model;
 		};
-		viewmodel.surrogate = function(view, model) {
-			var surrogate = {};
-			viewmodel(view, surrogate)
-			view.application.Observable.surrogate(model, surrogate);
-			return surrogate;
-		};
-		viewmodel.Member = ' ViewModel ';
-		viewmodel.Get = function(r) { 
-			r = r || {}; r = r.view || r; r = r.element || r;
-			return r[viewmodel.Member];
-		};
-		viewmodel.Parent = function(r) { 
-			r = r || {}; r = r.view || r; r = r.element || r;
-			if (r === app.root) { return false; }
-			while (r.parentNode && r.parentNode !== app.root && !(viewmodel.Member in r.parentNode)) { r = r.parentNode; }
-			return viewmodel.Get(r.parentNode);
-		};
-		viewmodel.Children = function(r) {
-			r = r.view || r; r = r.element || r;
-			var candidates = utils.toarray(r.querySelectorAll('*'));
-			return candidates.filter(function(c) {
-				if (!(viewmodel.Member in c)) { return false; }
-				return c[viewmodel.Member].parent === r[viewmodel.Member];
-			});
-		};	
-		viewmodel.Ready = function(r) {
-			r = r || {}; r = r.view || r; r = r.element || r;
-			if (r === app.root) return true;
-			while (r.parentNode && r.parentNode !== app.root && r.parentNode.matches && !r.parentNode.matches('[' + bindingName + ']')) { 
-				r = r.parentNode; 
-			}
-			return r.parentNode === app.root || (viewmodel.Member in r.parentNode);
+		
+		manager.convert = function(view, model) {
+			write(view, model);
+			app.Observable.convert(model);
+			return model;
 		};
 		
-		/*** ViewModel Manager ***/
-		var vmmgr = new (function() {
-			var manager = this;
-			manager.exists = function(name) { return name in viewmodels; };
-			manager.ready = function(view) { return viewmodel.Ready(view.element); }
-			function resolve(view, name) {
-				if (viewmodel.Member in view.element) { return false; }
-				if (!viewmodel.Ready(view)) { return false; }
-				return app.resolve(viewmodels[name], view.scope);
-			}
-			manager.create = function(view, name) {
-				var model = resolve(view, name);
-				if (!model) { return false; }
-				viewmodel.convert(view, model);
-				return model;
+		manager.surrogate = function(view, model) {
+			var surrogate = {};
+			write(view, surrogate);
+			app.Observable.surrogate(model, surrogate);
+			return surrogate;
+		}
+		
+		function write(view, vm) {
+			var element = view.element;
+			element[memberName] = vm;
+			
+			utils.readonly(vm, 'view', function() { return view; });
+			
+			utils.readonly(vm, 'parent', function() { return (function(elem) {
+				while (elem.parentNode && elem.parentNode !== app.root && !(memberName in elem)) {
+					elem = elem.parentNode;
+				} return !elem.parentNode ? false : (elem.parentNode[memberName] || false);
+			})(element); });
+			
+			utils.readonly(vm, 'children', function() { 
+				var nodes = utils.toarray(element.querySelectorAll('*'))
+					.filter(function(n) { 
+						return (memberName in n) && n[memberName].parent === vm; 
+					});
+				var models = [];
+				while (nodes.length) { models.push(nodes.pop()[memberName]); }
+				return models;
+			});	
+			
+			var watches = [];
+			utils.constant(vm, 'watch', function(path, callback) {
+				var disposal = utils.watch(vm, path, callback);
+				var watch = function() {
+					watches = watches.filter(function(w) { return w !== watch; });
+					disposal();
+				};
+				watches.push(watch);
+				return watch;
+			});
+			
+			view.dispose = function() {
+				while (watches.length) { watches.pop()(); }
+				watches = utils.nothing;
+				element = utils.nothing;
+				view = utils.nothing;
+				vm = utils.nothing;
 			};
-			manager.surrogate = function(view, model) {
-				var surrogate = viewmodel.surrogate(view, model);
-				return surrogate;
-			};
-			manager.get = function(ref) {
-				return viewmodel.Get(ref) || viewmodel.Parent(ref);
-			};
-			manager.bound = function(element) { return viewmodel.Member in element; }
-			Object.freeze(manager);
-		})()
-		app.register.instance('viewmodel manager', vmmgr);
-	}]);
+		};
+	}]);	
+	
+	Application.extend.binding(bindingName, ['viewmodel manager', 'view', function(mgr, view) {
+		var name = view.element.getAttribute(bindingName);
+		var model = mgr.init(name, view);
+		mgr.convert(view, model);
+		this.scope = { viewmodel: model };
+	}], function(view) {
+		var name = view.element.getAttribute(bindingName);
+		var mgr = view.application.resolve('viewmodel manager');
+		return mgr.prescan(name, view);
+	});
+	
 })();;
 
 // Binds the innerTEXT of this element to the multi-value formatted text specified
