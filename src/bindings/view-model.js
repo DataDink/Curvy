@@ -3,11 +3,44 @@
 	var bindingName = 'view-model';
 	
 	// Adds a registration extension to the Application constructor for pre-registration
-	var globals = {};
+	var preRegistration = {};
 	Object.defineProperty(Application.extend, 'viewmodel', { value: 
-		function(name, constructor) { globals[name] = constructor; },
+		function(name, constructor) { preRegistration[name] = constructor; },
 		configurable: false, enumerable: true
 	});
+	
+	Application.extend(['utilities', 'application', function(utils, app) {
+		var registrations = utils.copy(preRegistration);
+		var postponed = {};
+		app.viewmodel = function(name, constructor) {
+			if (name in registrations) { return; }
+			registrations[name] = constructor;
+		}
+		
+	}]);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	// The "view-model" binding
 	Application.extend.binding(bindingName, ['viewmodel manager', 'view', function(mgr, view) {
@@ -30,7 +63,7 @@
 	// Adds the ".viewmodel" extension to the application to be used after the application has been constructed
 	// Adds the "viewmodel manager" which manages constructing and converting viewmodels
 	Application.extend(['utilities', 'application', 'binding manager', function(utils, app, bmgr) {
-		var viewmodels = utils.copy(globals);
+		var viewmodels = utils.copy(preRegistration);
 		app.viewmodel = function(name, constructor) { 
 			if (name in viewmodels) { return; }
 			viewmodels[name] = constructor;
