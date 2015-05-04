@@ -1,4 +1,6 @@
 (function() {
+	var memberName = ' View ';
+
 	var globals = {};
 	Object.defineProperty(Application.extend, 'binding', { value: 
 		function(name, constructor, prescan) { globals[name] = { ctr: constructor, prescan: prescan}; },
@@ -8,20 +10,104 @@
 	// Application extension that tracks DOM changes and manages DOM bindings
 	// TLDR: This manages/tracks data-attributes and keeps them wired to code
 	Application.extend(['application', 'utilities', 'broadcast', function(app, utils, bcast) {
-		// A "View" is any element with bindings on it
-		View.Member = ' View '; // WTB some kind of hashing or a hash code on elements
-		View.Parent = function(e) {
+	
+		View = function(element) { // View constructor
+			if (memberName in element) { return; }
+			var parent = getParent(element);
+			if (parent && !parent.bound) { return; }
+			
+			var view = this;
+			element[memberName] = view;
+			
+			var application = app;
+			utils.readonly(view, 'application', function() { return application; });
+			utils.readonly(view, 'element', function() { return element; });
+			utils.readonly(view, 'root', function() { return (function(v) { while(getParent(v.element)) { v = View.Parent(v.element); } return v; })(view); });
+			utils.readonly(view, 'parent', function() { return getParent(element); });
+			utils.readonly(view, 'children', function() { return getChildren(view); });
+			
+			var bound = false; // Will not be bound until all bindings and parent bindings are "ready"
+			utils.readonly(view, 'bound', function() { return bound; });
+			
+			// Subscribes to a broadcast and will auto-unsubscribe when the view is disposed
+			view.listen = function(channel, callback) { 
+				bcast.subscribe(channel, callback);
+				view.dispose = function() { bcast.unsubscribe(callback); };
+			}
+			
+			// Marks this view as "bound" which will block further bindings to this element.
+			function setbound() { 
+				bound = true; 
+				attach([element]);
+			}
+			
+			function dispose() {
+				delete element[memberName];
+				application = utils.nothing;
+				element = utils.nothing;
+				view = utils.nothing;
+			};
+			// "Setting" dispose on the view will add to the disposal chain intead of replacing it
+			Object.defineProperty(view, 'dispose', {
+				get: function() { return dispose; },
+				set: function(d) { 
+					if (!utils.is(d, 'function')) { throw 'dispose must be a function'; }
+					dispose = (function(orig) { return function() { d(); orig(); }; })(dispose); 
+				},
+				configurable: false, enumerable: true
+			});
+			
+			// Injection scope for views is based on their ancestors
+			var scope = { view: view };
+			utils.readonly(view, 'scope', function() {
+				return !view.parent ? utils.copy(scope) : utils.merge(view.parent.scope, scope);
+			});
+			
+			// Scans this element and all of its child elements for bindings that need to be made
+			view.scan = function() {
+				if (bound) { return; } // Taken care of in a previous scan
+				if (view.parent && !view.parent.bound) { return; }
+				var names = {}; 
+				for (b in bindings) { 
+					if (element.matches && element.matches('[' + b + ']')) { 
+						names[b] = bindings[b]; 
+					} 
+				}
+				for (var b in names) { 
+					if ( bindings[b].prescan && bindings[b].prescan(view) === false ) { 
+						bound = false; return; 
+					}
+				}
+				for (var b in names) {
+					bind(app.resolve(bindings[b].ctr, view.scope));
+				}
+				setbound();
+			};
+			
+			function bind(binding) {
+				if ('scope' in binding) {
+					for (name in binding.scope) {
+						if (!(name in scope)) { scope[name] = binding.scope[name]; }
+					}
+				}
+				if ('dispose' in binding) { view.dispose = binding.dispose; }
+			}
+			
+			Object.freeze(view);
+			view.scan();
+		}
+		function getParent(e) {
 			e = ('element' in e) ? e.element : e;
-			while (e.parentNode && !(View.Member in e.parentNode)) { e = e.parentNode; }
-			return !e.parentNode ? utils.nothing : e.parentNode[View.Member];
+			while (e.parentNode && !(memberName in e.parentNode)) { e = e.parentNode; }
+			return !e.parentNode ? utils.nothing : e.parentNode[memberName];
 		};
-		View.Children = function(v) {
+		function getChildren(v) {
 			var element = ('element' in v) ? v.element : v;
 			var candidates = utils.toarray(element.querySelectorAll('*'));
-			return candidates.filter(function(c) { return c[View.Member].parent === element[View.Member]; });
+			return candidates.filter(function(c) { return c[memberName].parent === element[memberName]; });
 		};
-		View.Dispose = function(e) {
-			var view = (View.Member in e) ? e[View.Member] : e;
+		function disposeView(e) {
+			var view = (memberName in e) ? e[memberName] : e;
 			if (!view || !view.dispose) { return; }
 			view.dispose();
 		};
@@ -34,10 +120,10 @@
 				var elem = nodes[n];
 				if (!elem.querySelectorAll) { continue; }
 				var desc = utils.toarray(elem.querySelectorAll('*'))
-					.filter(function(c) { return !!c[View.Member]; });
-				View.Dispose(elem);
+					.filter(function(c) { return !!c[memberName]; });
+				disposeView(elem);
 				for (var d = 0; d < desc.length; d++) {
-					View.Dispose(desc[d]);
+					disposeView(desc[d]);
 				}
 			}
 		}
@@ -62,94 +148,6 @@
 		}
 		
 		attach([app.root]);
-		
-		/*** View ***/
-		function View(element) { // Represents a DOM node and keeps track of bindings.
-			if (View.Member in element) { return; }
-			var parent = View.Parent(element);
-			if (parent && !parent.bound) { return; }
-			
-			var view = this;
-			element[View.Member] = view;
-			
-			var application = app;
-			utils.readonly(view, 'application', function() { return application; });
-			utils.readonly(view, 'element', function() { return element; });
-			utils.readonly(view, 'root', function() { return (function(v) { while(View.Parent(v.element)) { v = View.Parent(v.element); } return v; })(view); });
-			utils.readonly(view, 'parent', function() { return View.Parent(element); });
-			utils.readonly(view, 'children', function() { return View.Children(view); });
-			
-			var bound = false; // Will not be bound until all bindings and parent bindings are "ready"
-			utils.readonly(view, 'bound', function() { return bound; });
-			
-			// Subscribes to a broadcast and will auto-unsubscribe when the view is disposed
-			view.listen = function(channel, callback) { 
-				bcast.subscribe(channel, callback);
-				view.dispose = function() { bcast.unsubscribe(callback); };
-			}
-			
-			// Marks this view as "bound" which will block further bindings to this element.
-			function setbound() { 
-				bound = true; 
-				attach([element]);
-			}
-			
-			function dispose() {
-				delete element[View.Member];
-				application = utils.nothing;
-				element = utils.nothing;
-				view = utils.nothing;
-			};
-			// "Setting" dispose on the view will add to the disposal chain intead of replacing it
-			Object.defineProperty(view, 'dispose', {
-				get: function() { return dispose; },
-				set: function(d) { 
-					if (!utils.is(d, 'function')) { throw 'dispose must be a function'; }
-					dispose = (function(orig) { return function() { d(); orig(); }; })(dispose); 
-				},
-				configurable: false, enumerable: true
-			});
-			
-			// Injection scope for views is based on their ancestors
-			var scope = {view: view};
-			utils.readonly(view, 'scope', function() {
-				return !view.parent ? utils.copy(scope) : utils.merge(view.parent.scope, scope);
-			});
-			
-			// Scans this element and all of its child elements for bindings that need to be made
-			view.scan = function() {
-				if (bound) { return; } // Taken care of in a previous scan
-				if (view.parent && !view.parent.bound) { return; }
-				var names = {}; 
-				for (b in bindings) { 
-					if (element.matches && element.matches('[' + b + ']')) { 
-						names[b] = bindings[b]; 
-					} 
-				}
-				for (var b in names) { 
-					if ( bindings[b].prescan && bindings[b].prescan(view) === false ) { 
-						bound = false; return; 
-					}
-				}
-				for (var b in names) {
-					view.bind(app.resolve(bindings[b].ctr, view.scope));
-				}
-				setbound();
-			};
-			
-			// Wires up scope and disposal for bindings. (Exposed for adding logical bindings)
-			view.bind = function(binding) {
-				if ('scope' in binding) {
-					for (name in binding.scope) {
-						if (!(name in scope)) { scope[name] = binding.scope[name]; }
-					}
-				}
-				if ('dispose' in binding) { view.dispose = binding.dispose; }
-			}
-			
-			Object.freeze(view);
-			view.scan();
-		}
 	}]);
 	
 	/*** DomWatcher (IE9+) ***/ 
