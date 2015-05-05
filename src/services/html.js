@@ -47,9 +47,11 @@
          }
          if (element.matches('select')) {
             if (!utils.is(value, Array)) { value = [value]; }
-            for (var v = 0; v < value.length; v++) {
-               for (var o = 0; o < element.options.length; o++) {
-                  element.options[o].checked = element.options[o].value === value[v];
+            for (var o = 0; o < element.options.length; o++) {
+               element.options[o].selected = false;
+               for (var v = 0; v < value.length; v++) {
+                  if (element.options[o].value !== value[v]) { continue; }
+                  element.options[o].selected = true;
                }
             }
             return;
