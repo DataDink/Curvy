@@ -1,162 +1,162 @@
 <!DOCTYPE html>
 <html>
-   <head>
-      <meta charset="utf-8">
-      <title>Construction</title>
-      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-      <script src="../../builds/curvy.js"></script>
-   </head>
-   <body>
-      <div id="qunit"></div>
-      <div id="qunit-fixture"></div>
-      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-      <script>
-         Application.extend(function(application) {
-            QUnit.test('New', function(assert) {
-               var ctrFunc = new application.Observable(function(utilities) {
-                  assert.ok(!!utilities, 'ctrFunc injects');
-                  this.member = true;
-               });
-               assert.ok(ctrFunc.member, 'ctrFunc constructs');
-
-               var ctrArr = new application.Observable(['utilities', function(utils) {
-                  assert.ok(!!utils, 'ctrArr injects');
-                  this.member = true;
-               }]);
-               assert.ok(ctrArr.member, 'ctrArr constructs');
-
-               var interceptObserve = false;
-               var interceptUnobserve = false;
-               var interceptNotify = false;
-               var interceptMemberNotify = false;
-               var intercept = new application.Observable(function() {
-                  this.observe = function() { interceptObserve = true; }
-                  this.unobserve = function() { interceptUnobserve = true; }
-                  this.notify = function(member) {
-                     interceptNotify = true;
-                     interceptMemberNotify = member === 'test';
-                  }
-                  this.interception = false;
-                  this.test = false;
-               });
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Nothing unexpected');
-
-               intercept.observe(function() {});
-               assert.ok(interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Observed');
-               interceptObserve = false;
-
-               intercept.unobserve(function() {});
-               assert.ok(!interceptObserve && interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Unobserved');
-               interceptUnobserve = false;
-
-               intercept.notify('interception');
-               assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && !interceptMemberNotify, 'Notified');
-               interceptNotify = false;
-
-               intercept.test = true;
-               assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && interceptMemberNotify, 'Intercepted');
-               interceptMemberNotify = false;
-
-               intercept.locked = true;
-               assert.ok(!intercept.locked, 'Is locked');
-            });
-
-            QUnit.test('Convert', function(assert) {
-               var obj = { member: true }
-               var conv = application.Observable.convert(obj);
-               assert.ok(obj === conv, 'Matches');
-               assert.ok(obj.member, 'Has value');
-
-               var interceptObserve = false;
-               var interceptUnobserve = false;
-               var interceptNotify = false;
-               var interceptMemberNotify = false;
-               var intercept = {
-                  observe: function() { interceptObserve = true; },
-                  unobserve: function() { interceptUnobserve = true; },
-                  notify: function(member) {
-                     interceptNotify = true;
-                     interceptMemberNotify = member === 'test';
-                  },
-                  interception: false,
-                  test: false
-               }
-               application.Observable.convert(intercept);
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Nothing unexpected');
-
-               intercept.observe(function() {});
-               assert.ok(interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Observed');
-               interceptObserve = false;
-
-               intercept.unobserve(function() {});
-               assert.ok(!interceptObserve && interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Unobserved');
-               interceptUnobserve = false;
-
-               intercept.notify('interception');
-               assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && !interceptMemberNotify, 'Notified');
-               interceptNotify = false;
-
-               intercept.test = true;
-               assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && interceptMemberNotify, 'Intercepted');
-               interceptMemberNotify = false;
-
-               intercept.locked = true;
-               assert.ok(!intercept.locked, 'Is locked');
-            });
-
-            QUnit.test('Surrogate', function(assert) {
-               var obj = { member: true }
-               var conv = application.Observable.surrogate(obj);
-               assert.ok(obj !== conv, "Don't Matches");
-               assert.ok(obj.member, 'Has value');
-
-               var interceptObserve = false;
-               var interceptUnobserve = false;
-               var interceptNotify = false;
-               var interceptMemberNotify = false;
-               var intercept = {
-                  observe: function() { interceptObserve = true; },
-                  unobserve: function() { interceptUnobserve = true; },
-                  notify: function(member) {
-                     interceptNotify = true;
-                     interceptMemberNotify = member === 'test';
-                  },
-                  interception: false,
-                  test: false
-               }
-               var members = [];
-               for (var member in intercept) { members.push(member); };
-               var surrogate = application.Observable.surrogate(intercept);
-               for (var member in intercept) {
-                  if (member !== members.shift()) {
-                     assert.ok(false, 'Original object was altered');
-                  }
-               }
-
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Nothing unexpected');
-
-               surrogate.observe(function() {});
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, "No Observe Override");
-               interceptObserve = false;
-
-               surrogate.unobserve(function() {});
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'No Unobserved Override');
-               interceptUnobserve = false;
-
-               surrogate.notify('interception');
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'No Notified Override');
-               interceptNotify = false;
-
-               surrogate.test = 123;
-               assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'No Intercepted Override');
-               assert.strictEqual(intercept.test, 123, 'Original updated');
-               interceptMemberNotify = false;
-
-               surrogate.locked = true;
-               assert.ok(!surrogate.locked, 'Is locked');
-            });
-         });
-         new Application();
-      </script>
-   </body>
+	<head>
+		<meta charset="utf-8">
+		<title>Construction</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			Application.extend(function(application) {
+				QUnit.test('New', function(assert) {
+					var ctrFunc = new application.Observable(function(utilities) {
+						assert.ok(!!utilities, 'ctrFunc injects');
+						this.member = true;
+					});
+					assert.ok(ctrFunc.member, 'ctrFunc constructs');
+					
+					var ctrArr = new application.Observable(['utilities', function(utils) {
+						assert.ok(!!utils, 'ctrArr injects');
+						this.member = true;
+					}]);
+					assert.ok(ctrArr.member, 'ctrArr constructs');
+					
+					var interceptObserve = false;
+					var interceptUnobserve = false;
+					var interceptNotify = false;
+					var interceptMemberNotify = false;
+					var intercept = new application.Observable(function() {
+						this.observe = function() { interceptObserve = true; }
+						this.unobserve = function() { interceptUnobserve = true; }
+						this.notify = function(member) { 
+							interceptNotify = true; 
+							interceptMemberNotify = member === 'test'; 
+						}
+						this.interception = false;
+						this.test = false;
+					});
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Nothing unexpected');
+					
+					intercept.observe(function() {});
+					assert.ok(interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Observed');
+					interceptObserve = false;
+					
+					intercept.unobserve(function() {});
+					assert.ok(!interceptObserve && interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Unobserved');
+					interceptUnobserve = false;
+					
+					intercept.notify('interception');
+					assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && !interceptMemberNotify, 'Notified');
+					interceptNotify = false;
+					
+					intercept.test = true;
+					assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && interceptMemberNotify, 'Intercepted');
+					interceptMemberNotify = false;
+					
+					intercept.locked = true;
+					assert.ok(!intercept.locked, 'Is locked');
+				});
+				
+				QUnit.test('Convert', function(assert) {
+					var obj = { member: true }
+					var conv = application.Observable.convert(obj); 
+					assert.ok(obj === conv, 'Matches');
+					assert.ok(obj.member, 'Has value');
+					
+					var interceptObserve = false;
+					var interceptUnobserve = false;
+					var interceptNotify = false;
+					var interceptMemberNotify = false;
+					var intercept = {
+						observe: function() { interceptObserve = true; },
+						unobserve: function() { interceptUnobserve = true; },
+						notify: function(member) { 
+							interceptNotify = true; 
+							interceptMemberNotify = member === 'test'; 
+						},
+						interception: false,
+						test: false
+					}
+					application.Observable.convert(intercept);
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Nothing unexpected');
+					
+					intercept.observe(function() {});
+					assert.ok(interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Observed');
+					interceptObserve = false;
+					
+					intercept.unobserve(function() {});
+					assert.ok(!interceptObserve && interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Unobserved');
+					interceptUnobserve = false;
+					
+					intercept.notify('interception');
+					assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && !interceptMemberNotify, 'Notified');
+					interceptNotify = false;
+					
+					intercept.test = true;
+					assert.ok(!interceptObserve && !interceptUnobserve && interceptNotify && interceptMemberNotify, 'Intercepted');
+					interceptMemberNotify = false;
+					
+					intercept.locked = true;
+					assert.ok(!intercept.locked, 'Is locked');
+				});
+				
+				QUnit.test('Surrogate', function(assert) {
+					var obj = { member: true }
+					var conv = application.Observable.surrogate(obj); 
+					assert.ok(obj !== conv, "Don't Matches");
+					assert.ok(obj.member, 'Has value');
+					
+					var interceptObserve = false;
+					var interceptUnobserve = false;
+					var interceptNotify = false;
+					var interceptMemberNotify = false;
+					var intercept = {
+						observe: function() { interceptObserve = true; },
+						unobserve: function() { interceptUnobserve = true; },
+						notify: function(member) { 
+							interceptNotify = true; 
+							interceptMemberNotify = member === 'test'; 
+						},
+						interception: false,
+						test: false
+					}
+					var members = [];
+					for (var member in intercept) { members.push(member); };
+					var surrogate = application.Observable.surrogate(intercept);
+					for (var member in intercept) {
+						if (member !== members.shift()) {
+							assert.ok(false, 'Original object was altered');
+						}
+					}
+					
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'Nothing unexpected');
+					
+					surrogate.observe(function() {});
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, "No Observe Override");
+					interceptObserve = false;
+					
+					surrogate.unobserve(function() {});
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'No Unobserved Override');
+					interceptUnobserve = false;
+					
+					surrogate.notify('interception');
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'No Notified Override');
+					interceptNotify = false;
+					
+					surrogate.test = 123;
+					assert.ok(!interceptObserve && !interceptUnobserve && !interceptNotify && !interceptMemberNotify, 'No Intercepted Override');
+					assert.strictEqual(intercept.test, 123, 'Original updated');
+					interceptMemberNotify = false;
+					
+					surrogate.locked = true;
+					assert.ok(!surrogate.locked, 'Is locked');
+				});
+			});
+			new Application();
+		</script>
+	</body>
 </html>

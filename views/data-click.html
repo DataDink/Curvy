@@ -1,17 +1,17 @@
 <h3>data-click</h3>
 <p>
-   Binds a command handler on the view-model to the element's "click" event.
+	Binds a command handler on the view-model to the element's "click" event.
 </p>
 <pre>
-   &lt;div view-model="my-vm"&gt;
-      &lt;button data-click="logClick"&gt;Click Me&lt;/button&gt;
-   &lt;/div&gt;
+	&lt;div view-model="my-vm"&gt;
+		&lt;button data-click="logClick"&gt;Click Me&lt;/button&gt;
+	&lt;/div&gt;
 </pre>
 <pre>
-   app.viewmodel('my-vm', function() {
-      this.logClick = function(e) {
-         e.preventDefault();
-         console.log('Clicked!');
-      };
-   });
+	app.viewmodel('my-vm', function() {
+		this.logClick = function(e) {
+			e.preventDefault();
+			console.log('Clicked!');
+		};
+	});
 </pre>

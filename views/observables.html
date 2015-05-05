@@ -1,96 +1,96 @@
 <h3>Observables</h3>
 <p>
-   One of my deviations from the way Angular does things is that Curvy monitors
-   changes in view models and objects by listening to change notification events
-   instead of scanning objects for changes when various events in the framework
-   occur. This, however, means that the objects it is listening for
-   value changes on must be wrapped with or converted into an observable object.
+	One of my deviations from the way Angular does things is that Curvy monitors 
+	changes in view models and objects by listening to change notification events
+	instead of scanning objects for changes when various events in the framework
+	occur. This, however, means that the objects it is listening for 
+	value changes on must be wrapped with or converted into an observable object.
 </p>
 <p>
-   Observables take advantage of javascript's Property functionality. Properties, while
-   appearing to work just like normal members on an object, actually fire off methods
-   when you are getting or settings their values. This allows Curvy to react to changes
-   made by intercepting value changes on your models and view models.
+	Observables take advantage of javascript's Property functionality. Properties, while
+	appearing to work just like normal members on an object, actually fire off methods
+	when you are getting or settings their values. This allows Curvy to react to changes
+	made by intercepting value changes on your models and view models.
 </p>
 <p>
-   View models will be auto-converted into observables after they have been constructed.
-   This is done by replacing any values you set on the "this" object during construction
-   with matching notification properties.
+	View models will be auto-converted into observables after they have been constructed.
+	This is done by replacing any values you set on the "this" object during construction 
+	with matching notification properties.
 </p>
 <p>
-   There are both advantages and disadvantages to doing things this way:
+	There are both advantages and disadvantages to doing things this way:
 </p>
 <em>Disadvantages</em>
 <ul>
-   <li>
-      You must convert or proxy any child-objects of your view-model if you want the
-      descendant members to trigger UI updates when changed.
-   </li>
-   <li>
-      New members can not be added to an observable after it has been converted.
-   </li>
+	<li>
+		You must convert or proxy any child-objects of your view-model if you want the 
+		descendant members to trigger UI updates when changed.
+	</li>
+	<li>
+		New members can not be added to an observable after it has been converted.
+	</li>
 </ul>
 <em>Advantages</em>
 <ul>
-   <li>Change responses are triggered by a change to the value instead of framework events</li>
-   <li>You are not required to wrap base javascript services such as setTimeout or setInterval</li>
-   <li>Your UI doesn't get out of sync with your view-model</li>
-</ul>
+	<li>Change responses are triggered by a change to the value instead of framework events</li>
+	<li>You are not required to wrap base javascript services such as setTimeout or setInterval</li>
+	<li>Your UI doesn't get out of sync with your view-model</li>
+</ul>	
 <h3>Making Observables</h3>
 <p>
-   Observables can be created using methods provided on the application object during run time.
-   You can create new observables, convert existing objects, and create observable surrogates.
+	Observables can be created using methods provided on the application object during run time.
+	You can create new observables, convert existing objects, and create observable surrogates.
 </p>
 <p class="container-fluid">
-   <strong class="col-sm-3">Create</strong>
-   <span class="col-sm-9">
-      <strong>new application.Observable(constructor)</strong><br />
-      Using the Observable constructor you can create a new observable with an injection
-      constructor. Observables created this way have access to dependency resolution services.
-   </span>
+	<strong class="col-sm-3">Create</strong>
+	<span class="col-sm-9">
+		<strong>new application.Observable(constructor)</strong><br />
+		Using the Observable constructor you can create a new observable with an injection
+		constructor. Observables created this way have access to dependency resolution services.
+	</span>
 </p>
 <div class="container-fluid">
-   <pre class="col-sm-9 col-sm-offset-3">
+	<pre class="col-sm-9 col-sm-offset-3">
 var myApp = new Application();
 var myObservable = new myApp.Observable(['dependency', function(dependency) {
-   this.observableProperty = 'initial value';
+	this.observableProperty = 'initial value';
 });
 
 myObservable.observe(function(member) { console.log(myObservable[member]); }
 myObservable.observableProperty = 'changed value';
-   </pre>
+	</pre>
 </div>
 <p class="container-fluid">
-   <strong class="col-sm-3">Convert</strong>
-   <span class="col-sm-9">
-      <strong>application.Observable.convert(obj)</strong><br />
-      An existing object can be converted into an observable. Use this with caution as
-      the existing method will be manipulated and ultimately locked down from receiving
-      any new members. If this is not desireable then use a surrogate.
-   </span>
+	<strong class="col-sm-3">Convert</strong>
+	<span class="col-sm-9">
+		<strong>application.Observable.convert(obj)</strong><br />
+		An existing object can be converted into an observable. Use this with caution as
+		the existing method will be manipulated and ultimately locked down from receiving
+		any new members. If this is not desireable then use a surrogate.
+	</span>
 </p>
 <div class="container-fluid">
-   <pre class="col-sm-9 col-sm-offset-3">
+	<pre class="col-sm-9 col-sm-offset-3">
 var myApp = new Application();
 var myObj = { myValue: 'initial value' };
 myApp.Observable.convert(myObj);
 
 myObj.observe(function(member) { console.log(myObj[member]); }
 myObj.myValue = 'changed value';
-   </pre>
+	</pre>
 </div>
 <p class="container-fluid">
-   <strong class="col-sm-3">Surrogate</strong>
-   <span class="col-sm-9">
-      <strong>application.Observable.surrogate(obj)</strong><br />
-      An surrogate can be made for an existing object that will act as an observable proxy.
-      Any changes to values on the surrogate will be set on the object and will provide
-      notifications. The original object will be left untouched, but will not provide
-      notifications for changes made directly to it.
-   </span>
+	<strong class="col-sm-3">Surrogate</strong>
+	<span class="col-sm-9">
+		<strong>application.Observable.surrogate(obj)</strong><br />
+		An surrogate can be made for an existing object that will act as an observable proxy.
+		Any changes to values on the surrogate will be set on the object and will provide
+		notifications. The original object will be left untouched, but will not provide
+		notifications for changes made directly to it.
+	</span>
 </p>
 <div class="container-fluid">
-   <pre class="col-sm-9 col-sm-offset-3">
+	<pre class="col-sm-9 col-sm-offset-3">
 var myApp = new Application();
 var myObj = { myValue: 'initial value' };
 var surrogate = myApp.Observable.convert(myObj);
@@ -99,5 +99,5 @@ surrogate.observe(function(member) { console.log(surrogate[member]); }
 surrogate.myValue = 'changed value';
 
 console.log(myObj.myValue);
-   </pre>
+	</pre>
 </div>

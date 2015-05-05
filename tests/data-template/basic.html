@@ -1,60 +1,60 @@
 <!DOCTYPE html>
 <html>
-   <head>
-      <meta charset="utf-8">
-      <title>Basic</title>
-      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-      <script src="../../builds/curvy.js"></script>
-   </head>
-   <body>
-      <div view-model="vm">
-         <div data-template="items">
-            <div data-binding></div>
-         </div>
-      </div>
-      <div id="qunit"></div>
-      <div id="qunit-fixture"></div>
-      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-      <script>
-         var container = document.querySelector('[view-model]');
-         var vm = false;
-         Application.extend.viewmodel('vm', function() {
-            this.items = [
-               { value: 0 },
-               { value: 1 },
-               { value: 2 }
-            ];
-            vm = this;
-         });
-
-         var bindings = [];
-         Application.extend.binding('data-binding', function(view, viewmodel) {
-            bindings.push(viewmodel);
-         });
-
-         new Application();
-
-         setTimeout(function() { // It just needs some time...
-            QUnit.test('Array', function(assert) {
-               assert.strictEqual(bindings.length, 3, 'All the bindings');
-               assert.strictEqual(bindings[0].value, 0, '1st binding');
-               assert.strictEqual(bindings[1].value, 1, '2nd binding');
-               assert.strictEqual(bindings[2].value, 2, '3rd binding');
-               var nodes = container.querySelectorAll('[data-binding]');
-               assert.strictEqual(nodes.length, 3, 'The nodes');
-            });
-
-            vm.items = { value: 3 };
-
-            setTimeout(function() {
-               QUnit.test('Single', function(assert) {
-                  assert.strictEqual(bindings.length, 4, 'All the bindings');
-                  assert.strictEqual(bindings[3].value, 3, 'The last binding');
-                  var nodes = container.querySelectorAll('[data-binding]');
-                  assert.strictEqual(nodes.length, 1, 'The nodes');
-               });
-            }, 100);
-         }, 100);
-      </script>
-   </body>
+	<head>
+		<meta charset="utf-8">
+		<title>Basic</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div view-model="vm">
+			<div data-template="items">
+				<div data-binding></div>
+			</div>
+		</div>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			var container = document.querySelector('[view-model]');
+			var vm = false;
+			Application.extend.viewmodel('vm', function() {
+				this.items = [
+					{ value: 0 },
+					{ value: 1 },
+					{ value: 2 }
+				];
+				vm = this;
+			});
+			
+			var bindings = [];
+			Application.extend.binding('data-binding', function(view, viewmodel) {
+				bindings.push(viewmodel);
+			});
+			
+			new Application();
+			
+			setTimeout(function() { // It just needs some time...
+				QUnit.test('Array', function(assert) {
+					assert.strictEqual(bindings.length, 3, 'All the bindings');
+					assert.strictEqual(bindings[0].value, 0, '1st binding');
+					assert.strictEqual(bindings[1].value, 1, '2nd binding');
+					assert.strictEqual(bindings[2].value, 2, '3rd binding');
+					var nodes = container.querySelectorAll('[data-binding]');
+					assert.strictEqual(nodes.length, 3, 'The nodes');
+				});
+				
+				vm.items = { value: 3 };
+				
+				setTimeout(function() {
+					QUnit.test('Single', function(assert) {
+						assert.strictEqual(bindings.length, 4, 'All the bindings');
+						assert.strictEqual(bindings[3].value, 3, 'The last binding');
+						var nodes = container.querySelectorAll('[data-binding]');
+						assert.strictEqual(nodes.length, 1, 'The nodes');
+					});
+				}, 100);
+			}, 100);
+		</script>
+	</body>
 </html>

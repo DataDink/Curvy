@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html>
-   <head>
-      <meta charset="utf-8">
-      <title>Nested</title>
-      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-      <script src="../../builds/curvy.js"></script>
-   </head>
-   <body>
-      <div view-model="vm">
-         <div data-template="items" data-binding>
-            <div data-template="items" data-binding>
-               <div data-binding></div>
-            </div>
-         </div>
-      </div>
-      <div id="qunit"></div>
-      <div id="qunit-fixture"></div>
-      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-      <script>
-         var container = document.querySelector('[view-model]');
-         var vm = false;
-         Application.extend.viewmodel('vm', function() {
-            this.items = [{
-               items: [{
-                  value: 123
-               }]
-            }];
-            vm = this;
-         });
-
-         var bindings = [];
-         Application.extend.binding('data-binding', function(view, viewmodel) {
-            bindings.push(viewmodel);
-         });
-
-         new Application();
-
-         setTimeout(function() { // It just needs some time...
-            QUnit.test('View Models', function(assert) {
-               assert.strictEqual(bindings.length, 3, 'All the bindings');
-               var elements = document.querySelectorAll('[data-binding]');
-               assert.ok(bindings[0].view.element === elements[0] && elements[0].parentNode === container, 'Root viewmodel');
-               assert.ok(bindings[1].view.element === elements[1] && elements[1].parentNode === elements[0], 'Root child viewmodel');
-               assert.ok(bindings[2] === bindings[1], 'Root child child viewmodel');
-            });
-
-            QUnit.test('Elements', function(assert) {
-               var root = container.querySelectorAll('*');
-               assert.strictEqual(root.length, 3, 'Root count');
-               assert.ok(root[0].parentNode === container, 'Root child');
-               assert.ok(root[1].parentNode !== container, 'Root desc1');
-               assert.ok(root[2].parentNode !== container, 'Root desc2');
-
-               var desc1 = root[0].querySelectorAll('*');
-               assert.strictEqual(desc1.length, 2, 'Desc1 count');
-               assert.ok(desc1[0].parentNode === root[0], 'Desc1 child');
-               assert.ok(desc1[1].parentNode !== root[0], 'Desc1 desc1');
-
-               var desc2 = root[1].querySelectorAll('*');
-               assert.strictEqual(desc2.length, 1, 'Desc2 count');
-               assert.ok(desc2[0].parentNode === root[1], 'Desc1 child');
-            });
-         }, 100);
-      </script>
-   </body>
+	<head>
+		<meta charset="utf-8">
+		<title>Nested</title>
+		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+		<script src="../../builds/curvy.js"></script>
+	</head>
+	<body>
+		<div view-model="vm">
+			<div data-template="items" data-binding>
+				<div data-template="items" data-binding>
+					<div data-binding></div>
+				</div>
+			</div>
+		</div>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+		<script>
+			var container = document.querySelector('[view-model]');
+			var vm = false;
+			Application.extend.viewmodel('vm', function() {
+				this.items = [{
+					items: [{
+						value: 123
+					}]
+				}];
+				vm = this;
+			});
+			
+			var bindings = [];
+			Application.extend.binding('data-binding', function(view, viewmodel) {
+				bindings.push(viewmodel);
+			});
+			
+			new Application();
+			
+			setTimeout(function() { // It just needs some time...
+				QUnit.test('View Models', function(assert) {
+					assert.strictEqual(bindings.length, 3, 'All the bindings');
+					var elements = document.querySelectorAll('[data-binding]');
+					assert.ok(bindings[0].view.element === elements[0] && elements[0].parentNode === container, 'Root viewmodel');
+					assert.ok(bindings[1].view.element === elements[1] && elements[1].parentNode === elements[0], 'Root child viewmodel');
+					assert.ok(bindings[2] === bindings[1], 'Root child child viewmodel');
+				});
+				
+				QUnit.test('Elements', function(assert) {
+					var root = container.querySelectorAll('*');
+					assert.strictEqual(root.length, 3, 'Root count');
+					assert.ok(root[0].parentNode === container, 'Root child');
+					assert.ok(root[1].parentNode !== container, 'Root desc1');
+					assert.ok(root[2].parentNode !== container, 'Root desc2');
+					
+					var desc1 = root[0].querySelectorAll('*');
+					assert.strictEqual(desc1.length, 2, 'Desc1 count');
+					assert.ok(desc1[0].parentNode === root[0], 'Desc1 child');
+					assert.ok(desc1[1].parentNode !== root[0], 'Desc1 desc1');
+					
+					var desc2 = root[1].querySelectorAll('*');
+					assert.strictEqual(desc2.length, 1, 'Desc2 count');
+					assert.ok(desc2[0].parentNode === root[1], 'Desc1 child');
+				});
+			}, 100);
+		</script>
+	</body>
 </html>
