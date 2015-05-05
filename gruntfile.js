@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 			index: { src: 'scripts/index.js', dest: 'scripts/index.min.js' }
 		}
 	});
-	
+
 	grunt.loadNpmTasks('grunt-contrib-less');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
@@ -31,4 +31,3 @@ module.exports = function(grunt) {
 	grunt.registerTask('build-styles', ['less']);
 	grunt.registerTask('build-scripts', ['concat', 'uglify']);
 };
-	

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Encoding</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
+
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         Application.extend(function(html) {
+            QUnit.test('encode', function(assert) {
+               var content = '<html></html>&"\'"';
+               var encode = html.encode(content);
+               assert.ok(encode.indexOf('<') < 0, 'No <s');
+               assert.ok(encode.indexOf('>') < 0, 'No >s');
+               assert.ok(encode.indexOf('"') < 0, 'No "s');
+               assert.ok(encode.indexOf("'") < 0, "No 's");
+               assert.ok(encode.indexOf('&amp;') >= 0, "No &s");
+            });
+
+            QUnit.test('parse', function(assert) {
+               var content = '<div><div><div></div></div></div>';
+               var parsed = html.parse(content);
+               assert.ok(parsed.length === 1, 'Has one root');
+               parsed = parsed[0];
+               assert.ok(parsed.matches('div'), 'Is a div');
+               assert.ok(parsed.querySelectorAll('*').length === 2, 'Has 2 descendants');
+               assert.ok(parsed.querySelectorAll('div').length === 2, 'Descendants are divs');
+            })
+         });
+
+         new Application();
+      </script>
+   </body>
+</html>

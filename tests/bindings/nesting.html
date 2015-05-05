@@ -1,64 +1,64 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Nesting</title>
-		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-		<script src="../../builds/curvy.js"></script>
-	</head>
-	<body>
-		<div outer-scope>
-			<div inner-scope></div>
-		</div>
-		<div blocker>
-			<div blocked></div>
-		</div>
-		<div id="qunit"></div>
-		<div id="qunit-fixture"></div>
-		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-		<script>
-			var outerBound = false;
-			var innerBound = false;
-			var innerValue = false;
-			Application.extend.binding('outer-scope', function(view) {
-				this.scope = { value: true };
-				outerBound = true;
-			});
-			Application.extend.binding('inner-scope', function(value) {
-				innerValue = value;
-				innerBound = true;
-			});
-			
-			var allowBinding = false;
-			var blockerBound = false;
-			var blockedBound = false;
-			var retry = false;
-			Application.extend.binding('blocker', function() {
-				blockerBound = true;
-			}, function(view) {
-				retry = function() { view.scan(); }
-				return allowBinding;
-			});
-			Application.extend.binding('blocked', function() {
-				blockedBound = true;
-			});
-			new Application();
-			
-			QUnit.test('Scope', function(assert) {
-				assert.ok(outerBound === true, 'Outer bound');
-				assert.ok(innerBound === true, 'Inner bound');
-				assert.ok(innerValue === true, 'Scope passed');
-			});
-			
-			QUnit.test('Prescan', function(assert) {
-				assert.ok(!blockerBound, 'Blocker blocked');
-				assert.ok(!blockedBound, 'Blocked blocked');
-				assert.ok(retry, 'Retry set');
-				allowBinding = true;
-				retry();
-				assert.ok(blockerBound === true, 'Blocker unblocked');
-				assert.ok(blockedBound === true, 'Blocked unblocked');
-			});
-		</script>
-	</body>
+   <head>
+      <meta charset="utf-8">
+      <title>Nesting</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
+      <div outer-scope>
+         <div inner-scope></div>
+      </div>
+      <div blocker>
+         <div blocked></div>
+      </div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         var outerBound = false;
+         var innerBound = false;
+         var innerValue = false;
+         Application.extend.binding('outer-scope', function(view) {
+            this.scope = { value: true };
+            outerBound = true;
+         });
+         Application.extend.binding('inner-scope', function(value) {
+            innerValue = value;
+            innerBound = true;
+         });
+
+         var allowBinding = false;
+         var blockerBound = false;
+         var blockedBound = false;
+         var retry = false;
+         Application.extend.binding('blocker', function() {
+            blockerBound = true;
+         }, function(view) {
+            retry = function() { view.scan(); }
+            return allowBinding;
+         });
+         Application.extend.binding('blocked', function() {
+            blockedBound = true;
+         });
+         new Application();
+
+         QUnit.test('Scope', function(assert) {
+            assert.ok(outerBound === true, 'Outer bound');
+            assert.ok(innerBound === true, 'Inner bound');
+            assert.ok(innerValue === true, 'Scope passed');
+         });
+
+         QUnit.test('Prescan', function(assert) {
+            assert.ok(!blockerBound, 'Blocker blocked');
+            assert.ok(!blockedBound, 'Blocked blocked');
+            assert.ok(retry, 'Retry set');
+            allowBinding = true;
+            retry();
+            assert.ok(blockerBound === true, 'Blocker unblocked');
+            assert.ok(blockedBound === true, 'Blocked unblocked');
+         });
+      </script>
+   </body>
 </html>

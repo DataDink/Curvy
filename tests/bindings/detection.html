@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Detection</title>
-		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-		<script src="../../builds/curvy.js"></script>
-	</head>
-	<body>
-		<div custom-binding></div>
-		<div id="qunit"></div>
-		<div id="qunit-fixture"></div>
-		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-		<script>
-			var existing = document.querySelector('[custom-binding]');
-			var added = document.createElement('div');
-			added.setAttribute('custom-binding', '');
-			
-			var detExisting = 0;
-			var detAdded = 0;
-			var detUnexpected = 0;
-			var disposals = 0;
-			var disposedViews = [];
-			var disposedElements = [];
-			Application.extend.binding('custom-binding', function(view) {
-				var element = view.element;
-				if (element === existing) {
-					detExisting++;
-				} else if (element === added) {
-					detAdded++;
-				} else {
-					detUnexpected++;
-				}
-				view.dispose = function() { 
-					disposals++; 
-					disposedViews.push(view);
-					disposedElements.push(element);
-				};
-			});
-			new Application();
-			
-			setTimeout(function() { // Because observations are processed in batches we need to allow dom processing
-				document.body.appendChild(added);
-				setTimeout(function() {
-					document.body.removeChild(added);
-					setTimeout(function() {
-						document.body.appendChild(added);
-						setTimeout(function() {
-							QUnit.test('Creation', function(assert) {
-								assert.strictEqual(detExisting, 1, 'Existing detected');
-								assert.ok(detAdded > 0, 'Add detected');
-								assert.strictEqual(detAdded, 2, 'Readd detected');
-								assert.strictEqual(detUnexpected, 0, 'Nothing unexpected');
-							});
-							
-							QUnit.test('Disposal', function(assert) {
-								assert.strictEqual(disposals, 1, 'Dispose detected');
-								assert.ok(!disposedViews[0].element, 'Element references released');
-								assert.ok(disposedElements[0][' View '] !== disposedViews[0], 'View reference replaced');
-							});
-						}, 1);
-					}, 1);
-				}, 1);
-			}, 1);
-		</script>
-	</body>
+   <head>
+      <meta charset="utf-8">
+      <title>Detection</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
+      <div custom-binding></div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         var existing = document.querySelector('[custom-binding]');
+         var added = document.createElement('div');
+         added.setAttribute('custom-binding', '');
+
+         var detExisting = 0;
+         var detAdded = 0;
+         var detUnexpected = 0;
+         var disposals = 0;
+         var disposedViews = [];
+         var disposedElements = [];
+         Application.extend.binding('custom-binding', function(view) {
+            var element = view.element;
+            if (element === existing) {
+               detExisting++;
+            } else if (element === added) {
+               detAdded++;
+            } else {
+               detUnexpected++;
+            }
+            view.dispose = function() {
+               disposals++;
+               disposedViews.push(view);
+               disposedElements.push(element);
+            };
+         });
+         new Application();
+
+         setTimeout(function() { // Because observations are processed in batches we need to allow dom processing
+            document.body.appendChild(added);
+            setTimeout(function() {
+               document.body.removeChild(added);
+               setTimeout(function() {
+                  document.body.appendChild(added);
+                  setTimeout(function() {
+                     QUnit.test('Creation', function(assert) {
+                        assert.strictEqual(detExisting, 1, 'Existing detected');
+                        assert.ok(detAdded > 0, 'Add detected');
+                        assert.strictEqual(detAdded, 2, 'Readd detected');
+                        assert.strictEqual(detUnexpected, 0, 'Nothing unexpected');
+                     });
+
+                     QUnit.test('Disposal', function(assert) {
+                        assert.strictEqual(disposals, 1, 'Dispose detected');
+                        assert.ok(!disposedViews[0].element, 'Element references released');
+                        assert.ok(disposedElements[0][' View '] !== disposedViews[0], 'View reference replaced');
+                     });
+                  }, 1);
+               }, 1);
+            }, 1);
+         }, 1);
+      </script>
+   </body>
 </html>
