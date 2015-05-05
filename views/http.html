@@ -1,156 +1,155 @@
 <h3>Http Service</h3>
 <p>
-	The http service is a small wrapper around XHR (ajax) that provides some 
-	common short-cuts for configuring restful calls to an API.
+   The http service is a small wrapper around XHR (ajax) that provides some
+   common short-cuts for configuring restful calls to an API.
 </p>
 <p>
-	<hr />
-	<strong>http.setGlobalHeader(headerName, headerValue)</strong> can be used to set a header on all
-	requests for the life of the application.
+   <hr />
+   <strong>http.setGlobalHeader(headerName, headerValue)</strong> can be used to set a header on all
+   requests for the life of the application.
 </p>
 <p>
-	<hr />
-	<strong>http.setGlobalConfig(configName, configValue)</strong> can be used to set a configuration
-	option on all requests for the life of the application.
+   <hr />
+   <strong>http.setGlobalConfig(configName, configValue)</strong> can be used to set a configuration
+   option on all requests for the life of the application.
 </p>
 <p>
-	<hr />
-	<strong>http.setGlobalParam(name, value)</strong> can be used to persist a value in all
-	requests for the life of the application.
+   <hr />
+   <strong>http.setGlobalParam(name, value)</strong> can be used to persist a value in all
+   requests for the life of the application.
 </p>
 <p>
-	<hr />
-	<strong>http.setGlobalQuery(name, value)</strong> can be used to persist a query-only value in all
-	requests for the life of the application.
+   <hr />
+   <strong>http.setGlobalQuery(name, value)</strong> can be used to persist a query-only value in all
+   requests for the life of the application.
 </p>
 <p>
-	<hr />
-	<strong>http.setHeader(headerName, headerValue)</strong> can be used to set a header on all 
-	requests for the life of this instance of the HTTP service.
+   <hr />
+   <strong>http.setHeader(headerName, headerValue)</strong> can be used to set a header on all
+   requests for the life of this instance of the HTTP service.
 </p>
 <p>
-	<hr />
-	<strong>http.setConfig(configName, configValue)</strong> can be used to set a configuration
-	option on all requests for the life of this instance of the HTTP service.
+   <hr />
+   <strong>http.setConfig(configName, configValue)</strong> can be used to set a configuration
+   option on all requests for the life of this instance of the HTTP service.
 </p>
 <p>
-	<hr />
-	<strong>http.setParam(name, value)</strong> can be used to persist a value
-	in all requests for the life of this instance of the HTTP service.
+   <hr />
+   <strong>http.setParam(name, value)</strong> can be used to persist a value
+   in all requests for the life of this instance of the HTTP service.
 </p>
 <p>
-	<hr />
-	<strong>http.setQuery(name, value)</strong> can be used to persist a query-only value
-	in all requests for the life of this instance of the HTTP service.
+   <hr />
+   <strong>http.setQuery(name, value)</strong> can be used to persist a query-only value
+   in all requests for the life of this instance of the HTTP service.
 </p>
 <p>
-	<hr />
-	<strong>http.get(uri, params, onSuccess, onError, headers, config)</strong>
-	sends a get request to the uri. <br />
-	<strong>uri:</strong> the uri to send the get request to.<br />
-	<strong>params:</strong> an object containing the request values to send.<br />
-	<strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
-	<strong>onError:</strong> a callback that will fire when the request fails.<br />
-	<strong>headers:</strong> an object with the header to set for this request.<br />
-	<strong>config:</strong> an object with the configuration options for this request.<br />
+   <hr />
+   <strong>http.get(uri, params, onSuccess, onError, headers, config)</strong>
+   sends a get request to the uri. <br />
+   <strong>uri:</strong> the uri to send the get request to.<br />
+   <strong>params:</strong> an object containing the request values to send.<br />
+   <strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
+   <strong>onError:</strong> a callback that will fire when the request fails.<br />
+   <strong>headers:</strong> an object with the header to set for this request.<br />
+   <strong>config:</strong> an object with the configuration options for this request.<br />
 </p>
 <p>
-	<hr />
-	<strong>http.delete(uri, params, onSuccess, onError, headers, config)</strong>
-	sends a delete request to the uri. <br />
-	<strong>uri:</strong> the uri to send the get request to.<br />
-	<strong>params:</strong> an object containing the request values to send.<br />
-	<strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
-	<strong>onError:</strong> a callback that will fire when the request fails.<br />
-	<strong>headers:</strong> an object with the header to set for this request.<br />
-	<strong>config:</strong> an object with the configuration options for this request.<br />
+   <hr />
+   <strong>http.delete(uri, params, onSuccess, onError, headers, config)</strong>
+   sends a delete request to the uri. <br />
+   <strong>uri:</strong> the uri to send the get request to.<br />
+   <strong>params:</strong> an object containing the request values to send.<br />
+   <strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
+   <strong>onError:</strong> a callback that will fire when the request fails.<br />
+   <strong>headers:</strong> an object with the header to set for this request.<br />
+   <strong>config:</strong> an object with the configuration options for this request.<br />
 </p>
 <p>
-	<hr />
-	<strong>http.post(uri, body, onSuccess, onError, headers, config)</strong>
-	sends a post request to the uri. <br />
-	<strong>uri:</strong> the uri to send the get request to.<br />
-	<strong>body:</strong> an object containing the request values to send.<br />
-	<strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
-	<strong>onError:</strong> a callback that will fire when the request fails.<br />
-	<strong>headers:</strong> an object with the header to set for this request.<br />
-	<strong>config:</strong> an object with the configuration options for this request.<br />
+   <hr />
+   <strong>http.post(uri, body, onSuccess, onError, headers, config)</strong>
+   sends a post request to the uri. <br />
+   <strong>uri:</strong> the uri to send the get request to.<br />
+   <strong>body:</strong> an object containing the request values to send.<br />
+   <strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
+   <strong>onError:</strong> a callback that will fire when the request fails.<br />
+   <strong>headers:</strong> an object with the header to set for this request.<br />
+   <strong>config:</strong> an object with the configuration options for this request.<br />
 </p>
 <p>
-	<hr />
-	<strong>http.patch(uri, body, onSuccess, onError, headers, config)</strong>
-	sends a get request to the uri. <br />
-	<strong>uri:</strong> the uri to send the get request to.<br />
-	<strong>body:</strong> an object containing the request values to send.<br />
-	<strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
-	<strong>onError:</strong> a callback that will fire when the request fails.<br />
-	<strong>headers:</strong> an object with the header to set for this request.<br />
-	<strong>config:</strong> an object with the configuration options for this request.<br />
+   <hr />
+   <strong>http.patch(uri, body, onSuccess, onError, headers, config)</strong>
+   sends a get request to the uri. <br />
+   <strong>uri:</strong> the uri to send the get request to.<br />
+   <strong>body:</strong> an object containing the request values to send.<br />
+   <strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
+   <strong>onError:</strong> a callback that will fire when the request fails.<br />
+   <strong>headers:</strong> an object with the header to set for this request.<br />
+   <strong>config:</strong> an object with the configuration options for this request.<br />
 </p>
 <p>
-	<hr />
-	<strong>http.put(uri, body, onSuccess, onError, headers, config)</strong>
-	sends a get request to the uri. <br />
-	<strong>uri:</strong> the uri to send the get request to.<br />
-	<strong>body:</strong> an object containing the request values to send.<br />
-	<strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
-	<strong>onError:</strong> a callback that will fire when the request fails.<br />
-	<strong>headers:</strong> an object with the header to set for this request.<br />
-	<strong>config:</strong> an object with the configuration options for this request.<br />
+   <hr />
+   <strong>http.put(uri, body, onSuccess, onError, headers, config)</strong>
+   sends a get request to the uri. <br />
+   <strong>uri:</strong> the uri to send the get request to.<br />
+   <strong>body:</strong> an object containing the request values to send.<br />
+   <strong>onSuccess:</strong> a callback that will fire when the request succeeds.<br />
+   <strong>onError:</strong> a callback that will fire when the request fails.<br />
+   <strong>headers:</strong> an object with the header to set for this request.<br />
+   <strong>config:</strong> an object with the configuration options for this request.<br />
 </p>
 <p>
-	<hr />
-	<strong>configuration:</strong>
-	The following configuration options are available:<br />
-	<strong>async:</strong> Set to false if you want the request to not be async<br />
-	<strong>user:</strong> Sets a username on the request<br />
-	<strong>pass:</strong> Sets a password for the username on the request<br />
-	<strong>mimeType:</strong> Overrides the mimeType for the request<br />
-	<strong>withCredentials:</strong> Set to true to force credentials with the request<br />
-	<strong>timeout:</strong> Sets a timeout for the request<br />
+   <hr />
+   <strong>configuration:</strong>
+   The following configuration options are available:<br />
+   <strong>async:</strong> Set to false if you want the request to not be async<br />
+   <strong>user:</strong> Sets a username on the request<br />
+   <strong>pass:</strong> Sets a password for the username on the request<br />
+   <strong>mimeType:</strong> Overrides the mimeType for the request<br />
+   <strong>withCredentials:</strong> Set to true to force credentials with the request<br />
+   <strong>timeout:</strong> Sets a timeout for the request<br />
 </p>
 <p>
-	<hr />
-	<strong>this:</strong>
-	On a success or error callback the "this" keyword will be set to an object with 
-	request/response info.
+   <hr />
+   <strong>this:</strong>
+   On a success or error callback the "this" keyword will be set to an object with
+   request/response info.
 </p>
 <p>
-	<hr />
-	Example Usages:
+   <hr />
+   Example Usages:
 </p>
 <pre>
-	// A huge configuration...
-	app.viewmodel('my-viewmodel', ['http', function(http) {
-		http.get(
-			'http://my-api/something',
-			{ somethingId: 1, anotherId: 2 },
-			function(data) {
-				console.log('success');
-				console.log(this);
-				console.log(data);
-			},
-			function(data) {
-				console.log('error');
-				console.log(this);
-				console.log(data);
-			},
-			{ 'SomeHeader': 'SomeHeaderValue' },
-			{ withCredentials: true }
-		);
-	}]);
-	
-	// A typical configuration...
-	app.viewmodel('my-viewmodel', ['http', function(http) {
-		http.get(
-			'http://my-api/something', 
-			{ id: 1 },
-			function(data) {
-				console.log('success');
-				console.log(this);
-				console.log(data);
-			}
-		);
-	}]);
-</pre>
+   // A huge configuration...
+   app.viewmodel('my-viewmodel', ['http', function(http) {
+      http.get(
+         'http://my-api/something',
+         { somethingId: 1, anotherId: 2 },
+         function(data) {
+            console.log('success');
+            console.log(this);
+            console.log(data);
+         },
+         function(data) {
+            console.log('error');
+            console.log(this);
+            console.log(data);
+         },
+         { 'SomeHeader': 'SomeHeaderValue' },
+         { withCredentials: true }
+      );
+   }]);
 
+   // A typical configuration...
+   app.viewmodel('my-viewmodel', ['http', function(http) {
+      http.get(
+         'http://my-api/something',
+         { id: 1 },
+         function(data) {
+            console.log('success');
+            console.log(this);
+            console.log(data);
+         }
+      );
+   }]);
+</pre>

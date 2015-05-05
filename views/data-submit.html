@@ -1,19 +1,19 @@
 <h3>data-submit</h3>
 <p>
-	Binds a command handler on the view-model to the element's "submit" event.
+   Binds a command handler on the view-model to the element's "submit" event.
 </p>
 <pre>
-	&lt;div view-model="my-vm"&gt;
-		&lt;form data-submit="search"&gt;
-			&lt;button type="submit"&gt;Submit&lt;/button&gt;
-		&lt;/form&gt;
-	&lt;/div&gt;
+   &lt;div view-model="my-vm"&gt;
+      &lt;form data-submit="search"&gt;
+         &lt;button type="submit"&gt;Submit&lt;/button&gt;
+      &lt;/form&gt;
+   &lt;/div&gt;
 </pre>
 <pre>
-	app.viewmodel('my-vm', function() {
-		this.search = function(e) {
-			e.preventDefault();
-			console.log('search initiated');
-		};
-	});
+   app.viewmodel('my-vm', function() {
+      this.search = function(e) {
+         e.preventDefault();
+         console.log('search initiated');
+      };
+   });
 </pre>
