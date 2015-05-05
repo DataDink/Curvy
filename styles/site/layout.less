@@ -1,35 +1,35 @@
 * { box-sizing: border-box; }
 html { height: 100%; width: 100%; overflow: auto; }
 body {
-	position: relative;
-	padding: 71px 0px 25px;
-	min-height: 100%;
-	
-	& > footer {
-		position: absolute;
-		padding: 0px 25px;
-		bottom: 0px;
-		opacity: .75;
-	}
+   position: relative;
+   padding: 71px 0px 25px;
+   min-height: 100%;
+
+   & > footer {
+      position: absolute;
+      padding: 0px 25px;
+      bottom: 0px;
+      opacity: .75;
+   }
 }
 
-aside { 
-	position: fixed;
-	top: 71px; bottom: 25px;
-	width: 0px;
-	overflow-y: auto;
-	
-	& * {
-		white-space: nowrap;
-		overflow-x: hidden;
-		text-overflow: ellipsis;
-	}
+aside {
+   position: fixed;
+   top: 71px; bottom: 25px;
+   width: 0px;
+   overflow-y: auto;
+
+   & * {
+      white-space: nowrap;
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+   }
 }
 
 @media (min-width: 992px) {
-	aside { width: 225px; }
+   aside { width: 225px; }
 }
 
 @media (min-width: 1400px) {
-	aside { width: 250px; }
+   aside { width: 250px; }
 }

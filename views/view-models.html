@@ -1,193 +1,192 @@
 <h3>ViewModels</h3>
 <p>
-	The view-model binding adds the specified view-model to the scope of the view
-	and its descendants. It will block all other bindings for the scope until 
-	a view-model has been configured with a matching name.
+   The view-model binding adds the specified view-model to the scope of the view
+   and its descendants. It will block all other bindings for the scope until
+   a view-model has been configured with a matching name.
 </p>
 <p>
-	When configuring a view-model you should treat the view-model function as you
-	would a constructor. By adding members to the 'this' keyword you will define
-	what your view-model looks like. 
+   When configuring a view-model you should treat the view-model function as you
+   would a constructor. By adding members to the 'this' keyword you will define
+   what your view-model looks like.
 </p>
 <p>
-	You <em>MUST</em> preconfigure all members that will be used on your view-model
-	in the view-model constructor. After the view-model is constructed all members
-	will be converted into observable properties and the object will be set to a 
-	locked state allowing no further additions to the object.
+   You <em>MUST</em> preconfigure all members that will be used on your view-model
+   in the view-model constructor. After the view-model is constructed all members
+   will be converted into observable properties and the object will be set to a
+   locked state allowing no further additions to the object.
 </p>
 <p>
-	For example, if you want to have a button call a function called "update"
-	which changes the value of a property called "value" it would look something
-	like this:
-</p>
-<pre>
-	var myApp = new Application(document); // viewmodels are added to an application before or after its instantiated
-	
-	myApp.viewmodel('my-viewmodel', function() {
-		this.value = 'initial value';
-		this.update = function(e) {
-			this.value = 'updated value';
-		};
-	});
-</pre>
-<p>
-	The markup that would attach to this would look something like this:
+   For example, if you want to have a button call a function called "update"
+   which changes the value of a property called "value" it would look something
+   like this:
 </p>
 <pre>
-	&lt;div view-model="my-viewmodel"&gt;
-		&lt;!-- Anything "using" the view-model must be inside the view-model element --&gt;
-		&lt;input type="text" data-bind="value" /&gt;
-		&lt;button data-click="update"&gt;Update Text&lt;/button&gt;
-	&lt;/div&gt;
+   var myApp = new Application(document); // viewmodels are added to an application before or after its instantiated
+
+   myApp.viewmodel('my-viewmodel', function() {
+      this.value = 'initial value';
+      this.update = function(e) {
+         this.value = 'updated value';
+      };
+   });
 </pre>
 <p>
-	After the viewmodel has been constructed it is converted to an "Observable" object.
-	An observable is given the following members:
-</p>
-<p>
-	<em class="col-sm-3">view</em>
-	<span class="col-sm-9">
-		Provides access to the View this view-model belongs to.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">parent</em>
-	<span class="col-sm-9">
-		Finds the first ancestor view model.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">children</em>
-	<span class="col-sm-9">
-		Scans all descendant elements for child view models
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">notify(propertyName)</em>
-	<span class="col-sm-9">
-		Calling this method will alert anything listening
-		to this object that the specified property has been updated.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">observe(callback)</em>
-	<span class="col-sm-9">
-		Adds a callback handler that will be called any time
-		the "notify" method is invoked.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">unobserve(callback)</em>
-	<span class="col-sm-9">
-		Removes a callback handler from the object's
-		notification pool.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">path(string)</em>
-	<span class="col-sm-9">
-		Navigates a dot(.) path from the view model and returns
-		the value or undefined if the path does not exist.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">watch(path, callback)</em>
-	<span class="col-sm-9">
-		Watches a chain of observables specified by a
-		dot(.) path. The first non-observable object in the dot(.) path will prevent further
-		observable members in the path from being observed.
-	</span>
-</p>
-<p>
-	<em class="col-sm-3">dispose()</em>
-	<span class="col-sm-9">
-		This method cleans up potential leaky references held by the
-		view model. This should never be called by your code.
-	</span>
-</p>
-<p>
-	Because observable members are added after the view model has been constructed there
-	is no way for you to access these additional members in your construction code which
-	executes prior to instantiation. Instead of setting an observe callback you can
-	instead <em>override</em> the notify, observe, or unobserve methods. 
-</p>
-<p>
-	Overriding these methods will not break their functionality. They will still operate
-	as normal making your method more of an <em>interceptor</em> than an override.
+   The markup that would attach to this would look something like this:
 </p>
 <pre>
-	myApp.viewmodel('my-viewmodel', function() {
-		this.notify = function(property) {
-			console.log('The ' + property + ' property has been set!');
-		};
-	});
+   &lt;div view-model="my-viewmodel"&gt;
+      &lt;!-- Anything "using" the view-model must be inside the view-model element --&gt;
+      &lt;input type="text" data-bind="value" /&gt;
+      &lt;button data-click="update"&gt;Update Text&lt;/button&gt;
+   &lt;/div&gt;
 </pre>
 <p>
-	It is crucial when configuring your view-model that you do not lock any values down 
-	using a property definition or by locking/freezing the object. This will be done for you
-	by the conversion process.
+   After the viewmodel has been constructed it is converted to an "Observable" object.
+   An observable is given the following members:
 </p>
 <p>
-	It is important to note that because Curvy operates by watching Observables intead of 
-	triggering scans (as in other frameworks) that descendant members will not trigger 
-	notification events when changed unless they are also observable.
+   <em class="col-sm-3">view</em>
+   <span class="col-sm-9">
+      Provides access to the View this view-model belongs to.
+   </span>
 </p>
 <p>
-	For example:
+   <em class="col-sm-3">parent</em>
+   <span class="col-sm-9">
+      Finds the first ancestor view model.
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">children</em>
+   <span class="col-sm-9">
+      Scans all descendant elements for child view models
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">notify(propertyName)</em>
+   <span class="col-sm-9">
+      Calling this method will alert anything listening
+      to this object that the specified property has been updated.
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">observe(callback)</em>
+   <span class="col-sm-9">
+      Adds a callback handler that will be called any time
+      the "notify" method is invoked.
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">unobserve(callback)</em>
+   <span class="col-sm-9">
+      Removes a callback handler from the object's
+      notification pool.
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">path(string)</em>
+   <span class="col-sm-9">
+      Navigates a dot(.) path from the view model and returns
+      the value or undefined if the path does not exist.
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">watch(path, callback)</em>
+   <span class="col-sm-9">
+      Watches a chain of observables specified by a
+      dot(.) path. The first non-observable object in the dot(.) path will prevent further
+      observable members in the path from being observed.
+   </span>
+</p>
+<p>
+   <em class="col-sm-3">dispose()</em>
+   <span class="col-sm-9">
+      This method cleans up potential leaky references held by the
+      view model. This should never be called by your code.
+   </span>
+</p>
+<p>
+   Because observable members are added after the view model has been constructed there
+   is no way for you to access these additional members in your construction code which
+   executes prior to instantiation. Instead of setting an observe callback you can
+   instead <em>override</em> the notify, observe, or unobserve methods.
+</p>
+<p>
+   Overriding these methods will not break their functionality. They will still operate
+   as normal making your method more of an <em>interceptor</em> than an override.
 </p>
 <pre>
-	myApp.viewmodel('my-viewmodel', function() {
-		this.member = {};
-		this.member.member = 'value';
-		this.update = function() {
-			this.member.member = 'will not update UI';
-		};
-	});
+   myApp.viewmodel('my-viewmodel', function() {
+      this.notify = function(property) {
+         console.log('The ' + property + ' property has been set!');
+      };
+   });
 </pre>
 <p>
-	In this example the "update" function will not trigger a change in the UI because the 
-	descendant "member" object is not observable.
+   It is crucial when configuring your view-model that you do not lock any values down
+   using a property definition or by locking/freezing the object. This will be done for you
+   by the conversion process.
+</p>
 <p>
+   It is important to note that because Curvy operates by watching Observables intead of
+   triggering scans (as in other frameworks) that descendant members will not trigger
+   notification events when changed unless they are also observable.
+</p>
 <p>
-	In order to make changes to the descendant member trigger UI updates you must either
-	convert it to an observable or an observable surrogate.
+   For example:
 </p>
 <pre>
-	// Converts the "member" object into an observable
-	myApp.viewmodel('my-viewmodel', ['application', function(application) {
-		this.member = {};
-		this.member.member = 'value';
-		<strong>application.Observable.convert(this.member);</strong>
-		this.update = function() {
-			this.member.member = 'UI will update';
-		};
-	}]);
+   myApp.viewmodel('my-viewmodel', function() {
+      this.member = {};
+      this.member.member = 'value';
+      this.update = function() {
+         this.member.member = 'will not update UI';
+      };
+   });
 </pre>
 <p>
-	When converting an object to an observable, like a view-model, it will be locked down
-	and no longer able to have additional properties or functions added to it. If you require
-	a less intrusive way of observing an object you can create a surrogate.
+   In this example the "update" function will not trigger a change in the UI because the
+   descendant "member" object is not observable.
+<p>
+<p>
+   In order to make changes to the descendant member trigger UI updates you must either
+   convert it to an observable or an observable surrogate.
 </p>
 <pre>
-	// Creates an observable surrogate that proxies the "member" object
-	myApp.viewmodel('my-viewmodel', ['application', function(application) {
-		this.member = {};
-		this.member.member = 'value';
-		<strong>this.member = application.Observable.surrogate(this.member);</strong>
-		this.update = function() {
-			this.member.member = 'UI will update';
-		};
-	}]);
+   // Converts the "member" object into an observable
+   myApp.viewmodel('my-viewmodel', ['application', function(application) {
+      this.member = {};
+      this.member.member = 'value';
+      <strong>application.Observable.convert(this.member);</strong>
+      this.update = function() {
+         this.member.member = 'UI will update';
+      };
+   }]);
 </pre>
 <p>
-	When a surrogate is created a new observable object is created that will get and set
-	values on the original object instead of on itself. Remember that once a surrogate is
-	created its structure can't be altered. This means if you add a new field to the original
-	object after the surrogate is created that new field will not be available on the surrogate.
+   When converting an object to an observable, like a view-model, it will be locked down
+   and no longer able to have additional properties or functions added to it. If you require
+   a less intrusive way of observing an object you can create a surrogate.
+</p>
+<pre>
+   // Creates an observable surrogate that proxies the "member" object
+   myApp.viewmodel('my-viewmodel', ['application', function(application) {
+      this.member = {};
+      this.member.member = 'value';
+      <strong>this.member = application.Observable.surrogate(this.member);</strong>
+      this.update = function() {
+         this.member.member = 'UI will update';
+      };
+   }]);
+</pre>
+<p>
+   When a surrogate is created a new observable object is created that will get and set
+   values on the original object instead of on itself. Remember that once a surrogate is
+   created its structure can't be altered. This means if you add a new field to the original
+   object after the surrogate is created that new field will not be available on the surrogate.
 </p>
 <p>
-	I don't know what will happen if you use either of these methods on an existing observable.
-	I simply recommend not doing so as this is not an intended functionality.
+   I don't know what will happen if you use either of these methods on an existing observable.
+   I simply recommend not doing so as this is not an intended functionality.
 </p>
 <hr />
-	

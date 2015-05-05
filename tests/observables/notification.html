@@ -1,117 +1,117 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Notification</title>
-		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-		<script src="../../builds/curvy.js"></script>
-	</head>
-	<body>
-		<div id="qunit"></div>
-		<div id="qunit-fixture"></div>
-		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-		<script>
-			Application.extend(function(application) {
-				QUnit.test('Convert', function(assert) {
-					var observed = application.Observable.convert({
-						member: false
-					});
-					
-					var notified = false;
-					var membered = false;
-					var handler = function(member) {
-						notified = true;
-						if (member === 'member') { membered = true; }
-					}
-					observed.observe(handler);
-					observed.member = true;
-					assert.ok(notified, 'Notified');
-					assert.ok(membered, 'Membered');
-					
-					notified = false;
-					membered = false;
-					observed.unobserve(handler);
-					observed.member = true;
-					assert.ok(!notified, 'Not notified');
-					assert.ok(!membered, 'Not membered');
-					
-					notified = false;
-					membered = false;
-					observed.observe(handler);
-					observed.notify('evil');
-					assert.ok(notified, 'Notified');
-					assert.ok(!membered, 'Not membered');
-					
-					notified = false;
-					membered = false;
-					observed.notify('member');
-					assert.ok(notified, 'Notified');
-					assert.ok(membered, 'Membered');
-				});
-				QUnit.test('Surrogate', function(assert) {
-					var observed = application.Observable.surrogate({
-						member: false
-					});
-					
-					var notified = false;
-					var membered = false;
-					var handler = function(member) {
-						notified = true;
-						if (member === 'member') { membered = true; }
-					}
-					observed.observe(handler);
-					observed.member = true;
-					assert.ok(notified, 'Notified');
-					assert.ok(membered, 'Membered');
-					
-					notified = false;
-					membered = false;
-					observed.unobserve(handler);
-					observed.member = true;
-					assert.ok(!notified, 'Not notified');
-					assert.ok(!membered, 'Not membered');
-					
-					notified = false;
-					membered = false;
-					observed.observe(handler);
-					observed.notify('evil');
-					assert.ok(notified, 'Notified');
-					assert.ok(!membered, 'Not membered');
-					
-					notified = false;
-					membered = false;
-					observed.notify('member');
-					assert.ok(notified, 'Notified');
-					assert.ok(membered, 'Membered');
-					
-					var original = { member: false }
-					var surrogate = application.Observable.surrogate(original);
-					var notified = false;
-					surrogate.observe(function() { notified = true; });
-					
-					assert.ok(surrogate.member === false, 'Surrogate value');
-					assert.ok(original.member === false, 'Member value');
-					
-					surrogate.member = true;
-					assert.ok(notified, 'Notified surrogate');
-					assert.ok(surrogate.member === true, 'Surrogate value');
-					assert.ok(original.member === true, 'Member value');
-					notified = false;
-					
-					original.member = false;
-					assert.ok(!notified, 'Not notified member');
-					assert.ok(surrogate.member === false, 'Surrogate value');
-					assert.ok(original.member === false, 'Member value');
-					
-					original.diff = true;
-					surrogate.ext = true;
-					assert.ok(!notified, 'Not notify unexpected');
-					assert.ok(!surrogate.diff, 'Surrogate value');
-					assert.ok(original.diff === true, 'Member value');
-					assert.ok(!surrogate.ext, 'Extra value');
-				});
-			});
-			new Application();
-		</script>
-	</body>
+   <head>
+      <meta charset="utf-8">
+      <title>Notification</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         Application.extend(function(application) {
+            QUnit.test('Convert', function(assert) {
+               var observed = application.Observable.convert({
+                  member: false
+               });
+
+               var notified = false;
+               var membered = false;
+               var handler = function(member) {
+                  notified = true;
+                  if (member === 'member') { membered = true; }
+               }
+               observed.observe(handler);
+               observed.member = true;
+               assert.ok(notified, 'Notified');
+               assert.ok(membered, 'Membered');
+
+               notified = false;
+               membered = false;
+               observed.unobserve(handler);
+               observed.member = true;
+               assert.ok(!notified, 'Not notified');
+               assert.ok(!membered, 'Not membered');
+
+               notified = false;
+               membered = false;
+               observed.observe(handler);
+               observed.notify('evil');
+               assert.ok(notified, 'Notified');
+               assert.ok(!membered, 'Not membered');
+
+               notified = false;
+               membered = false;
+               observed.notify('member');
+               assert.ok(notified, 'Notified');
+               assert.ok(membered, 'Membered');
+            });
+            QUnit.test('Surrogate', function(assert) {
+               var observed = application.Observable.surrogate({
+                  member: false
+               });
+
+               var notified = false;
+               var membered = false;
+               var handler = function(member) {
+                  notified = true;
+                  if (member === 'member') { membered = true; }
+               }
+               observed.observe(handler);
+               observed.member = true;
+               assert.ok(notified, 'Notified');
+               assert.ok(membered, 'Membered');
+
+               notified = false;
+               membered = false;
+               observed.unobserve(handler);
+               observed.member = true;
+               assert.ok(!notified, 'Not notified');
+               assert.ok(!membered, 'Not membered');
+
+               notified = false;
+               membered = false;
+               observed.observe(handler);
+               observed.notify('evil');
+               assert.ok(notified, 'Notified');
+               assert.ok(!membered, 'Not membered');
+
+               notified = false;
+               membered = false;
+               observed.notify('member');
+               assert.ok(notified, 'Notified');
+               assert.ok(membered, 'Membered');
+
+               var original = { member: false }
+               var surrogate = application.Observable.surrogate(original);
+               var notified = false;
+               surrogate.observe(function() { notified = true; });
+
+               assert.ok(surrogate.member === false, 'Surrogate value');
+               assert.ok(original.member === false, 'Member value');
+
+               surrogate.member = true;
+               assert.ok(notified, 'Notified surrogate');
+               assert.ok(surrogate.member === true, 'Surrogate value');
+               assert.ok(original.member === true, 'Member value');
+               notified = false;
+
+               original.member = false;
+               assert.ok(!notified, 'Not notified member');
+               assert.ok(surrogate.member === false, 'Surrogate value');
+               assert.ok(original.member === false, 'Member value');
+
+               original.diff = true;
+               surrogate.ext = true;
+               assert.ok(!notified, 'Not notify unexpected');
+               assert.ok(!surrogate.diff, 'Surrogate value');
+               assert.ok(original.diff === true, 'Member value');
+               assert.ok(!surrogate.ext, 'Extra value');
+            });
+         });
+         new Application();
+      </script>
+   </body>
 </html>

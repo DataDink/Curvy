@@ -1,44 +1,44 @@
 <h3>Why MVVM?</h3>
 
 <p>
-	I chose to go with MVVM over MVC because I think it is a better fit to front-end
-	web frameworks. Because the framework is so close to the view in this technology
-	stack it makes sense to be concerned with view-state in your code. It also presents
-	a much nicer separation of concerns for the view itself which need only define 
-	bindings to a view-model in this pattern. This keeps code out of the view and 
-	that's a good thing for everyone concerned.
+   I chose to go with MVVM over MVC because I think it is a better fit to front-end
+   web frameworks. Because the framework is so close to the view in this technology
+   stack it makes sense to be concerned with view-state in your code. It also presents
+   a much nicer separation of concerns for the view itself which need only define
+   bindings to a view-model in this pattern. This keeps code out of the view and
+   that's a good thing for everyone concerned.
 </p>
 
 <h3>What is MVVM?</h3>
 
 <p>
-	By now you've probably heard the acronym "MVC" but may not be aware of what that
-	acronym really means. You may also not know there are a number of design patterns
-	out there that all are attempting to solve some of the same problems but in 
-	different ways.
+   By now you've probably heard the acronym "MVC" but may not be aware of what that
+   acronym really means. You may also not know there are a number of design patterns
+   out there that all are attempting to solve some of the same problems but in
+   different ways.
 </p>
 <p>
-	Unfortunately because of some of the misuses of these acronyms there seems to be a
-	general confusion as to what these different patterns are, their pros and cons, 
-	and why "MVC" is more than just a keyword to be thrown around in technical
-	conversations.
+   Unfortunately because of some of the misuses of these acronyms there seems to be a
+   general confusion as to what these different patterns are, their pros and cons,
+   and why "MVC" is more than just a keyword to be thrown around in technical
+   conversations.
 </p>
 <p>
-	Without getting into too much detail MVVM when compared to MVC is a pattern that 
-	concerns itself with view-state. What this means in MVC is that MVC deals only with linking 
-	together models and business logic. Niether the controllers nor the models, from a purist 
-	standpoint, concern themselves with how the model is going to be presented.
+   Without getting into too much detail MVVM when compared to MVC is a pattern that
+   concerns itself with view-state. What this means in MVC is that MVC deals only with linking
+   together models and business logic. Niether the controllers nor the models, from a purist
+   standpoint, concern themselves with how the model is going to be presented.
 </p>
 <p>
-	Because of this things like what class to add to an element must be configured directly 
-	in your	view because there is no middle man that can change a boolean value on a model into a 
-	text value on your view. This forces an application to litter its views with code which
-	(also from a purist point of view) travels farther down the already well tread path of
-	breaking the basic principals of separation of concerns and single responsibility.
+   Because of this things like what class to add to an element must be configured directly
+   in your   view because there is no middle man that can change a boolean value on a model into a
+   text value on your view. This forces an application to litter its views with code which
+   (also from a purist point of view) travels farther down the already well tread path of
+   breaking the basic principals of separation of concerns and single responsibility.
 </p>
 <p>
-	MVVM (or any pattern with a view-model) attempts to alleviate this issue to some extent
-	by providing a place that can work like a code backing for your views. The view-model acts as
-	kind of a proxy between the model and the view allowing as much view logic as possible
-	to be moved out of the view and into a code file.
+   MVVM (or any pattern with a view-model) attempts to alleviate this issue to some extent
+   by providing a place that can work like a code backing for your views. The view-model acts as
+   kind of a proxy between the model and the view allowing as much view logic as possible
+   to be moved out of the view and into a code file.
 </p>

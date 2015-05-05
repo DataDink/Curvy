@@ -1,67 +1,67 @@
 <h3>Route Service</h3>
 <p>
-	The route service tracks and broadcasts changes to the browser hash path and
-	exposes navigation functionality. The routing service can be directly subsribed
-	to or listened for using the broadcast service or shortcuts exposed on the
-	"View" object.
+   The route service tracks and broadcasts changes to the browser hash path and
+   exposes navigation functionality. The routing service can be directly subsribed
+   to or listened for using the broadcast service or shortcuts exposed on the
+   "View" object.
 </p>
 <pre>
-	app.viewmodel('my-viewmodel', ['route', function(route) {
-		// Will fire every route change
-		route.subscribe(function(info) {
-			console.log(info.uri);
-			console.log(info.data);
-		});
-		
-		// Will only fire on '#some-uri'
-		route.subscribe(function(info) {
-			console.log(info.uri);
-			console.log(info.data);
-		}, 'some-uri');
-		
-		route.navigate('some-uri');
-		route.navigate('another-uri');
-		route.navigate('some-uri', { someValue: 'lalala' });
-	}]);
-</pre>
-<p>
-	If you would like your subscription to be disposed with a view you can use the 
-	"View.listen(channel, callback)" shortcut function.
-</p>
-<pre>
-	app.viewmodel('my-viewmodel', ['view', function(view) {
-		view.listen('Route.Updated', function(info) {
-			console.log(info.uri);
-			console.log(info.data);
-		});
-	}]);
+   app.viewmodel('my-viewmodel', ['route', function(route) {
+      // Will fire every route change
+      route.subscribe(function(info) {
+         console.log(info.uri);
+         console.log(info.data);
+      });
 
-	// Or like this...
-	app.viewmodel('my-viewmodel', ['view', 'broadcast', function(view, bcast) {
-		function subscription = function(info) {
-			console.log(info.uri);
-			console.log(info.data);
-		}
-		bcast.subscribe('Route.Updated', subscription);
-		view.dispose = function() { bcast.unsubscribe(subscription); }
-	}]);
+      // Will only fire on '#some-uri'
+      route.subscribe(function(info) {
+         console.log(info.uri);
+         console.log(info.data);
+      }, 'some-uri');
+
+      route.navigate('some-uri');
+      route.navigate('another-uri');
+      route.navigate('some-uri', { someValue: 'lalala' });
+   }]);
 </pre>
 <p>
-	The route service is also responsible for registering paths to views.
-	Routes <em>should</em> be configured after the Application has been instantiated
-	but realistically it probably will never matter.
-</p>
-<p>
-	Here is one way to get routes configured for your application:
+   If you would like your subscription to be disposed with a view you can use the
+   "View.listen(channel, callback)" shortcut function.
 </p>
 <pre>
-	var app = new Application();
-	app.resolve(['route', function(route) {
-		route.register('home', 'views/home.html');
-		route.register('docs', 'views/documents.html');
-		route.register('profile', 'views/profiles.html');
-	}]);
+   app.viewmodel('my-viewmodel', ['view', function(view) {
+      view.listen('Route.Updated', function(info) {
+         console.log(info.uri);
+         console.log(info.data);
+      });
+   }]);
+
+   // Or like this...
+   app.viewmodel('my-viewmodel', ['view', 'broadcast', function(view, bcast) {
+      function subscription = function(info) {
+         console.log(info.uri);
+         console.log(info.data);
+      }
+      bcast.subscribe('Route.Updated', subscription);
+      view.dispose = function() { bcast.unsubscribe(subscription); }
+   }]);
 </pre>
 <p>
-	You can access configured views via the ".routes" member on the route service.
+   The route service is also responsible for registering paths to views.
+   Routes <em>should</em> be configured after the Application has been instantiated
+   but realistically it probably will never matter.
+</p>
+<p>
+   Here is one way to get routes configured for your application:
+</p>
+<pre>
+   var app = new Application();
+   app.resolve(['route', function(route) {
+      route.register('home', 'views/home.html');
+      route.register('docs', 'views/documents.html');
+      route.register('profile', 'views/profiles.html');
+   }]);
+</pre>
+<p>
+   You can access configured views via the ".routes" member on the route service.
 </p>
