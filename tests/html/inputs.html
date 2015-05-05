@@ -31,7 +31,88 @@
                var radioValue = html.getInputValue(radio);
                assert.ok(radio.checked === radioValue, 'Radios');
 
+               var text = document.createElement('textarea');
+               input.value = 'x';
+               var textvalue = html.getInputValue(text);
+               assert.ok(text.value === textvalue, 'Text');
 
+               var select = document.createElement('select');
+               select.setAttribute('multiple', '');
+               var optA = document.createElement('option');
+               var optB = document.createElement('option');
+               var optC = document.createElement('option');
+
+               optA.value = 'a';
+               optB.innerHTML = 'b';
+               optC.value = 'c';
+
+               select.appendChild(optA);
+               select.appendChild(optB);
+               select.appendChild(optC);
+
+               optA.selected = true;
+               var singleValue = html.getInputValue(select);
+               assert.ok(singleValue === 'a', 'Single value');
+
+               optC.selected = true;
+               var doubleValue = html.getInputValue(select);
+               assert.strictEqual(doubleValue.length, 2, 'Two values');
+               assert.strictEqual(doubleValue[0], 'a', 'A value');
+               assert.strictEqual(doubleValue[1], 'c', 'C value');
+
+               optB.selected = true;
+               var tripValue = html.getInputValue(select);
+               assert.strictEqual(tripValue.length, 3, 'Three values');
+               assert.strictEqual(tripValue[1], 'b', 'B value');
+            })
+
+            QUnit.test('Set Values', function(assert) {
+               var input = document.createElement('input');
+               html.setInputValue(input, 'x');
+               assert.strictEqual(input.value, 'x', 'Inputs');
+
+               var check = document.createElement('input');
+               check.setAttribute('type', 'checkbox');
+               html.setInputValue(check, true);
+               assert.ok(check.checked, 'Checkboxes');
+
+               var radio = document.createElement('input');
+               radio.setAttribute('type', 'radio');
+               html.setInputValue(radio, true);
+               assert.ok(radio.checked, 'Radios');
+
+               var text = document.createElement('textarea');
+               html.setInputValue(text, 'x');
+               assert.strictEqual(text.value, 'x');
+
+               var select = document.createElement('select');
+               select.setAttribute('multiple', '');
+               var optA = document.createElement('option');
+               var optB = document.createElement('option');
+               var optC = document.createElement('option');
+
+               optA.value = 'a';
+               optB.innerHTML = 'b';
+               optC.value = 'c';
+
+               select.appendChild(optA);
+               select.appendChild(optB);
+               select.appendChild(optC);
+
+               html.setInputValue(select, ['a']);
+               assert.ok(optA.selected, 'A');
+               assert.ok(!optB.selected, 'B');
+               assert.ok(!optC.selected, 'C');
+
+               html.setInputValue(select, 'b');
+               assert.ok(!optA.selected, 'A');
+               assert.ok(optB.selected, 'B');
+               assert.ok(!optC.selected, 'C');
+
+               html.setInputValue(select, ['a', 'b', 'c']);
+               assert.ok(optA.selected, 'A');
+               assert.ok(optB.selected, 'B');
+               assert.ok(optC.selected, 'C');
             })
 
          });
