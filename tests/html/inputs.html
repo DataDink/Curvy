@@ -1,42 +1,42 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Inputs</title>
-		<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
-		<script src="../../builds/curvy.js"></script>
-	</head>
-	<body>
+   <head>
+      <meta charset="utf-8">
+      <title>Inputs</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
 
-		<div id="qunit"></div>
-		<div id="qunit-fixture"></div>
-		<script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-		<script>
-			Application.extend(function(html) {
-				QUnit.test('Get Values', function(assert) {
-					var input = document.createElement('input');
-					input.value = 'x';
-					var inputValue = html.getInputValue(input);
-					assert.ok(input.value === inputValue, 'Inputs');
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         Application.extend(function(html) {
+            QUnit.test('Get Values', function(assert) {
+               var input = document.createElement('input');
+               input.value = 'x';
+               var inputValue = html.getInputValue(input);
+               assert.ok(input.value === inputValue, 'Inputs');
 
-					var check = document.createElement('input');
-					check.setAttribute('type', 'checkbox');
-					check.checked = true;
-					var checkValue = html.getInputValue(check);
-					assert.ok(check.checked === checkValue, 'Checkboxes');
+               var check = document.createElement('input');
+               check.setAttribute('type', 'checkbox');
+               check.checked = true;
+               var checkValue = html.getInputValue(check);
+               assert.ok(check.checked === checkValue, 'Checkboxes');
 
-					var radio = document.createElement('input');
-					radio.setAttribute('type', 'checkbox');
-					radio.checked = true;
-					var radioValue = html.getInputValue(radio);
-					assert.ok(radio.checked === radioValue, 'Radios');
+               var radio = document.createElement('input');
+               radio.setAttribute('type', 'checkbox');
+               radio.checked = true;
+               var radioValue = html.getInputValue(radio);
+               assert.ok(radio.checked === radioValue, 'Radios');
 
 
-				})
+            })
 
-			});
+         });
 
-			new Application();
-		</script>
-	</body>
+         new Application();
+      </script>
+   </body>
 </html>
