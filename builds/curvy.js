@@ -842,8 +842,11 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
          if (typeof(obj) === 'string') { return obj; }
          var params = [];
          for (var name in obj) {
-            var value = (obj[name] === utils.nothing ? '' : obj[name]).toString();
-            params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
+            var values = utils.is(obj[name], Array) ? obj[name] : [obj[name]];
+            for (var i = 0; i < values.length; i++) {
+               var value = (values[i] === utils.nothing ? '' : values[i]);
+               params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
+            }
          }
          return params.join('&');
       }
@@ -867,7 +870,6 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
             if (parts.length !== 2) { continue; }
             var key = decodeURIComponent(parts[0] || '');
             var value = decodeURIComponent(parts[1] || '');
-            if (!key || !value) { continue; }
             if (typeof(result[key]) === 'string') { result[key] = [result[key], value]; }
             else if (key in result) { result[key].push(value); }
             else { result[key] = value; }

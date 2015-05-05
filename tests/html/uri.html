@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Uri</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
+
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         Application.extend(function(html) {
+            QUnit.test('Tests', function(assert) {
+               var query = 'a=1&b=2&c=3';
+               assert.ok(html.formatParameters(query) == query, "Doesn't format query");
+               var formatted = html.formatParameters({a: 1, b: '2', c: 3});
+               formatted.replace(/\s+/gi, '');
+               assert.ok(query == formatted, 'Formats parameters');
+               var formattedArray = html.formatParameters({a: 1, b: ['2', 3]})
+               assert.ok(formattedArray == 'a=1&b=2&b=3');
+
+               var params = html.parseQuery(query);
+               assert.ok(params.a === '1' && params.b === '2' && params.c === '3', 'Parses params');
+               var paramsArray = html.parseQuery('b=1&b=2');
+               assert.strictEqual(paramsArray.b.length, 2, 'Detects array');
+               assert.ok(paramsArray.b[0] === '1', 'First is first');
+               assert.ok(paramsArray.b[1] === '2', 'Second is second');
+            })
+         });
+
+         new Application();
+      </script>
+   </body>
+</html>
