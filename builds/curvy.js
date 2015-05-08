@@ -1333,12 +1333,23 @@ Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(
    var config = value.indexOf('{') < 0 ? false : value.replace(/^\{+|\}+$/g, '');
 
    if (member) {
-      var update = function() {
-         var cls = viewmodel.path(member) || '';
-         html.addClass(view.element, cls);
+      var paths = member.split(/\s+/gi);
+      var classes = {};
+
+      var update = function(path) {
+         if (classes[path] !== false) { html.removeClass(view.element); }
+         var newclass = viewmodel.path(path);
+         classes[path] = (!newclass || html.hasClass(view.element, newclass))
+            ? false : newclass;
+         if (classes[path] === false) { return; }
+         html.addClass(newclass);
       };
-      viewmodel.watch(member, update);
-      update();
+
+      for (var i = 0; i < paths.length; i++) {
+         classes[paths[i]] = false;
+         viewmodel.watch(paths[i], (function(p) { return function() { update(p); }; })(paths[i]));
+         update(paths[i]);
+      }
    } else if (config) {
       var settings = config.split(',');
       for (var i = 0; i < settings.length; i++) {
