@@ -842,8 +842,11 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
          if (typeof(obj) === 'string') { return obj; }
          var params = [];
          for (var name in obj) {
-            var value = (obj[name] === utils.nothing ? '' : obj[name]).toString();
-            params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
+            var values = utils.is(obj[name], Array) ? obj[name] : [obj[name]];
+            for (var i = 0; i < values.length; i++) {
+               var value = (values[i] === utils.nothing ? '' : values[i]);
+               params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
+            }
          }
          return params.join('&');
       }
@@ -867,7 +870,6 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
             if (parts.length !== 2) { continue; }
             var key = decodeURIComponent(parts[0] || '');
             var value = decodeURIComponent(parts[1] || '');
-            if (!key || !value) { continue; }
             if (typeof(result[key]) === 'string') { result[key] = [result[key], value]; }
             else if (key in result) { result[key].push(value); }
             else { result[key] = value; }
@@ -1331,12 +1333,23 @@ Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(
    var config = value.indexOf('{') < 0 ? false : value.replace(/^\{+|\}+$/g, '');
 
    if (member) {
-      var update = function() {
-         var cls = viewmodel.path(member) || '';
-         html.addClass(view.element, cls);
+      var paths = member.split(/\s+/gi);
+      var classes = {};
+
+      var update = function(path) {
+         if (classes[path] !== false) { html.removeClass(view.element); }
+         var newclass = viewmodel.path(path);
+         classes[path] = (!newclass || html.hasClass(view.element, newclass))
+            ? false : newclass;
+         if (classes[path] === false) { return; }
+         html.addClass(newclass);
       };
-      viewmodel.watch(member, update);
-      update();
+
+      for (var i = 0; i < paths.length; i++) {
+         classes[paths[i]] = false;
+         viewmodel.watch(paths[i], (function(p) { return function() { update(p); }; })(paths[i]));
+         update(paths[i]);
+      }
    } else if (config) {
       var settings = config.split(',');
       for (var i = 0; i < settings.length; i++) {
