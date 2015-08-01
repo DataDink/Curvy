@@ -86,11 +86,12 @@
          delete surrogate[member];
          proxyMember(member, target, surrogate);
       }
+      Object.freeze(surrogate);
    }
 
    function proxyMember(member, target, surrogate) {
       var interceptor = createInterceptor(target[member], member, surrogate);
-      Object.defineProperty(surrogate, member, { enumerable: true, configurable: false
+      Object.defineProperty(surrogate, member, { enumerable: true, configurable: false,
          get: function() { return interceptor || target[member]; },
          set: function(v) {
             interceptor = createInterceptor(v, member, surrogate);
