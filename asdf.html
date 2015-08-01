@@ -1,0 +1,13 @@
+<html>
+   <script src="src/Curvy.Observable.js"></script>
+   <body>
+      <script>
+         var observable = new Curvy.Observable();
+         observable.first = 'test';
+         observable.second = function(v) { };
+         observable.observe(function(n) { console.log(n); });
+         observable.intercept(function(n, a) { console.log(n); console.log(a); }
+         observable.seal();
+      </script>
+   </body>
+</html>

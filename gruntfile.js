@@ -4,30 +4,14 @@ module.exports = function(grunt) {
          options: { separator: ';\r\n\r\n' },
          curvy: {
             src: [
-               'src/core.js',
-               'src/services/utilities.js',
-               'src/services/observable.js',
-               'src/services/broadcast.js',
-               'src/services/bindings.js',
-               'src/services/http.js',
-               'src/services/html.js',
-               'src/services/route.js',
-
-               'src/bindings/data-routed.js',
-               'src/bindings/data-template.js',
-               'src/bindings/data-view.js',
-               'src/bindings/view-model.js',
-               'src/bindings/data-format.js',
-               'src/bindings/data-bind.js',
-               'src/bindings/data-html.js',
-               'src/bindings/data-src.js',
-               'src/bindings/data-href.js',
-               'src/bindings/data-title.js',
-               'src/bindings/data-show.js',
-               'src/bindings/data-hide.js',
-               'src/bindings/data-class.js',
-               'src/bindings/data-submit.js',
-               'src/bindings/data-click.js'
+               'src/Curvy.js',
+               'src/Curvy.Configuration.js',
+               'src/Curvy.Observable.js',
+               'src/services/Curvy.Services.js',
+               'src/services/Curvy.Modules.js',
+               'src/services/Curvy.Services.Injector.js',
+               'src/services/Curvy.Services.Utilities.js',
+               'src/services/Curvy.Services.DomWatcher.js'
             ],
             dest: 'builds/curvy.js'
          }
