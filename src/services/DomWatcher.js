@@ -60,4 +60,4 @@ Curvy.Services.DomWatcher = function(utils) {
    // pushall itterates from a non-array collection into an array
    function pushall(arr, from) { for (var i = 0; !!from && i < from.length; i++) { arr.push(from[i]); } }
 };
-Curvy.register.module('dom-watcher', ['utilities'], Curvy.Services.DomWatcher);
+Curvy.register.service('dom-watcher', ['utilities'], Curvy.Services.DomWatcher);

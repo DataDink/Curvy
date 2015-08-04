@@ -44,7 +44,7 @@
 
       Object.defineProperty(observable, 'seal', { enumerable: true, configurable: false, value: function() {
          observable.notifyIntercept('seal', arguments);
-         if (target) { return proxy(target, observerable, observers); }
+         if (target) { return proxy(target, observable); }
          target = {};
          for (member in observable) {
             if (locked(observable, member)) { continue; }
@@ -90,22 +90,20 @@
    }
 
    function proxyMember(member, target, surrogate) {
-      var interceptor = createInterceptor(target[member], member, surrogate);
       Object.defineProperty(surrogate, member, { enumerable: true, configurable: false,
-         get: function() { return interceptor || target[member]; },
+         get: function() {
+            if (typeof(target[member]) === 'function') {
+               return (function(func) { return function() {
+                  surrogate.notifyIntercept(member, arguments);
+                  func.apply(surrogate, arguments);
+               };})(target[member]);
+            }
+            return target[member];
+         },
          set: function(v) {
-            interceptor = createInterceptor(v, member, surrogate);
             target[member] = v;
             surrogate.notify(member);
          }
-      });
-   }
-
-   function createInterceptor(func, member, surrogate) {
-      if (typeof(func) !== 'function') { return false; }
-      return (function() {
-         surrogate.notifyIntercept(member, arguments);
-         func.apply(surrogate, arguments);
       });
    }
 

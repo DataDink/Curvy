@@ -4,14 +4,26 @@ module.exports = function(grunt) {
          options: { separator: ';\r\n\r\n' },
          curvy: {
             src: [
+               // core
+               'polyfills/*.js',
                'src/Curvy.js',
-               'src/Curvy.Configuration.js',
-               'src/Curvy.Observable.js',
-               'src/services/Curvy.Services.js',
-               'src/services/Curvy.Modules.js',
-               'src/services/Curvy.Services.Injector.js',
-               'src/services/Curvy.Services.Utilities.js',
-               'src/services/Curvy.Services.DomWatcher.js'
+
+               // namespaces
+               'src/modules/Modules.js',
+               'src/services/Services.js',
+               'src/bindings/Bindings.js',
+
+               // lib
+               'src/Configuration.js',
+               'src/Observable.js',
+
+               // services
+               'src/services/Injector.js',
+               'src/services/Utilities.js',
+               'src/services/DomWatcher.js',
+
+               // modules
+               'src/modules/Bindings.js',
             ],
             dest: 'builds/curvy.js'
          }

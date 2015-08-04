@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Observables</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         var observable;
+         var observed = false;
+         var observer = function() { observed = true; };
+         var intercepted = false;
+         var interceptor = function() { intercepted = true; };
+
+         QUnit.test('Basic', function(ass) {
+            ass.ok(typeof(Curvy.Observable) === 'function', 'Exists');
+            observable = new Curvy.Observable();
+            ass.ok(observable instanceof Curvy.Observable, 'Valid');
+
+            observable.observe(observer);
+            observable.intercept(interceptor);
+
+            QUnit.test('Pre-Seal', function(ass) {
+               observable.value = 'test';
+               ass.ok(observable.value === 'test', 'Pre-Seal Writable');
+
+               observed = false;
+               observable.value = 'asdf';
+               ass.ok(!observed, 'Pre-Seal Observer');
+
+               intercepted = false;
+               observable.value = function() {};
+               observable.value();
+               ass.ok(!intercepted, 'Pre-Seal Interceptor');
+
+               intercepted = false;
+               observed = false;
+               observable.notify('test');
+               ass.ok(observed && intercepted, 'Pre-Seal Triggers');
+
+               QUnit.test('Post-Seal', function(ass) {
+                  intercepted = false;
+                  observed = false;
+                  observable.seal();
+                  ass.ok(intercepted && !observed, 'Seal-Triggered');
+
+                  intercepted = false;
+                  observable.value();
+                  ass.ok(intercepted, 'Pre-Seal Intercept');
+
+                  observed = false;
+                  var triggered = false;
+                  observable.value = function() { triggered = (this === observable); }
+                  ass.ok(observed, 'Post-Seal Observer');
+
+                  intercepted = false;
+                  observable.value();
+                  ass.ok(intercepted && triggered, 'Post-Seal Interceptor');
+
+                  observable.unobserve(observer);
+                  observable.release(interceptor);
+                  observed = false;
+                  triggered = false;
+                  intercepted = false;
+                  observable.value = function() { triggered = true; }
+                  observable.value();
+
+                  ass.ok(!observed && !intercepted && triggered, 'Responders removed');
+               });
+            });
+
+         });
+
+
+      </script>
+   </body>
+</html>

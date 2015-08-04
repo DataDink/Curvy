@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Curvy</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/services/Services.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         var instance = {};
+         var singleton = function() {};
+         var contextual = function() {};
+         var transient = function() {};
+         var service = function() {};
+
+         var initialized = false;
+         var loaded = false;
+         var module = function() {
+            this.init = function() { initialized = true; },
+            this.load = function() { loaded = true; }
+         };
+
+         QUnit.test('Registration', function(ass) {
+            ass.ok(!!Curvy.register, 'Global Registrations OK');
+            Curvy.register.instance('instance', instance);
+            Curvy.register.singleton('singleton', [], singleton);
+            Curvy.register.contextual('contextual', [], contextual);
+            Curvy.register.transient('transient', [], transient);
+            Curvy.register.service('service', [], service);
+
+            var app = Curvy.create();
+            ass.ok(app instanceof Curvy, 'Application OK');
+
+            ass.ok(app.dependencies.resolve('instance') === instance, 'Instance OK');
+
+            var singletonFirst = app.dependencies.resolve('singleton');
+            ass.ok(singletonFirst instanceof singleton, 'Singleton OK');
+            ass.ok(singletonFirst === app.dependencies.resolve('singleton'), 'Singleton Persisted');
+
+            var contextualFirst = app.dependencies.resolve('contextual');
+            ass.ok(contextualFirst instanceof contextual, 'Contextual OK');
+            ass.ok(contextualFirst !== app.dependencies.resolve('contextual'), 'Contextual Fresh');
+
+            var transientFirst = app.dependencies.resolve('transient');
+            ass.ok(transientFirst instanceof transient, 'Transient OK');
+            ass.ok(transientFirst !== app.dependencies.resolve('transient'), 'Transient Fresh');
+
+            var serviceFirst = app.dependencies.resolve('service');
+            var serviceAll = app.dependencies.resolve.all('services');
+            ass.ok(serviceFirst instanceof service, 'Service OK');
+            ass.ok(serviceAll instanceof Array, 'Services All');
+            ass.ok(serviceAll[0] instanceof service, 'Services All OK');
+            ass.ok(serviceAll.length === 1, 'Services All Counted');
+            ass.ok(serviceAll[0] === serviceFirst, 'Service Persisted');
+
+            ass.ok(initialized, 'Module initialized');
+            ass.ok(loaded, 'Module Loaded');
+            var moduleFirst = app.dependencies.resolve('module');
+            var moduleAll = app.dependencies.resolve.all('modules');
+            ass.ok(moduleFirst instanceof module, 'Module OK');
+            ass.ok(moduleAll instanceof Array, 'Modules All');
+            ass.ok(moduleAll[0] instanceof module, 'Modules All OK');
+            ass.ok(moduleAll.length === 1, 'Modules All Counted');
+            ass.ok(moduleAll[0] === moduleFirst, 'Modules Persisted');
+
+         });
+      </script>
+   </body>
+</html>

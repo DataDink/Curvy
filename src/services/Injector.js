@@ -11,14 +11,27 @@
             root.register.singleton(names, dependencies, constructor);
          },
          module: function(names, dependencies, constructor) {
-            names = strings(names).filter(function(n) { return n !== 'modules'; }).concat(['modules']));
+            names = strings(names).filter(function(n) { return n !== 'modules'; }).concat(['modules']);
             root.register.singleton(names, dependencies, constructor);
          }
       };
 
       Curvy.create = function() {
          var scope = root.branch();
-         return new Curvy(scope, Curvy.Configuration);
+         var app = new Curvy(Curvy.Configuration);
+         Object.defineProperty(app, 'dependencies', { enumerable: true, configurable: false, value: scope });
+         scope.register.instance('application', app);
+
+         var modules = scope.resolve.all('modules').filter(function(m) { return !!m; });
+         var stages = (app.configuration || {}).lifecycle || [];
+         for (var s = 0; s < stages.length; s++) {
+            var stage = stages[s];
+            for (var m = 0; m < modules.length; m++) {
+               var module = modules[m];
+               if (typeof(module[stage]) === 'function') { module[stage](); }
+            }
+         }
+         return app;
       }
    }
 
@@ -67,27 +80,32 @@
 
       injector.branch = function() {
          var child = new Curvy.Services.Injector();
-         itterate(function(name, info) {
+         itterate(function(names, info) {
             if (info.singleton && ('instance' in info)) { child.register.instance(name, info.instance); }
             else if (info.singleton) { child.register.singleton(name, info.dependencies, info.constructor); }
             else if (info.transient) { child.register.transient(name, info.dependencies, info.constructor); }
             else { child.register.contextual(name, info.dependencies, info.constructor); }
          });
+         return child;
       };
       Object.freeze(injector);
 
       function resolve(item, overrides) {
+         overrides = overrides || {};
          var scope = {};
-         itterate(function(name, info) {
-            scope[name] = scope[name] || [];
-            if (info.singleton) { scope[name].push(info); }
-            else {
-               scope[name].push({
-                  dependencies: info.dependencies,
-                  constructor: info.constructor,
-                  singleton: info.singleton,
-                  transient: info.transient
-               });
+         itterate(function(names, info) {
+            for (var i = 0; i < names.length; i++) {
+               var name = names[i];
+               scope[name] = scope[name] || [];
+               if (info.singleton) { scope[name].push(info); }
+               else {
+                  scope[name].push({
+                     dependencies: info.dependencies,
+                     constructor: info.constructor,
+                     singleton: info.singleton,
+                     transient: info.transient
+                  });
+               }
             }
          });
          if (typeof(item) === 'string') { return resolveName(item, scope, overrides); }
@@ -129,18 +147,30 @@
       }
 
       function itterate(callback) {
+         var reginfos = [];
          for (var name in registry) {
             var registration = registry[name];
             for (var i = 0; i < registration.length; i++) {
-               var info = registration[name];
-               callback(name, info);
+               var info = registration[i];
+               var reginfo = reginfos.filter(function(r) { return r.info === info; })[0];
+               if (!reginfo) {
+                  reginfo = { info: info, names: [] };
+                  reginfos.push(reginfo);
+               }
+               reginfo.names.push(name);
             }
+         }
+         for (var i = 0; i < reginfos.length; i++) {
+            var reginfo = reginfos[i];
+            callback(reginfo.names, reginfo.info);
          }
       }
 
       function register(names, info) {
          if (typeof(info.constructor) !== 'function') { error('Registered constructor was not a function'); }
-         for (var name in strings(names)) {
+         names = strings(names);
+         for (var i = 0; i < names.length; i++) {
+            var name = names[i];
             registry[name] = registry[name] || [];
             registry[name].push(info);
          }
@@ -149,8 +179,8 @@
 
    function strings(items) {
       return (items instanceof Array)
-         ? strings.filter(function(s) { return typeof(s) === 'string'; })
-         : (typeof(strings) === 'string' ? [strings] : []);
+         ? items.filter(function(s) { return typeof(s) === 'string'; })
+         : (typeof(items) === 'string' ? [items] : []);
    }
    register();
 })();
