@@ -2,9 +2,10 @@
 <html>
    <head>
       <meta charset="utf-8">
-      <title>Curvy</title>
+      <title>Pre-Registration</title>
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Configuration.js"></script>
       <script src="../../src/services/Services.js"></script>
       <script src="../../src/services/Injector.js"></script>
    </head>
@@ -34,6 +35,7 @@
             Curvy.register.contextual('contextual', [], contextual);
             Curvy.register.transient('transient', [], transient);
             Curvy.register.service('service', [], service);
+            Curvy.register.module('module', [], module);
 
             var app = Curvy.create();
             ass.ok(app instanceof Curvy, 'Application OK');

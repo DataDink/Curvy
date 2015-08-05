@@ -81,10 +81,10 @@
       injector.branch = function() {
          var child = new Curvy.Services.Injector();
          itterate(function(names, info) {
-            if (info.singleton && ('instance' in info)) { child.register.instance(name, info.instance); }
-            else if (info.singleton) { child.register.singleton(name, info.dependencies, info.constructor); }
-            else if (info.transient) { child.register.transient(name, info.dependencies, info.constructor); }
-            else { child.register.contextual(name, info.dependencies, info.constructor); }
+            if (info.singleton && ('instance' in info)) { child.register.instance(names, info.instance); }
+            else if (info.singleton) { child.register.singleton(names, info.dependencies, info.constructor); }
+            else if (info.transient) { child.register.transient(names, info.dependencies, info.constructor); }
+            else { child.register.contextual(names, info.dependencies, info.constructor); }
          });
          return child;
       };
