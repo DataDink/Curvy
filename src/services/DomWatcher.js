@@ -23,7 +23,7 @@ Curvy.Services.DomWatcher = function(utils) {
       utils.distinct(info.added);
       for (var i = 0; i < listeners.length; i++) {
          listeners[i](info);
-      }s
+      }
    }
 
    var observer;
@@ -53,7 +53,7 @@ Curvy.Services.DomWatcher = function(utils) {
          }
       }
    } else {
-      observer = new MutationObserver(handler);
+      observer = new MutationObserver(broadcast);
       observer.observe(document, {childList: true, subtree: true});
    }
 
