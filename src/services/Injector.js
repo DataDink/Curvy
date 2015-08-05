@@ -111,7 +111,7 @@
          if (typeof(item) === 'string') { return resolveName(item, scope, overrides); }
          if (typeof(item) === 'function') { return resolveConstructor([item], scope, overrides); }
          if (item instanceof Array) { return resolveConstructor(item, scope, overrides); }
-         error('Unable to resolve ' + typeof(item));
+         throw('Unable to resolve ' + typeof(item));
       }
 
       function resolveName(name, scope, overrides) {
@@ -124,7 +124,7 @@
             var info = registration[i];
             if ('instance' in info) { resolutions.push(info.instance); }
             else {
-               var resolution = resolveConstructor(info.dependencies.concat([info.constructor]));
+               var resolution = resolveConstructor(info.dependencies.concat([info.constructor]), scope, overrides);
                if (!info.transient) { info.instance = resolution; }
                resolutions.push(resolution);
             }
@@ -135,10 +135,10 @@
       function resolveConstructor(constructor, scope, overrides) {
          var dependencies = constructor.filter(function(n) { return typeof(n) === 'string'; });
          constructor = constructor.filter(function(n) { return typeof(n) === 'function'; })[0];
-         if (!constructor) { error('Invalid constructor'); }
+         if (!constructor) { throw('Invalid constructor'); }
 
          for (var i = 0; i < dependencies.length; i++) {
-            dependencies[i] = resolve(dependencies[i], scope, overrides);
+            dependencies[i] = resolveName(dependencies[i], scope, overrides);
          }
 
          function Dependency() { constructor.apply(this, dependencies); }
@@ -167,7 +167,7 @@
       }
 
       function register(names, info) {
-         if (typeof(info.constructor) !== 'function') { error('Registered constructor was not a function'); }
+         if (typeof(info.constructor) !== 'function') { throw('Registered constructor was not a function'); }
          names = strings(names);
          for (var i = 0; i < names.length; i++) {
             var name = names[i];
