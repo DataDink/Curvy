@@ -1,3 +1,4 @@
 Curvy.Configuration = {
-   lifecycle: ['init', 'load']
+   lifecycle: ['init', 'load'],
+   nodedata: ' _Curvy Node Data_ '
 }
