@@ -16,7 +16,23 @@
          bindings[name] = (dependencies || []).concat(constructor);
       }});
 
+      dom.listen(function(info) {
+         var removed = roots(info.removed);
+         for (var i = 0; i < removed.length; i++) { unwire(removed[i]); }
+
+         var added = roots(info.added);
+         for (var i = 0; i < added.length; i++) { wire(added[i]); }
+      });
+
       function wire(node) {
+         var attachments = discover(node);
+         for (var a = 0; a < attachments.length; a++) {
+            var scope = {};
+         }
+      }
+
+      function unwire(node) {
+
       }
 
       function discover(node) {
@@ -53,4 +69,17 @@
          return matches;
       }
    };
+
+   function roots(nodes) {
+      var results = [];
+      while (nodes.length) {
+         var node = nodes.pop();
+         var ancestor = node.parentNode;
+         while (ancestor && nodes.filter(function(n) { return n === ancestor; }).length === 0) {
+            ancestor = ancestor.parentNode;
+         }
+         if (!ancestor) { results.push(node); }
+      }
+      return results;
+   }
 })();
