@@ -29,21 +29,23 @@ Curvy.Services.DomWatcher = function(utils) {
    var observer;
    if(!window.MutationObserver && document.addEventListener) {
       observer = function() {
-         root.addEventListener('DOMNodeInserted', function(e) {
-            observer.addedNodes.push(e.target);
+         document.addEventListener('DOMNodeInserted', function(e) {
+            observer.added.push(e.target);
             if (observer.timeout) { clearTimeout(observer.timeout); }
             observer.timeout = setTimeout(observer.broadcast);
          });
-         root.addEventListener('DOMNodeRemoved', function(e) {
-            observer.removedNodes.push(e.target);
+         document.addEventListener('DOMNodeRemoved', function(e) {
+            observer.removed.push(e.target);
             if (observer.timeout) { clearTimeout(observer.timeout); }
             observer.timeout = setTimeout(observer.broadcast);
          });
+         pushall(observer.added, document.querySelectorAll('*'));
+         observer.broadcast();
       };
       observer.added = []; observer.removed = [];
       observer.broadcast = function() {
-         var info = { addedNodes: observer.added, removedNodes: observer.added };
-         observer.addedNodes = []; observer.removedNodes = [];
+         var info = { addedNodes: observer.added, removedNodes: observer.removed };
+         observer.added = []; observer.removed = [];
          broadcast([info]);
       };
       if (document.readyState === 'complete') { observer(); }

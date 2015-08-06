@@ -14,19 +14,43 @@
          var dependencies = Curvy.create().dependencies;
          var watcher = dependencies.resolve('dom-watcher');
 
-         var load = false;
+         var added = [];
+         var removed = [];
          watcher.listen(function(info) {
-            load = true;
+            added = added.concat(info.added);
+            removed = removed.concat(info.removed);
          });
       </script>
    </head>
    <body>
+      <div id="pre-rendered"><div id="pre-inner"></div></div>
       <div id="qunit"></div>
       <div id="qunit-fixture"></div>
       <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
       <script>
-         QUnit.test('Tests', function(ass) {
-            ass.ok(load, 'test');
+         QUnit.test('Pre-Render', function(ass) {
+            var bodyDetected = added.filter(function(e) { return e === document.body; }).length === 1;
+            ass.ok(bodyDetected, 'Body detected');
+
+            var preDiv = document.querySelector('#pre-rendered');
+            var preDivDetected = added.filter(function(e) { return e === preDiv; }).length === 1;
+            ass.ok(preDivDetected, 'Pre-Div Detected');
+
+            var preInner = document.querySelector('#pre-inner');
+            var preInnerDetected = added.filter(function(e) { return e === preInner; }).length === 1;
+            ass.ok(preInnerDetected, 'Pre-Inner Detected');
+
+            added = []; removed = [];
+            preDiv.parentElement.removeChild(preDiv);
+
+            setTimeout(function() {
+               QUnit.test('Post-Render', function(ass) {
+                  var preDivRemoved = removed.filter(function(e) { return e === preDiv; }).length === 1;
+                  ass.ok(preDivRemoved, 'Pre-Div Removal');
+                  var preInnerRemoved = removed.filter(function(e) { return e === preInner; }).length === 1;
+                  ass.ok(!preInnerRemoved, 'Pre-Inner Removal');
+               });
+            }, 100);
          });
       </script>
    </body>
