@@ -15,7 +15,7 @@
       return name.toLowerCase();
    }
 
-   Curvy.Modules.Bindings = function(injector, dom, app, utils, config) {
+   Curvy.Modules.Bindings = function(injector, dom, app, config) {
       var binder = this;
       var bindings = {};
       for (var name in registry) { bindings[name] = registry[name]; }
@@ -29,11 +29,18 @@
       function scan(nodes, names) {
          nodes = reduce(nodes);
          names = names || getNames(bindings);
-         for (var n = 0; n < names.length; n++) { names[n] = getAttribute(names[n]); }
-         var query = names.join(', ');
-         var results = domSearch(node, query);
+         for (var n = 0; n < nodes; n++) {
+            var results = domSearch(nodes[n], names);
+            for (var r = 0; r < results.length; r++) { bind(results[r]); }
+         }
+      }
 
-         for (var n = 0; n < results.length; n++) { bind(results[n]); }
+      function unload(nodes) {
+         nodes = reduce(nodes);
+         for (var n = 0; n < nodes; n++) {
+            var results = domSearch(nodes[n], getNames(bindings));
+            for (var r = 0; r < results.length; r++) { dispose(results[r]); }
+         }
       }
 
       function bind(node) {
@@ -54,6 +61,53 @@
             var instance = injector.resolve(dependencies.concat([Binding]), overrides);
             data.bindings[name] = instance;
          }
+      }
+
+      function dispose(node) {
+         var data = getData(node);
+         if (!data) { return; }
+         for (var d = 0; d < data.disposals; d++) {
+            data.disposals[d]();
+         }
+         for (var name in data.bindings) { delete data.bindings[name]; }
+         for (var name in data.registrations) { delete data.registrations[name]; }
+         while (data.disposals.length) { data.disposals.pop(); }
+         delete data.bindings;
+         delete data.registrations;
+         delete data.suspended;
+         delete data.disposals;
+         delete node[config.nodedata];
+      }
+
+      function initNode(node) {
+         node[config.nodedata] = node[config.nodedata] || {
+            bindings: {},
+            registrations: {},
+            suspended: false,
+            disposals: []
+         };
+         Object.freeze(node[config.nodedata]);
+         return getData(node);
+      }
+
+      function configureContext(context, node) {
+         Object.defineProperty('element', {enumerable: true, configurable: false, value: node});
+         Object.defineProperty('suspend', {enumerable: true, configurable: false, value: function() {
+            var data = getData(node);
+            data.suspended = true;
+            return function() {
+               data.suspended = false;
+               bind(node);
+            };
+         }});
+         Object.defineProperty('register', {enumerable: true, configurable: false, value: function(name, value) {
+            var data = getData(node);
+            data.registrations[name] = value;
+         }});
+         Object.defineProperty('dispose', {enumerable: true, configurable: false, value: function(disposal) {
+            var data = getData(node);
+            data.disposals.push(disposal);
+         }});
       }
 
       function reduce(nodes) {
@@ -77,16 +131,11 @@
          return false;
       }
 
-      function hasAncestor(node, nodes) {
-         var ancestor = node.parentNode;
-         while (ancestor) {
-            if (nodes.filter(function(n) { return n === node; }) { return true; }
-         }
-      }
-
       function formatAttribute(name) { return '[' + name + ']'; }
 
-      function domSearch(node, query) {
+      function domSearch(node, names) {
+         for (var n = 0; n < names.length; n++) { names[n] = getAttribute(names[n]); }
+         var query = names.join(', ');
          var results = node.matches(query) ? [{node: node, depth: domDepth(node)}] : [];
          var search = node.querySelectorAll(query);
          for (var r = 0; r < search.length; r++) { results.push({node: search[r], depth: domDepth(search[r])}); };
@@ -102,87 +151,35 @@
          for (var name in obj) { names.push(name); }
       }
 
-      function initNode(node) {
-         node[config.nodedata] = node[config.nodedata] || {
-            bindings: {},
-            registrations: {},
-            suspended: false
-         };
-         return getData(node);
-      }
-
       function getData(node) {
          return node[config.nodedata];
       }
 
-
-
-
-
-
-      dom.listen(function(info) {
-         unwire(info.removed);
-         wire(info.added);
-      });
-
-      function wire(nodes) {
-         nodes = root(nodes);
-         for (var n = 0; n < nodes.length; n++) {
-            var targets = scan(nodes[n]);
-            for (var t = 0; t < targets.length; t++) {
-               bind(targets[t]);
-            }
-         }
-      }
-
-      function unwire(node) {
-
-      }
-
-      function bind(info) {
-         initNode(info.node);
-         for (var b = 0; b < info.bindings.length; b++) {
-            var name = info.bindings[b];
-            var binding = createBinding(info, name);
-         }
-         for (var c = 0; c < info.children.length; c++) {
-            var child = info.children[c];
-            bind(child);
-         }
-      }
-
-      function createBinding(info, name) {
-         var dependencies = bindings[name];
-         var constructor = dependencies.pop();
-         var overrides = getOverrides(info);
-         var context = createContext(info, name);
-         var Binding = function() { constructor.apply(context, arguments); }
-         Binding.prototype = constructor.prototype;
-         return injector.resolve(dependencies.concat([Binding]), overrides);
-      }
-
-      function getOverrides(info) {
+      function getOverrides(node) {
          var overrides = {};
-         var ancestor = info.node;
+         var ancestor = node;
          while (ancestor) {
-            var data = ancestor[config.nodedata];
+            var data = getData(ancestor);
             if (data) {
                for (var name in data.registrations) {
                   if (name in overrides) { continue; }
                   overrides[name] = data.registrations[name];
                }
             }
-            ancestor = ancestor.parentNode;
+            ancestor = node.parentNode;
          }
          return overrides;
       }
 
-      function createContext(info, name) {
-         var data = info.node[config.nodedata];
-         var context = {};
-
-
+      function hasAncestor(node, nodes) {
+         var ancestor = node.parentNode;
+         while (ancestor) {
+            if (nodes.filter(function(n) { return n === node; }) { return true; }
+         }
       }
 
-
+      dom.listen(function(info) {
+         unload(info.removed);
+         scan(info.added);
+      });
 })();
