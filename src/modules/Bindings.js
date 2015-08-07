@@ -37,18 +37,22 @@
       }
 
       function bind(node) {
-         initNode(node);
+         var data = initNode(node);
          for (var name in bindings) {
             if (isSuspended(node)) { break; }
+            if (name in data.bindings) { continue; }
             if (!node.matches || !node.matches(getAttribute(name))) { continue; }
 
             var overrides = getOverrides(node);
-            var context = createContext(node);
             var dependencies = bindings[name];
             var constructor = dependencies.pop();
-            var Binding = function() { constructor.apply(context, arguments); }
+            var Binding = function() {
+               configureContext(this, node);
+               constructor.apply(this, arguments);
+            }
             Binding.prototype = constructor.prototype;
-            injector.resolve(dependencies.concat([Binding]), overrides);
+            var instance = injector.resolve(dependencies.concat([Binding]), overrides);
+            data.bindings[name] = instance;
          }
       }
 
