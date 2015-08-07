@@ -174,7 +174,7 @@
       function hasAncestor(node, nodes) {
          var ancestor = node.parentNode;
          while (ancestor) {
-            if (nodes.filter(function(n) { return n === node; }) { return true; }
+            if (nodes.filter(function(n) { return n === node; }).length) { return true; }
          }
       }
 
@@ -182,4 +182,6 @@
          unload(info.removed);
          scan(info.added);
       });
+      if (document.body) { scan([body]); }
+   };
 })();
