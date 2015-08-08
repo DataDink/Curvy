@@ -15,12 +15,13 @@
             root.register.singleton(names, dependencies, constructor);
          }
       };
+      root.register.instance('configuration', Curvy.Configuration);
 
       Curvy.create = function() {
          var scope = root.branch();
-         var app = new Curvy(Curvy.Configuration);
-         Object.defineProperty(app, 'dependencies', { enumerable: true, configurable: false, value: scope });
+         var app = scope.resolve(['configuration', Curvy]);
          scope.register.instance('application', app);
+         Object.defineProperty(app, 'dependencies', { enumerable: true, configurable: false, value: scope });
 
          var modules = scope.resolve.all('modules').filter(function(m) { return !!m; });
          var stages = (app.configuration || {}).lifecycle || [];
@@ -93,7 +94,7 @@
       function resolve(item, overrides) {
          overrides = clone(overrides || {});
          overrides.dependencies = injector;
-         
+
          var scope = {};
          itterate(function(names, info) {
             for (var i = 0; i < names.length; i++) {

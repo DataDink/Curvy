@@ -20,6 +20,8 @@
       var bindings = {};
       for (var name in registry) { bindings[name] = registry[name]; }
 
+      config = config || app.configuration || Curvy.Configuration;
+
       Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
          name = validateName(name);
          bindings[name] = (dependencies || []).concat(constructor);
@@ -37,7 +39,7 @@
       function scan(nodes, names) {
          nodes = reduce(nodes);
          names = names || getNames(bindings);
-         for (var n = 0; n < nodes; n++) {
+         for (var n = 0; n < nodes.length; n++) {
             var results = domSearch(nodes[n], names);
             for (var r = 0; r < results.length; r++) { bind(results[r]); }
          }
@@ -144,6 +146,7 @@
       function domSearch(node, names) {
          for (var n = 0; n < names.length; n++) { names[n] = getAttribute(names[n]); }
          var query = names.join(', ');
+         if (!query || !query.length) { return []; }
          var results = node.matches(query) ? [{node: node, depth: domDepth(node)}] : [];
          var search = node.querySelectorAll(query);
          for (var r = 0; r < search.length; r++) { results.push({node: search[r], depth: domDepth(search[r])}); };
@@ -157,6 +160,7 @@
       function getNames(obj) {
          var names = [];
          for (var name in obj) { names.push(name); }
+         return names;
       }
 
       function getData(node) {
@@ -174,7 +178,7 @@
                   overrides[name] = data.registrations[name];
                }
             }
-            ancestor = node.parentNode;
+            ancestor = ancestor.parentNode;
          }
          return overrides;
       }
@@ -182,7 +186,8 @@
       function hasAncestor(node, nodes) {
          var ancestor = node.parentNode;
          while (ancestor) {
-            if (nodes.filter(function(n) { return n === node; }).length) { return true; }
+            if (nodes.filter(function(n) { return n === ancestor; }).length) { return true; }
+            ancestor = ancestor.parentNode;
          }
       }
    };
