@@ -1,6 +1,6 @@
 (function() {
+   var registry = {};
    function register() {
-      var registry = {};
       Curvy.register.binding = function(name, dependencies, constructor) {
          name = validateName(name);
          registry[name] = (dependencies || []).concat(constructor);
@@ -24,6 +24,14 @@
          name = validateName(name);
          bindings[name] = (dependencies || []).concat(constructor);
          scan([document.body], [name]);
+      }});
+
+      Object.defineProperty(binder, 'load', { enumerable: false, configurable: false, value: function() {
+         dom.listen(function(info) {
+            unload(info.removed);
+            scan(info.added);
+         });
+         if (document.body) { scan([document.body]); }
       }});
 
       function scan(nodes, names) {
@@ -177,11 +185,7 @@
             if (nodes.filter(function(n) { return n === node; }).length) { return true; }
          }
       }
-
-      dom.listen(function(info) {
-         unload(info.removed);
-         scan(info.added);
-      });
-      if (document.body) { scan([body]); }
    };
+
+   Curvy.register.module('bindings', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.Bindings);
 })();

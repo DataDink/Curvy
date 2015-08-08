@@ -91,7 +91,9 @@
       Object.freeze(injector);
 
       function resolve(item, overrides) {
-         overrides = overrides || {};
+         overrides = clone(overrides || {});
+         overrides.dependencies = injector;
+         
          var scope = {};
          itterate(function(names, info) {
             for (var i = 0; i < names.length; i++) {
@@ -182,5 +184,12 @@
          ? items.filter(function(s) { return typeof(s) === 'string'; })
          : (typeof(items) === 'string' ? [items] : []);
    }
+
+   function clone(obj) {
+      var dupe = {};
+      for (var name in obj) { dupe[name] = obj[name]; }
+      return dupe;
+   }
+
    register();
 })();
