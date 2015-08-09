@@ -5,7 +5,7 @@
          name = validateName(name);
          registry[name] = (dependencies || []).concat(constructor);
       };
-      Curvy.register.module('bindings', ['injector', 'dom-watcher', 'application', 'utilities'], Curvy.Modules.Bindings)
+      Curvy.register.module('bindings', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.Bindings)
    }
 
    function validateName(name) {
@@ -96,13 +96,12 @@
             suspended: false,
             disposals: []
          };
-         Object.freeze(node[config.nodedata]);
          return getData(node);
       }
 
       function configureContext(context, node) {
-         Object.defineProperty('element', {enumerable: true, configurable: false, value: node});
-         Object.defineProperty('suspend', {enumerable: true, configurable: false, value: function() {
+         Object.defineProperty(context, 'element', {enumerable: true, configurable: false, value: node});
+         Object.defineProperty(context, 'suspend', {enumerable: true, configurable: false, value: function() {
             var data = getData(node);
             data.suspended = true;
             return function() {
@@ -110,11 +109,11 @@
                bind(node);
             };
          }});
-         Object.defineProperty('register', {enumerable: true, configurable: false, value: function(name, value) {
+         Object.defineProperty(context, 'register', {enumerable: true, configurable: false, value: function(name, value) {
             var data = getData(node);
             data.registrations[name] = value;
          }});
-         Object.defineProperty('dispose', {enumerable: true, configurable: false, value: function(disposal) {
+         Object.defineProperty(context, 'dispose', {enumerable: true, configurable: false, value: function(disposal) {
             var data = getData(node);
             data.disposals.push(disposal);
          }});
@@ -144,6 +143,8 @@
       function formatAttribute(name) { return '[' + name + ']'; }
 
       function domSearch(node, names) {
+         if (!node || !node.matches) { return []; }
+         names = names.slice(0);
          for (var n = 0; n < names.length; n++) { names[n] = getAttribute(names[n]); }
          var query = names.join(', ');
          if (!query || !query.length) { return []; }
@@ -190,7 +191,10 @@
             ancestor = ancestor.parentNode;
          }
       }
-   };
 
-   Curvy.register.module('bindings', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.Bindings);
+      function getAttribute(name) {
+         return '[' + name + ']'
+      }
+   };
+   register();
 })();

@@ -14,11 +14,15 @@
       <script src="../../src/modules/Bindings.js"></script>
    </head>
    <body>
+      <div data-test></div>
       <div id="qunit"></div>
       <div id="qunit-fixture"></div>
       <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
       <script>
          QUnit.test('Tests', function(ass) {
+            Curvy.register.binding('data-test', [], function() {
+               console.log(this);
+            });
             var app = Curvy.create();
          });
       </script>
