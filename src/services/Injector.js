@@ -43,27 +43,22 @@
 
       injector.register = {
          instance: function(names, instance) { register(names, {
-            dependencies: [],
-            constructor: function() {},
             instance: instance,
             singleton: true,
             transient: false,
          });},
          singleton: function(names, dependencies, constructor) { register(names, {
-            dependencies: strings(dependencies),
-            constructor: constructor,
+            builder: builder(dependencies, constructor),
             singleton: true,
             transient: false,
          });},
          contextual: function(names, dependencies, constructor) { register(names, {
-            dependencies: strings(dependencies),
-            constructor: constructor,
+            builder: builder(dependencies, constructor),
             singleton: false,
             transient: false,
          });},
          transient: function(names, dependencies, constructor) { register(names, {
-            dependencies: strings(dependencies),
-            constructor: constructor,
+            builder: builder(dependencies, constructor),
             singleton: false,
             transient: true,
          });}
@@ -170,13 +165,28 @@
       }
 
       function register(names, info) {
-         if (typeof(info.constructor) !== 'function') { throw('Registered constructor was not a function'); }
          names = strings(names);
+         if (info.builder) {
+            info.constructor = info.builder.pop();
+            info.dependencies = info.builder;
+            delete info.builder;
+         }
          for (var i = 0; i < names.length; i++) {
             var name = names[i];
             registry[name] = registry[name] || [];
             registry[name].push(info);
          }
+      }
+
+      function builder(deps, ctr) {
+         ctr = typeof(ctr) === 'function' ? ctr
+            : (typeof(deps) === 'function' ? deps
+            : (!!deps && (deps instanceof Array)) ? deps.pop()
+            : false);
+         if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
+
+         deps = strings(deps);
+         return deps.concat([ctr]);
       }
    };
 

@@ -2,17 +2,28 @@
    var registry = {};
    function register() {
       Curvy.register.binding = function(name, dependencies, constructor) {
-         name = validateName(name);
-         registry[name] = (dependencies || []).concat(constructor);
+         createRegistration(registry, name, dependencies, constructor);
       };
       Curvy.register.module('bindings', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.Bindings)
    }
 
-   function validateName(name) {
+   function createRegistration(reg, name, deps, ctr) {
       if (!name) { throw 'Invalid Binding Name'; }
       if (!name.match(/^[a-zA-Z]/gi)) { throw 'Binding name must start with a letter'; }
       if (name.match(/[^a-zA-Z0-9\-\_]/gi)) { throw 'Binding names can only contain alpha-numeric characters, "-", and "_".'; }
-      return name.toLowerCase();
+      name = name.toLowerCase();
+
+      ctr = typeof(ctr) === 'function' ? ctr
+         : (typeof(deps) === 'function' ? deps
+         : (deps instanceof Array ? deps.pop()
+         : false));
+      if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
+
+      deps = deps || [];
+      deps = (deps instanceof Array) ? deps : [];
+
+      reg[name] = deps.concat([ctr]);
+      return name;
    }
 
    Curvy.Modules.Bindings = function(injector, dom, app, config) {
@@ -23,8 +34,7 @@
       config = config || app.configuration || Curvy.Configuration;
 
       Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
-         name = validateName(name);
-         bindings[name] = (dependencies || []).concat(constructor);
+         name = createRegistration(bindings, name, dependencies, constructor);
          scan([document.body], [name]);
       }});
 
@@ -61,7 +71,7 @@
             if (!node.matches || !node.matches(getAttribute(name))) { continue; }
 
             var overrides = getOverrides(node);
-            var dependencies = bindings[name];
+            var dependencies = bindings[name].slice(0);
             var constructor = dependencies.pop();
             var Binding = function() {
                configureContext(this, node);
@@ -106,7 +116,7 @@
             data.suspended = true;
             return function() {
                data.suspended = false;
-               bind(node);
+               scan([node]);
             };
          }});
          Object.defineProperty(context, 'register', {enumerable: true, configurable: false, value: function(name, value) {
