@@ -8,7 +8,7 @@
       Curvy.register.module('viewmodel-manager', ['dependencies', 'application'], Curvy.Modules.ViewModels);
    }
    function builder(deps, ctr) {
-      deps = (deps || []).slice(0);
+      deps = (deps instanceof Array) ? deps.slice(0) : (deps || []);
       ctr = typeof(ctr) === 'function' ? ctr
          : (typeof(deps) === 'function' ? deps
          : (deps instanceof Array ? deps.pop()
@@ -51,14 +51,14 @@
       }});
 
       Object.defineProperty(manager, 'create', { configurable: false, enumerable: true, value: function(constructor, parent, binding) {
-         if (!(deps instanceof Array)) { throw 'Invalid Constructor'; }
+         if (!(constructor instanceof Array)) { throw 'Invalid Constructor'; }
          var deps = constructor.slice(0);
          var ctr = deps.pop();
          if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
          function ViewModel() {
             var vm = this;
             Curvy.Observable.call(vm);
-            Object.defineProperty(vm, 'view', {configurable: false, enumerable: true, value: binding.view});
+            Object.defineProperty(vm, 'view', {configurable: false, enumerable: true, value: binding.element});
             Object.defineProperty(vm, 'parent', {configurable: false, enumerable: true, value: parent});
             Object.defineProperty(vm, 'dispose', {configurable: false, enumerable: true, value: function(disposal) {
                binding.dispose(disposal);
@@ -69,7 +69,7 @@
          ViewModel.prototype = Curvy.Observable.prototype;
          return injector.resolve(deps.concat([ViewModel]));
       }});
-   });
+   };
 
    register();
 })();
