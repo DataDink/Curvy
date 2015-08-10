@@ -11,4 +11,4 @@
             };
    Element.prototype.matches = Element.prototype.matches || polyfill;
    document.matches = document.matches || polyfill;
-})
+})();

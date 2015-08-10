@@ -29,16 +29,15 @@
       <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
       <script>
          QUnit.test('Pre-Render', function(ass) {
-            var bodyDetected = added.filter(function(e) { return e === document.body; }).length === 1;
-            ass.ok(bodyDetected, 'Body detected');
+            ass.ok(added.length, 'Node Adds Detected');
 
             var preDiv = document.querySelector('#pre-rendered');
-            var preDivDetected = added.filter(function(e) { return e === preDiv; }).length === 0;
-            ass.ok(preDivDetected, 'Pre-Div Undetected');
+            var preDivDetected = added.filter(function(e) { return e === preDiv || (e.contains && e.contains(preDiv)); }).length > 0;
+            ass.ok(preDivDetected, 'Pre-Div Detected');
 
             var preInner = document.querySelector('#pre-inner');
-            var preInnerDetected = added.filter(function(e) { return e === preInner; }).length === 0;
-            ass.ok(preInnerDetected, 'Pre-Inner Undetected');
+            var preInnerDetected = added.filter(function(e) { return e === preInner || (e.contains && e.contains(preInner)); }).length > 0;
+            ass.ok(preInnerDetected, 'Pre-Inner Detected');
 
             added = []; removed = [];
             preDiv.parentElement.removeChild(preDiv);
