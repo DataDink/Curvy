@@ -39,9 +39,18 @@
       }});
 
       Object.defineProperty(binder, 'load', { enumerable: false, configurable: false, value: function() {
+         var suspendCircuit = false;
          dom.listen(function(info) {
-            unload(info.removed);
-            scan(info.added);
+            try {
+               if (suspendCircuit) { return; }
+               unload(info.removed);
+               scan(info.added);
+            } catch (error) {
+               suspendCircuit = true;
+               setTimeout(function() { suspendCircuit = false; }, 250)
+               if (console && console.log) { console.log('Circuit breaker tripped.'); }
+               throw error;
+            }
          });
          if (document.body) { scan([document.body]); }
       }});
