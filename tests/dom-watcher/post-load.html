@@ -44,9 +44,19 @@
 
                added = []; removed = [];
                preDiv.parentElement.removeChild(preDiv);
+               var appended = document.createElement('div');
+               appended.innerHTML = '<div></div>';
+               var appendedChild = appended.childNodes[0];
+               document.body.appendChild(appended);
+
 
                setTimeout(function() {
                   QUnit.test('Post-Render', function(ass) {
+                     var appendedDetected = added.filter(function(e) { return e === appended; }).length === 1;
+                     ass.ok(appendedDetected, 'Appended Node Detected');
+                     var appendedChildUndetected = added.filter(function(e) { return e === appendedChild; }).length === 0;
+                     ass.ok(appendedChildUndetected, 'Appended Child Undetected');
+
                      var preDivRemoved = removed.filter(function(e) { return e === preDiv; }).length === 1;
                      ass.ok(preDivRemoved, 'Pre-Div Removal');
                      var preInnerRemoved = removed.filter(function(e) { return e === preInner; }).length === 1;

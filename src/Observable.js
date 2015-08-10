@@ -33,8 +33,8 @@
          for (var i = 0; i < interceptors.length; i++) { interceptors[i](member, args); }
       }});
 
-      Object.defineProperty(observable, 'dispose', { enumerable: true, configurable: false, value: function() {
-         observable.notifyIntercept('dispose', arguments);
+      Object.defineProperty(observable, 'destroy', { enumerable: true, configurable: false, value: function() {
+         observable.notifyIntercept('destroy', arguments);
          var nothing = (function() {})();
          interceptors = nothing;
          observable = nothing;

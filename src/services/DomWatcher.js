@@ -19,11 +19,28 @@ Curvy.Services.DomWatcher = function(utils) {
          pushall(info.added, reports[r].addedNodes);
          pushall(info.removed, reports[r].removedNodes);
       }
-      utils.distinct(info.removed);
-      utils.distinct(info.added);
+
+      info.removed = reduce(info.removed);
+      info.added = reduce(info.added);
       for (var i = 0; i < listeners.length; i++) {
          listeners[i](info);
       }
+   }
+
+   // reduce filters out nodes that are children of others in the array
+   function reduce(nodes) {
+      var results = [];
+      for (var n = 0; n < nodes.length; n++) {
+         var node = nodes[n];
+         if (results.filter(function(r) { return r === node; }).length) { continue; }
+         var ancestor = node.parentNode;
+         while (ancestor && !nodes.filter(function(a) { return a === ancestor; }).length) {
+            ancestor = ancestor.parentNode;
+         }
+         if (ancestor) { continue; }
+         results.push(node);
+      }
+      return results;
    }
 
    var observer;

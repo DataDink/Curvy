@@ -29,13 +29,14 @@
    Curvy.Modules.Bindings = function(injector, dom, app, config) {
       var binder = this;
       var bindings = {};
-      for (var name in registry) { bindings[name] = registry[name]; }
-
       config = config || app.configuration || Curvy.Configuration;
 
-      Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
-         name = createRegistration(bindings, name, dependencies, constructor);
-         scan([document.body], [name]);
+      Object.defineProperty(binder, 'init', { enumerable: false, configurable: false, value: function() {
+         for (var name in registry) { bindings[name] = registry[name]; }
+         Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
+            name = createRegistration(bindings, name, dependencies, constructor);
+            scan([document.body], [name]);
+         }});
       }});
 
       Object.defineProperty(binder, 'load', { enumerable: false, configurable: false, value: function() {
@@ -56,7 +57,7 @@
       }});
 
       function scan(nodes, names) {
-         nodes = reduce(nodes);
+         nodes = nodes.filter(function(n) { return !isSuspended(n); });
          names = names || getNames(bindings);
          for (var n = 0; n < nodes.length; n++) {
             var results = domSearch(nodes[n], names);
@@ -65,7 +66,6 @@
       }
 
       function unload(nodes) {
-         nodes = reduce(nodes);
          for (var n = 0; n < nodes; n++) {
             var results = domSearch(nodes[n], getNames(bindings));
             for (var r = 0; r < results.length; r++) { dispose(results[r]); }
@@ -138,17 +138,6 @@
          }});
       }
 
-      function reduce(nodes) {
-         var reduction = [];
-         for (var n = 0; n < nodes.length; n++) {
-            var node = nodes[n];
-            if (isSuspended(node)) { continue; }
-            if (hasAncestor(node, nodes)) { continue; }
-            reduction.push(node);
-         }
-         return reduction;
-      }
-
       function isSuspended(node) {
          var ancestor = node;
          while(ancestor) {
@@ -201,14 +190,6 @@
             ancestor = ancestor.parentNode;
          }
          return overrides;
-      }
-
-      function hasAncestor(node, nodes) {
-         var ancestor = node.parentNode;
-         while (ancestor) {
-            if (nodes.filter(function(n) { return n === ancestor; }).length) { return true; }
-            ancestor = ancestor.parentNode;
-         }
       }
 
       function getAttribute(name) {

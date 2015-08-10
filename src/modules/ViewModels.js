@@ -22,24 +22,54 @@
    Curvy.Modules.ViewModels = function(injector, app) {
       var manager = this;
       var viewmodels = {};
-      for (var name in registry) { viewmodels[name] = registry[name]; }
+      var postponed = {};
 
-      Object.defineProperty(app, 'viewmodel', { configurable: false, enumerable: true, value: function(name, dependencies, constructor) {
-         if (!name) { throw 'Invalid Name'; }
-         viewmodels[name] = builder(dependencies, constructor);
+      Object.defineProperty(manager, 'init', { configurable: false, enumerable: false, value: function() {
+         for (var name in registry) { viewmodels[name] = registry[name]; }
+         Object.defineProperty(app, 'viewmodel', { configurable: false, enumerable: true, value: function(name, dependencies, constructor) {
+            manager.register(name, dependencies, constructor);
+         }});
       }});
 
-      Object.defineProperty(manager, 'resolve', { configurable: false, enumerable: true, value: function(name, parent, view) {
+      Object.defineProperty(manager, 'register', { configurable: false, enumerable: true, value: function(name, dependencies, constructor) {
+         if (!name) { throw 'Invalid Name'; }
+         viewmodels[name] = builder(dependencies, constructor);
+         if (name in postponed) {
+            for (var i = 0; i < postponed[name].length; i++) { postponed[name][i](); }
+            delete postponed[name];
+         }
+      }});
+
+      Object.defineProperty(manager, 'postpone', { configurable: false, enumerable: true, value: function(name, action) {
+         postponed[name] = postponed[name] || [];
+         postponed[name].push(action);
+      }});
+
+      Object.defineProperty(manager, 'resolve', { configurable: false, enumerable: true, value: function(name, parent, binding) {
          if (!(name in viewmodels)) { return false; }
-         var deps = viewmodels[name];
+         return manager.create(viewmodels[name].slice(0), parent, binding);
+      }});
+
+      Object.defineProperty(manager, 'create', { configurable: false, enumerable: true, value: function(constructor, parent, binding) {
+         if (!(deps instanceof Array)) { throw 'Invalid Constructor'; }
+         var deps = constructor.slice(0);
          var ctr = deps.pop();
-         var ViewModel = function() {
-            var viewmodel = new Curvy.Observable();
-            Object.defineProperty(viewmodel, 'parent', {configurable: false, enumerable: true, value: parent});
-            Object.defineProperty(viewmodel, 'view', {configurable: false, enumerable: true, value: view});
-            ctr.apply(viewmodel, arguments);
-         };
+         if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
+         function ViewModel() {
+            var vm = this;
+            Curvy.Observable.call(vm);
+            Object.defineProperty(vm, 'view', {configurable: false, enumerable: true, value: binding.view});
+            Object.defineProperty(vm, 'parent', {configurable: false, enumerable: true, value: parent});
+            Object.defineProperty(vm, 'dispose', {configurable: false, enumerable: true, value: function(disposal) {
+               binding.dispose(disposal);
+            }});
+            ctr.apply(vm, arguments);
+            vm.seal();
+         }
+         ViewModel.prototype = Curvy.Observable.prototype;
          return injector.resolve(deps.concat([ViewModel]));
       }});
    });
+
+   register();
 })();

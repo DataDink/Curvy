@@ -33,12 +33,12 @@
             ass.ok(bodyDetected, 'Body detected');
 
             var preDiv = document.querySelector('#pre-rendered');
-            var preDivDetected = added.filter(function(e) { return e === preDiv; }).length === 1;
-            ass.ok(preDivDetected, 'Pre-Div Detected');
+            var preDivDetected = added.filter(function(e) { return e === preDiv; }).length === 0;
+            ass.ok(preDivDetected, 'Pre-Div Undetected');
 
             var preInner = document.querySelector('#pre-inner');
-            var preInnerDetected = added.filter(function(e) { return e === preInner; }).length === 1;
-            ass.ok(preInnerDetected, 'Pre-Inner Detected');
+            var preInnerDetected = added.filter(function(e) { return e === preInner; }).length === 0;
+            ass.ok(preInnerDetected, 'Pre-Inner Undetected');
 
             added = []; removed = [];
             preDiv.parentElement.removeChild(preDiv);
