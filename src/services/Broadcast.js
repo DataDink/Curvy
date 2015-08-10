@@ -1,5 +1,5 @@
 // Singleton service that manages global broadcasts
-Curvy.Service.Broadcast = function() {
+Curvy.Services.Broadcast = function() {
    var service = this;
    var subscriptions = {};
    service.subscribe = function(key, callback) {
@@ -24,4 +24,4 @@ Curvy.Service.Broadcast = function() {
 
    Object.freeze(service);
 };
-Curvy.register.service('broadcast', Curvy.Service.Broadcast);
+Curvy.register.service('broadcast', Curvy.Services.Broadcast);

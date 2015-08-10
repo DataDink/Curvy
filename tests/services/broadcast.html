@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Broadcast</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/services/Services.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/Broadcast.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         QUnit.test('Tests', function(ass) {
+            var service = new Curvy.Services.Broadcast();
+
+            var messages = [];
+            var responder = function(message) { messages.push(message); }
+
+            service.subscribe('test', responder);
+            service.send('test', 'valid');
+            ass.ok(messages[0] === 'valid', 'Pass Message Passed');
+            service.send('fail', 'invalid');
+            ass.ok(messages.length === 1, 'Fail Message Failed');
+            service.unsubscribe(responder);
+            service.send('test', 'invalid');
+            ass.ok(messages.length === 1, 'Ignore Message Ignored');
+
+         });
+
+
+      </script>
+   </body>
+</html>
