@@ -1,5 +1,5 @@
 // Singleton service that manages global broadcasts
-Application.extend.register.perApp('broadcast', function() {
+Curvy.Service.Broadcast = function() {
    var service = this;
    var subscriptions = {};
    service.subscribe = function(key, callback) {
@@ -23,4 +23,5 @@ Application.extend.register.perApp('broadcast', function() {
    };
 
    Object.freeze(service);
-});
+};
+Curvy.register.service('broadcast', Curvy.Service.Broadcast);
