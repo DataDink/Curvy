@@ -4,7 +4,7 @@
       Curvy.register.binding = function(name, dependencies, constructor) {
          createRegistration(registry, name, dependencies, constructor);
       };
-      Curvy.register.module('bindings', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.Bindings)
+      Curvy.register.module('binding-manager', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.BindingManager)
    }
 
    function createRegistration(reg, name, deps, ctr) {
@@ -26,7 +26,7 @@
       return name;
    }
 
-   Curvy.Modules.Bindings = function(injector, dom, app, config) {
+   Curvy.Modules.BindingManager = function(injector, dom, app, config) {
       var binder = this;
       var bindings = {};
       config = config || app.configuration || Curvy.Configuration;
