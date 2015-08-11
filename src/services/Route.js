@@ -7,6 +7,7 @@
       this.channel = 'Route.Updated';
       Object.defineProperty(service, 'channel', { configurable: false, enumerable: true, value: 'Route.Updated'});
 
+      var previous = false;
       Object.defineProperty(service, 'current', {configurable: false, enumerable: true, get: function() {
          return service.parse(window.location.hash);
       }});
@@ -24,9 +25,17 @@
       var general = [];
       var subscriptions = {};
       Object.defineProperty(service, 'subscribe', {configurable: false, enumerable: true, value: function(subscription, uri) {
-         if (uri === nothing) { general.push(subscription); return; }
+         var handler = typeof(subscription) === 'function' ? subscription
+            : (typeof(uri) === 'function' ? uri
+            : false);
+         if (!handler) { throw 'Invalid Subscription'; }
+
+         var uri = typeof(uri) === 'string' ? uri
+            : (typeof(subscription) === 'string' ? subscription
+            : false);
+         if (!uri) { general.push(handler); return; }
          subscriptions[uri] = subscription[uri] || [];
-         subscriptions[uri].push(subscription);
+         subscriptions[uri].push(handler);
       }});
 
       Object.defineProperty(service, 'unsubscribe', {configurable: false, enumerable: true, value: function(subscription) {
