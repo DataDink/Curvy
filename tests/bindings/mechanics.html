@@ -15,52 +15,77 @@
       <script src="../../src/modules/Bindings.js"></script>
    </head>
    <body>
-
-      <div view-model="pre-load">
-         <div pre-bind></div>
+      <div suspend>
+         <div suspend-child></div>
       </div>
-      
-      <div view-model="post-load">
-         <div post-bind></div>
+      <div resume>
+         <div resume-child></div>
       </div>
+      <div dupe-stack><div dupe-stack></div></div>
+      <div dupe></div><div dupe></div>
 
       <div id="qunit"></div>
       <div id="qunit-fixture"></div>
       <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
       <script>
          QUnit.test('Tests', function(ass) {
-            var dependency = {};
-            var preVm = false;
-            var preVmLoaded = false;
-            var preVmDep = false;
-            var preBindLoaded = false;
-            var preBindVm = false;
+            var suspendLoaded = false;
+            var suspendHalted = true;
 
-            var postVm = false;
-            var postVmLoaded = false;
-            var postVmDep = false;
-            var postBindLoaded = false;
-            var postBindVm = false;
+            var resumeLoaded = false;
+            var resumeRerun = false;
+            var resumeValue = false;
+            var resumeAction = false;
 
-            Curvy.register.instance('dep', dependency);
-            Curvy.register.viewmodel('pre-load', ['dep'], function(dep) {
-               preVmLoaded = true;
-               preVmDep = dep === dependency;
-               preVm = this;
-            });
-            Curvy.register.binding('pre-bind', ['viewmodel'], function(vm) {
-               preBindLoaded = true;
-               preBindVm = vm;
+            var dupeStackCount = 0;
+            var dupeCount = 0;
+
+            Curvy.register.binding('suspend', function() {
+               suspendLoaded = true;
+               this.suspend();
             });
 
-            var app = Curvy.create();
-            ass.ok(preVmLoaded, 'Pre VM Loaded');
-            ass.ok(preVmDep, 'Pre VM Dependency');
-            ass.ok(preBindLoaded, 'Pre Bind Loaded');
-            ass.ok(preBindVm === preVm, 'Pre Bind VM');
-            ass.ok(preVm instanceof Curvy.Observable, 'VM Is Observable');
+            Curvy.register.binding('suspend-child', function() {
+               suspendHalted = false;
+            });
 
+            Curvy.register.binding('resume', function() {
+               resumeLoaded = true;
+               var context = this;
+               var resumer = this.suspend();
+               resumeAction = function() {
+                  context.register('value', 'test');
+                  resumer();
+               };
+            });
 
+            Curvy.register.binding('resume-child', ['value'], function(value) {
+               resumeRerun = true;
+               resumeValue = value;
+            });
+
+            Curvy.register.binding('dupe-stack', function() {
+               dupeStackCount++;
+            });
+
+            Curvy.register.binding('dupe', function() {
+               dupeCount++;
+            });
+
+            Curvy.create();
+
+            ass.ok(suspendLoaded && suspendHalted, 'Suspend Halted');
+
+            ass.ok(resumeLoaded && !resumeRerun, 'Resume Halted');
+
+            ass.ok(dupeStackCount === 2, 'Stacked Dupes Correct');
+
+            ass.ok(dupeCount === 2, 'Sibling Dupes Correct');
+
+            resumeAction();
+
+            ass.ok(resumeRerun, 'Resume Succeeded');
+            ass.ok(resumeValue === 'test', 'Resume Value OK');
          });
       </script>
    </body>

@@ -69,7 +69,7 @@
          ViewModel.prototype = Curvy.Observable.prototype;
          return injector.resolve(deps.concat([ViewModel]));
       }});
-   };
+   });
 
    register();
 })();
