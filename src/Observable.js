@@ -47,7 +47,8 @@
          if (target) { return proxy(target, observable); }
          target = {};
          for (member in observable) {
-            if (locked(observable, member)) { continue; }
+            if (member in Curvy.Observable.prototype) { continue; }
+            else if (locked(observable, member)) { continue; }
             target[member] = observable[member];
          };
          return proxy(target, observable, observers);
@@ -60,25 +61,38 @@
       return source;
    }});
 
+   function defaultDispose() {};
+
+   function pathInfo(path) {
+      var parts = (path || '').split('.');
+      if (!parts.length) { return false; }
+      var member = parts.shift();
+      if (!member) { return false; }
+      return {path: path, member: member, child: parts.join('.')};
+   }
+
+   function watchChild(child, path, callback) {
+      return (child instanceof Curvy.Observable) ? child.watch(path, callback) : defaultDispose;
+   }
+
    Object.defineProperty(Curvy.Observable.prototype, 'watch', { enumerable: true, configurable: false, value: function(path, callback) {
-      if (!(this instanceof Curvy.Observable)) { return function() {}; }
-      var parts = (path || '').split('.'); if (!parts.length) { return function() {}; }
-      var member = parts.shift(); if (!member) { return function() {}; }
-      var childpath = parts.join('.');
-      function watchchild(child) { return (child instanceof Curvy.Observable)
-         ? child.watch(childpath, callback)
-         : function() {};
-      }
-      var disposechild = watchchild(this[member]);
-      var observer = function(name) { if (name === member) {
-         disposechild();
-         disposechild = watchchild(this[member]);
-         callback.call(target, member);
-      } };
-      this.observe(observer);
+      if (!(this instanceof Curvy.Observable)) { return defaultDispose; }
+      var observable = this;
+      path = pathInfo(path);
+      if (!path) { return defaultDispose; }
+
+      var disposechild = watchChild(observable[path.member], path.child, callback);
+      var observer = function(name) {
+         if (name === path.member) {
+            disposechild();
+            disposechild = watchChild(observable[path.member], path.child, callback);
+            callback.call(observable, path.member);
+         }
+      };
+      observable.observe(observer);
       return function() {
-         this.unobserve(observer); disposechild();
-      }
+         observable.unobserve(observer); disposechild();
+      };
    }});
 
    function proxy(target, surrogate) {
@@ -108,4 +122,5 @@
    }
 
    function locked(model, member) { return !(Object.getOwnPropertyDescriptor(model, member) || {configurable: true}).configurable; }
+   Object.freeze(Curvy.Observable.prototype);
 })();

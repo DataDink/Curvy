@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Watch</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         QUnit.test('Observations', function(ass) {
+            var root = new Curvy.Observable();
+            var parent = new Curvy.Observable();
+            var child = new Curvy.Observable();
+
+            root.parent = parent;
+            parent.child = child;
+            child.value = 'test';
+
+            child.seal();
+            parent.seal();
+            root.seal();
+
+            var observed = false;
+            var observer = function() {
+               observed = true;
+            };
+
+            var dispose = root.watch('parent.child.value', observer);
+
+            child.value = 'change';
+            ass.ok(observed, 'Value Observed');
+
+            observed = false;
+            parent.child = 'test';
+            ass.ok(observed, 'Child Observed');
+
+            observed = false;
+            root.parent = 'test';
+            ass.ok(observed, 'Parent Observed');
+
+            QUnit.test('Detachments', function(ass) {
+
+               observed = false;
+               child.value = 'test';
+               ass.ok(!observed, 'Value Ignored');
+
+               observed = false;
+               parent.child = child;
+               ass.ok(!observed, 'Child Ignored');
+
+               QUnit.test('Retachment', function(ass) {
+
+                  observed = false;
+                  root.parent = parent;
+                  ass.ok(observed, 'Parent Observed');
+
+                  observed = false;
+                  child.value = 'change';
+                  ass.ok(observed, 'Value Observed');
+
+                  QUnit.test('Disposal', function(ass) {
+
+                     observed = false;
+                     dispose();
+                     ass.ok(!observed, 'Disposed');
+
+                     observed = false;
+                     child.value = 'test';
+                     ass.ok(!observed, 'Child Disposed');
+
+                     observed = false;
+                     parent.child = 'test';
+                     ass.ok(!observed, 'Parent Disposed');
+
+                     observed = false;
+                     root.parent = 'test';
+                     ass.ok(!observed, 'Root Disposed');
+
+                  });
+               });
+            });
+         });
+
+
+      </script>
+   </body>
+</html>
