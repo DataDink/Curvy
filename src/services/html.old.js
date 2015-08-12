@@ -23,43 +23,6 @@
          return nodes;
       };
 
-      // GETINPUTVALUE: tries to determine an input type and get an appropriate value
-      service.getInputValue = function(element) {
-         if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
-            return element.checked;
-         }
-         if (element.matches('select')) {
-            var values = [];
-            for (var i = 0; i < element.options.length; i++) {
-               if (element.options[i].selected) { values.push(element.options[i].value); }
-            }
-            return values.length > 1 ? values : values[0];
-         }
-         if ('value' in element) { return element.value; }
-         return element.innerHTML || '';
-      };
-
-      // SETINPUTVALUE: tries to determine an input type and set an appropriate value
-      service.setInputValue = function(element, value) {
-         if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
-            element.checked = !!value;
-            return;
-         }
-         if (element.matches('select')) {
-            if (!utils.is(value, Array)) { value = [value]; }
-            for (var o = 0; o < element.options.length; o++) {
-               element.options[o].selected = false;
-               for (var v = 0; v < value.length; v++) {
-                  if (element.options[o].value !== value[v]) { continue; }
-                  element.options[o].selected = true;
-               }
-            }
-            return;
-         }
-         if ('value' in element) { element.value = value; return; }
-         element.innerHTML = service.encode((value || '').toString());
-      };
-
       // SETSTYLE: Adds a styling rule to the page
       service.setStyle = function(selector, style) {
          if (selector in styles) { return; }
@@ -129,22 +92,6 @@
          return uri.indexOf('?') >= 0
             ? uri + '&' + params
             : uri + '?' + params;
-      }
-
-      // PARSEQUERY: converts a query string into an object
-      service.parseQuery = function(params) {
-         var result = {};
-         var items = (params || '').replace(/^\?+|^\&+|\&+$/g, '').split('&');
-         for (var i = 0; i < items.length; i++) {
-            var parts = items[i].split('=');
-            if (parts.length !== 2) { continue; }
-            var key = decodeURIComponent(parts[0] || '');
-            var value = decodeURIComponent(parts[1] || '');
-            if (typeof(result[key]) === 'string') { result[key] = [result[key], value]; }
-            else if (key in result) { result[key].push(value); }
-            else { result[key] = value; }
-         }
-         return result;
       }
 
       Object.freeze(service);
