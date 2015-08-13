@@ -11,14 +11,14 @@ Curvy.register.binding('data-class', ['viewmodel'], function(viewmodel) {
 
       var update = function(path) {
          if (classes[path] !== false) { binding.element.classList.remove(classes[path]); }
-         classes[path] = validate(this.path(path));
+         classes[path] = validate(viewmodel.path(path));
          if (!classes[path]) { return; }
          binding.element.classList.add(classes[path]);
       };
 
       for (var i = 0; i < paths.length; i++) {
          classes[paths[i]] = false;
-         viewmodel.watch(paths[i], (function(p) { return function() { update.call(this, p); }; })(paths[i]));
+         viewmodel.watch(paths[i], (function(p) { return function() { update(p); }; })(paths[i]));
          update(paths[i]);
       }
    } else if (config) {
@@ -26,22 +26,24 @@ Curvy.register.binding('data-class', ['viewmodel'], function(viewmodel) {
       for (var i = 0; i < settings.length; i++) {
          var parts = settings[i].split(':');
          settings[i] = {
-            class: parts[0].trim(),
+            class: validate(parts[0].trim()),
             path: parts[1].trim()
          };
+         if (!settings[i].class) { throw 'Invalid Class Name'; }
+
          settings[i].update = (function(setting) { return function() {
             var value = viewmodel.path(setting.path);
-            if (value) { html.addClass(view.element, setting.class); }
-            else { html.removeClass(view.element, setting.class); }
+            binding.element.classList.remove(setting.class);
+            if (value) { binding.element.classList.add(setting.class); }
          };})(settings[i]);
          viewmodel.watch(settings[i].path, settings[i].update);
          settings[i].update();
       }
    }
 
-   function validate(class) {
-      if (typeof(class) !== 'string' || class.length < 1) { return false; }
-      if (/[^a-zA-Z0-9\-_]/.test(class)) { return false; }
-      return class.toLowerString();
+   function validate(name) {
+      if (typeof(name) !== 'string' || name.length < 1) { return false; }
+      if (/[^a-zA-Z0-9\-_]/.test(name)) { return false; }
+      return name.toLowerCase();
    }
 });

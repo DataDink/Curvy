@@ -56,9 +56,10 @@
    };
 
    Object.defineProperty(Curvy.Observable.prototype, 'path', { enumerable: true, configurable: false, value: function(path) {
+      var value = this;
       var parts = (path.split('.') || []);
-      while (source !== nothing && parts.length) { source = source[parts.shuft()]; }
-      return source;
+      while (typeof(value) !== 'undefined' && parts.length) { value = value[parts.shift()]; }
+      return value;
    }});
 
    function defaultDispose() {};
