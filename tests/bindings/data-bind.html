@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>data-bind</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/polyfills/matches.js"></script>
+      <script src="../../src/polyfills/classlist.js"></script>
+
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+      <script src="../../src/Configuration.js"></script>
+
+      <script src="../../src/services/Services.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+
+      <script src="../../src/modules/Modules.js"></script>
+      <script src="../../src/modules/BindingManager.js"></script>
+      <script src="../../src/modules/ViewModelManager.js"></script>
+
+      <script src="../../src/bindings/Bindings.js"></script>
+      <script src="../../src/bindings/view-model.js"></script>
+      <script src="../../src/bindings/data-bind.js"></script>
+   </head>
+   <body>
+      <div view-model="test">
+         <input type="checkbox" data-bind="toggle" />
+         <input type="text" data-bind="text" />
+         <select data-bind="select">
+            <option value="a">a</option>
+            <option>b</option>
+            <option value="c"></option>
+         </select>
+      </div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         QUnit.test('Tests', function(ass) {
+            var cbox = document.querySelector('[type=checkbox]');
+            var text = document.querySelector('[type=text]');
+            var sel = document.querySelector('select');
+            var viewmodel = false;
+
+            Curvy.register.viewmodel('test', function() {
+               viewmodel = this;
+               viewmodel.toggle = true;
+               viewmodel.text = 'test';
+               viewmodel.select = 'c';
+            });
+            Curvy.create();
+
+            ass.ok(cbox.checked);
+            ass.ok(text.value === 'test');
+            ass.ok(!sel.options[0].selected);
+            ass.ok(!sel.options[1].selected);
+            ass.ok(sel.options[2].selected);
+            viewmodel.select = 'b';
+            ass.ok(!sel.options[0].selected);
+            ass.ok(sel.options[1].selected);
+            ass.ok(!sel.options[2].selected);
+            viewmodel.select = 'd';
+            ass.ok(sel.options[0].selected);
+            ass.ok(!sel.options[1].selected);
+            ass.ok(!sel.options[2].selected);
+            sel.setAttribute('multiple', 'true')
+            viewmodel.select = ['b', 'c'];
+            ass.ok(!sel.options[0].selected);
+            ass.ok(sel.options[1].selected);
+            ass.ok(sel.options[2].selected);
+            sel.options[0].selected = true;
+
+            sel.dispatchEvent(new Event('change'));
+            ass.ok(viewmodel.select.length === 3);
+         });
+
+
+      </script>
+   </body>
+</html>

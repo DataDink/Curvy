@@ -1,7 +1,8 @@
 // Binds an input's value to the ViewModel
 (function() {
-   Curvy.register.binding('data-bind', function(viewmodel) {
-      var uri = view.element.getAttribute('data-bind') || false;
+   Curvy.register.binding('data-bind', ['viewmodel'], function(viewmodel) {
+      var binding = this;
+      var uri = binding.element.getAttribute('data-bind') || false;
       if (!uri) { throw 'data-bind must be set to a property / path to watch' }
 
       var parts = uri.split('.');
@@ -19,7 +20,7 @@
             toModel = true; toView = false;
 
             var model = !modelPath ? viewmodel : viewmodel.path(modelPath);
-            model[memberName] = getInput(view.element);
+            model[memberName] = getInput(binding.element);
             toModel = false;
          });
       } catch (error) { } }
@@ -29,7 +30,7 @@
          toView = true; toModel = false;
 
          var value = viewmodel.path(uri);
-         setInput(view.element, value === utilities.nothing ? '' : value);
+         setInput(binding.element, typeof(value) === 'undefined' ? '' : value);
          toView = false;
       }
 
@@ -37,7 +38,7 @@
       writeView();
    });
 
-   function getInput(input) {
+   function getInput(element) {
       if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
          return element.checked;
       }
@@ -52,13 +53,13 @@
       return element.innerHTML || '';
    }
 
-   function setInput(input) {
+   function setInput(element, value) {
       if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
          element.checked = !!value;
          return;
       }
       if (element.matches('select')) {
-         if (!utils.is(value, Array)) { value = [value]; }
+         if (!(value instanceof Array)) { value = [value]; }
          for (var o = 0; o < element.options.length; o++) {
             element.options[o].selected = false;
             for (var v = 0; v < value.length; v++) {
@@ -72,5 +73,3 @@
       element.innerHTML = service.encode((value || '').toString());
    }
 })();
-Application.extend.binding('data-bind', ['view', 'viewmodel', 'utilities', 'html', function(view, viewmodel, utilities, html) {
-}]);
