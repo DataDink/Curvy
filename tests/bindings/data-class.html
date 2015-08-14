@@ -50,8 +50,29 @@
             });
             Curvy.create();
 
-            ass.ok(!configured.className, 'Configured Empty');
-            ass.ok(variable.className === 'three four', 'Variable OK');
+            // These would be better written to not require specific ordering of classes.
+            ass.ok(!configured.className);
+            ass.ok(variable.className === 'three four');
+            viewmodel.toggle = true;
+            ass.ok(configured.className === 'one');
+            viewmodel.child.toggle = true;
+            ass.ok(configured.className === 'one two');
+            viewmodel.toggle = false;
+            ass.ok(configured.className === 'two');
+            viewmodel.child.toggle = false;
+            ass.ok(!configured.className);
+            configured.className = 'test';
+            viewmodel.toggle = true;
+            ass.ok(configured.className === 'test one');
+            configured.className = '';
+            ass.ok(!configured.className);
+            viewmodel.child.toggle = true;
+            ass.ok(configured.className === 'two');
+
+            viewmodel.value = 'three-test';
+            ass.ok(variable.className === 'four three-test');
+            viewmodel.child.value = 'four-test';
+            ass.ok(variable.className === 'three-test four-test');
          });
 
 
