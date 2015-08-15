@@ -24,7 +24,7 @@
       <script src="../../src/bindings/data-bind.js"></script>
    </head>
    <body>
-      <div view-model="test">
+      <div view-model="test" style="display: none;">
          <input type="checkbox" data-bind="toggle" />
          <input type="text" data-bind="text" />
          <select data-bind="select">
@@ -70,10 +70,18 @@
             ass.ok(!sel.options[0].selected);
             ass.ok(sel.options[1].selected);
             ass.ok(sel.options[2].selected);
-            sel.options[0].selected = true;
 
+            sel.options[0].selected = true;
             sel.dispatchEvent(new Event('change'));
             ass.ok(viewmodel.select.length === 3);
+
+            cbox.checked = false
+            cbox.dispatchEvent(new Event('click'));
+            ass.ok(!viewmodel.toggle);
+
+            text.value = 'value';
+            text.dispatchEvent(new Event('change'));
+            ass.ok(viewmodel.text === 'value');
          });
 
 

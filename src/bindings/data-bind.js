@@ -15,7 +15,7 @@
 
       var events = ['click', 'keyup', 'change'];
       for (var i = 0; i < events.length; i++) { try {
-         view.element.addEventListener(events[i], function() {
+         binding.element.addEventListener(events[i], function() {
             if (toView) { return; }
             toModel = true; toView = false;
 
