@@ -1,55 +1,50 @@
 (function() {
-   var memberName = ' Template Model '
-
-   Application.extend.binding('data-template', ['view', 'viewmodel manager', function(view, vmgr) {
-      var model = view.element[memberName];
-      var viewmodel = vmgr.surrogate(view, model);
-      this.scope = { viewmodel: viewmodel };
-      delete view.element[memberName];
-      view.element.removeAttribute('data-template');
-   }], function(view) {
-      if (memberName in view.element) { return true; }
-
-      var html = view.application.resolve('html');
-      var utils = view.application.resolve('utilities');
-      var viewmodel = view.scope.viewmodel;
-
-      var element = view.element;
-      var path = element.getAttribute('data-template');
-      element.setAttribute('data-template', '');
-      element.removeAttribute('view-model');
-
-      var template = element.outerHTML;
+   Curvy.register.binding('data-template', ['viewmodel', binding-manager], function(viewmodel, manager) {
+      this.suspend();
+      var element = this.element;
       var marker = document.createComment('Template Content');
+      var path = element.getAttribute('data-template');
+
+      element.removeAttribute('data-template');
+      var template = element.outerHTML;
       element.parentNode.insertBefore(marker, element);
-      element.parentNode.removeChild(element);
+      element.parentNode.removeChild(binding.element);
 
-      function create(model, insert) { // Applies the model to the template and inserts a new copy at "insert"
-         var e = html.parse(template)[0];
-         e[memberName] = model;
-         marker.parentNode.insertBefore(e, insert || marker);
-         return { model: model, element: e };
-      }
+      var items = [];
+      function update() {
+         var models = viewmodel.path(path);
+         models = (models instanceof Array) ? models.slice(0) : [models];
 
-      var templateItems = [];
-      var update = function() { // Keeps the view synced with the item(s) watched on the viewmodel
-         var value = viewmodel.path(path);
-         if (!utils.is(value, Array)) { value = [value]; }
-
-         var i = 0; do {
-            while (i < templateItems.length && templateItems[i].model !== value[i]) {
-               var elem = templateItems.splice(i, 1)[0].element;
-               elem.parentNode.removeChild(elem);
+         var buffer = [];
+         while (models.length) {
+            var model = models.shift();
+            while (items[0] && items[0].model !== model) {
+               var item = items.shift();
+               item.element.parentNode.removeChild(item.element);
             }
-            if (i >= templateItems.length && i < value.length) {
-               templateItems.push(create(value[i]));
+            if (items[0] && items[0].model === model) { buffer.push(items.shift()); }
+            else {
+               var element = Curvy.Services.utilities.parse(template);
+               var datamodel = createDataModel(element, manager, viewmodel, model);
+               manager.override(element, 'viewmodel', datamodel);
+               var target = !items[0] ? marker : items[0].element;
+               target.parentNode.insertBefore(element, target);
+               buffer.push({model: model, element: element});
             }
-         } while (++i < value.length);
+         }
+         items = buffer;
       }
-      // Sets a watch on the "path" on the view model
-      viewmodel.watch(path, update);
-      update();
-
-      return false;
    });
+
+   function createDataModel(element, manager, viewmodel, model) {
+      var observable = new Curvy.Observable(model);
+      Object.defineProperty(observable, 'view', {configurable: false, enumerable: true, value: viewmodel.view});
+      Object.defineProperty(observable, 'parent', {configurable: false, enumerable: true, value: viewmodel});
+      Object.defineProperty(observable, 'dispose', {configurable: false, enumerable: true, value: function(disposal) {
+         manager.dispose(element, disposal);
+      }});
+      manager.dispose(function() {observable.destroy();});
+      observable.seal();
+      return observable;
+   }
 })();

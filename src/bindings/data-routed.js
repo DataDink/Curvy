@@ -1,22 +1,23 @@
 // Responds to routing changes and loads content into the element.
-Application.extend.binding('data-routed', ['view', 'route', function(view, route) {
-   var update = function(current, previous) {
-      if (previous && current.uri === previous.uri) { return; } // only trigger on path changes
+Curvy.register.binding('data-route', ['route'], function(route) {
+   var binding = this;
+   function update(current, previous) {
+      if (previous && current.uri === previous.uri) { return; }
       var uri = route.routes[current.uri];
-      if (!uri) { view.element.innerHTML = ''; return; }
+      if (!uri) { binding.element.innerHTML = ''; return; }
       var request = new XMLHttpRequest();
       request.open('get', uri, true);
       request.onreadystatechange = function() {
          if (this.readyState !== 4) { return; }
          if (this.status < 200 || this.status >= 400) {
-            view.element.innerHTML = '';
-         }
-         else {
-            view.element.innerHTML = this.responseText;
+            binding.element.innerHTML = '';
+         } else {
+            binding.element.innerHTML = this.responseText;
          }
       }
       request.send();
-   };
+   }
    route.subscribe(update);
+   binding.dispose(function() { route.unsubscribe(update); });
    update(route.current);
-}]);
+});

@@ -2,6 +2,7 @@
 (function() {
    var styleblock = false;
    var cssrules = [];
+   var parser = document.createElement('div');
 
    Curvy.Services.utilities = {
       style: function(selector, rule) {
@@ -22,6 +23,16 @@
          if (content.indexOf('"') < 0 && content.indexOf("'") < 0 && content.indexOf('<') < 0 && content.indexOf('>') < 0) { return content; }
          return (content || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      },
+
+      parse: function(html) {
+         parser.innerHTML = html;
+         var content = [];
+         while (parser.firstChild) {
+            content.push(parser.firstChild);
+            parser.removeChild(parser.firstChild);
+         }
+         return (content.length > 1) ? content : content[0];
       }
    };
 })();

@@ -56,6 +56,16 @@
          if (document.body) { scan([document.body]); }
       }});
 
+      Object.defineProperty(binder, 'override', { enumerable: true, configurable: false, value: function(element, name, value) {
+         var data = initNode(element);
+         data.registrations[name] = value;
+      }});
+
+      Object.defineProperty(binder, 'dispose', { enumerable: true, configurable: false, value: function(element, disposal) {
+         var data = initNode(element);
+         data.disposals.push(disposal);
+      }});
+
       function scan(nodes, names) {
          nodes = nodes.filter(function(n) { return !isSuspended(n); });
          names = names || getNames(bindings);
@@ -73,6 +83,7 @@
       }
 
       function bind(node) {
+         context = context || {};
          var data = initNode(node);
          for (var name in bindings) {
             if (isSuspended(node)) { break; }
