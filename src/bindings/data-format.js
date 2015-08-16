@@ -16,7 +16,7 @@ Curvy.register.binding('data-format', ['viewmodel'], function(viewmodel) {
          while (phrase.indexOf(member) >= 0) { phrase = phrase.replace(member, value); }
       }
       if (value in binding.element) { binding.element.value = phrase; }
-      else { binding.element.innerHTML = Curvy.Services.Utilities.encode(phrase); }
+      else { binding.element.innerHTML = Curvy.Services.utilities.encode(phrase); }
    }
 
    for (var m = 0; m < members.length; m++) {
