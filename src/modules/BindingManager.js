@@ -76,9 +76,13 @@
       }
 
       function unload(nodes) {
-         for (var n = 0; n < nodes; n++) {
-            var results = domSearch(nodes[n], getNames(bindings));
-            for (var r = 0; r < results.length; r++) { dispose(results[r]); }
+         for (var n = 0; n < nodes.length; n++) {
+            var node = nodes[n];
+            if (!('getElementsByTagName' in node)) { continue; } // faster than queryselectorall
+            [node].concat(node.getElementsByTagName('*'))
+               .forEach(function(n) { 
+                  if (config.nodedata in n) { dispose(n); }
+               });
          }
       }
 
@@ -105,7 +109,7 @@
       function dispose(node) {
          var data = getData(node);
          if (!data) { return; }
-         for (var d = 0; d < data.disposals; d++) {
+         for (var d = 0; d < data.disposals.length; d++) {
             data.disposals[d]();
          }
          for (var name in data.bindings) { delete data.bindings[name]; }

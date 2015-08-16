@@ -32,9 +32,9 @@ Curvy.Services.DomWatcher = function() {
       var results = [];
       for (var n = 0; n < nodes.length; n++) {
          var node = nodes[n];
-         if (results.filter(function(r) { return r === node; }).length) { continue; }
+         if (results.some(function(r) { return r === node; })) { continue; }
          var ancestor = node.parentNode;
-         while (ancestor && !nodes.filter(function(a) { return a === ancestor; }).length) {
+         while (ancestor && !nodes.some(function(a) { return a === ancestor; })) {
             ancestor = ancestor.parentNode;
          }
          if (ancestor) { continue; }

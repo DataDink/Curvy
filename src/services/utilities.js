@@ -14,7 +14,7 @@
          selector = (selector || '').trim().toLowerCase();
          if (!selector) { return; }
          rule = selector + ' { ' + (rule || '') + ' }';
-         if (cssrules.filter(function(r) { r === rule; }).length) { return; }
+         if (cssrules.some(function(r) { r === rule; })) { return; }
          cssrules.push(rule);
          styleblock.sheet.insertRule(rule, styleblock.sheet.rules.length);
       },
