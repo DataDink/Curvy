@@ -83,7 +83,6 @@
       }
 
       function bind(node) {
-         context = context || {};
          var data = initNode(node);
          for (var name in bindings) {
             if (isSuspended(node)) { break; }
