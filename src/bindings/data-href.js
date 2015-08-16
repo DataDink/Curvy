@@ -4,7 +4,7 @@ Curvy.register.binding('data-href', ['viewmodel'], function(viewmodel) {
    var path = binding.element.getAttribute('data-href');
    var update = function() {
       var value = viewmodel.path(path) || '';
-      view.element.setAttribute('href', value);
+      binding.element.setAttribute('href', value);
    }
    viewmodel.watch(path, update);
    update();

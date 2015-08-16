@@ -1,5 +1,5 @@
 // Responds to routing changes and loads content into the element.
-Curvy.register.binding('data-route', ['route'], function(route) {
+Curvy.register.binding('data-routed', ['route'], function(route) {
    var binding = this;
    function update(current, previous) {
       if (previous && current.uri === previous.uri) { return; }

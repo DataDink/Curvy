@@ -34,6 +34,8 @@
          }
          items = buffer;
       }
+      viewmodel.watch(path, update);
+      update();
    });
 
    function createDataModel(element, manager, viewmodel, model) {

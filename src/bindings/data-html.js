@@ -2,9 +2,9 @@
 Curvy.register.binding('data-html', ['viewmodel'], function(viewmodel) {
    var binding = this;
    var path = binding.element.getAttribute('data-html') || '';
-   function udpate() {
+   function update() {
       var value = viewmodel.path(path) || '';
-      view.element.innerHTML = value;
+      binding.element.innerHTML = value;
    }
    viewmodel.watch(path, update);
    update();

@@ -2,7 +2,7 @@
 <html>
    <head>
       <meta charset="utf-8">
-      <title>data-click</title>
+      <title>data-hide</title>
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/polyfills/matches.js"></script>
       <script src="../../src/polyfills/classlist.js"></script>
@@ -12,6 +12,7 @@
       <script src="../../src/Configuration.js"></script>
 
       <script src="../../src/services/Services.js"></script>
+      <script src="../../src/services/utilities.js"></script>
       <script src="../../src/services/Injector.js"></script>
       <script src="../../src/services/DomWatcher.js"></script>
 
@@ -21,11 +22,11 @@
 
       <script src="../../src/bindings/Bindings.js"></script>
       <script src="../../src/bindings/view-model.js"></script>
-      <script src="../../src/bindings/data-click.js"></script>
+      <script src="../../src/bindings/data-href.js"></script>
    </head>
    <body>
       <div view-model="test">
-         <div data-click="action"></div>
+         <div data-href="value"></div>
       </div>
       <div id="qunit"></div>
       <div id="qunit-fixture"></div>
@@ -33,17 +34,17 @@
       <script>
 
          QUnit.test('Tests', function(ass) {
-            var triggered = false;
-
+            var viewmodel = false;
             Curvy.register.viewmodel('test', function() {
                viewmodel = this;
-               viewmodel.action = function() { triggered = true; }
+               viewmodel.value = 'test';
             });
             Curvy.create();
 
-            var div = document.querySelector('[data-click]');
-            div.dispatchEvent(new Event('click'));
-            ass.ok(triggered);
+            var div = document.querySelector('[data-href]');
+            ass.ok(div.getAttribute('href') === 'test');
+            viewmodel.value = 'test2';
+            ass.ok(div.getAttribute('href') === 'test2');
          });
 
 
