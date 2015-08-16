@@ -1,9 +1,9 @@
 // Binds this element's click event to a command handler on the ViewModel
-Application.extend.binding('data-click', ['view', 'viewmodel', 'utilities', function(view, viewmodel, utilities) {
-   var path = view.element.getAttribute('data-click');
-   view.element.addEventListener('click', function() {
+Curvy.register.binding('data-click', ['viewmodel'], function(viewmodel) {
+   var path = this.element.getAttribute('data-click');
+   this.element.addEventListener('click', function() {
       var method = viewmodel.path(path);
-      if (!utilities.is(method, 'function')) { return; }
+      if (typeof(method) !== 'function') { return; }
       method.apply(viewmodel, arguments);
    });
-}]);
+});

@@ -8,13 +8,6 @@
    Application.extend.register.perApp('html', ['utilities', 'application', function(utils, app) {
       var service = this;
 
-      // ENCODE: encodes HTML so that it can be displayed
-      service.encode = function(str) {
-         if (str.indexOf('"') < 0 && str.indexOf("'") < 0 && str.indexOf('<') < 0 && str.indexOf('>') < 0) { return str; }
-         return (str || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      };
-
       // PARSE: parses html into DOM nodes
       service.parse = function(str) {
          var nodes = [];
