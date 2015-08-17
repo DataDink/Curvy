@@ -1,7 +1,7 @@
 # Curvy JS
 An experimental micro MVVM framework inspired by AngularJS
 
-AS IF we need another framework. Curvy is small and simple and was made for the fun of making. 
+AS IF we need another framework. Curvy is small and simple and was a great learning experience made for the fun of making.
 There is SOME small amount of documentation available at https://DataDink.github.io/Curvy
 
 Curious about Curvy?
@@ -13,12 +13,12 @@ If you would like something changed send me a pull request.
 
 First you'll need an application:
 ```javascript
-window.myApp = new Application(document);
+application = Curvy.create();
 ```
 
 Next you'll need a view-model:
 ```javascript
-window.myApp.viewmodel('my-viewmodel', function() {
+application.viewmodel('my-viewmodel', function() {
   this.value = 0;
   this.update = function() {
     this.value++;
@@ -38,14 +38,16 @@ Please visit the docs or take a dive into the code for more info: https://DataDi
 
 # Additional Infoz
 
-Compat: IE9+, Chrome, FireFox, Opera
+Compat: IE9+, Chrome, FireFox, Opera, Safari
 
-Unknown: IOS/Safari
-
-Version: 0.0.2
+Version: 0.1.0
 
 # Version Notes
 
+* 0.1.0
+   * Major framework cleanup (Now closer to what I originally wanted this to be)
+   * This is a breaking change - Documentation updates are incoming...
+   * Browser compat is under construction
 * 0.0.2
    * Added unit testing. Minimal coverage... for now.
    * Cleaned up bindings. Performance refactor.
