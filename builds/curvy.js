@@ -1,388 +1,447 @@
-(function() {
-   // Globally defining the Application constructor
-   Object.defineProperty(window, 'Application', { value: Application, configurable: false, enumerable: false });
+var Curvy = function(config) {
+   var application = this;
+   Object.defineProperty(application, 'configuration', { enumerable: true, configurable: false, value: config });
+};
 
-   // Creating the "extend" registry (for registering framework extensions prior to construction)
-   var extensions = [];
-   window.Application.extend = function(constructor) { extensions.push(constructor); };
-
-   // Defining the global injection container
-   Object.defineProperty(window.Application.extend, 'register', {
-      value: new InjectionContainer(),
-      configurable: false, enumerable: true
-   });
-   Object.freeze(window.Application);
-
-   // Stuff
-   var nothing = (function(v) { return v; })();
-   function copy(f) { var x = {}; for (var n in f) { x[n] = f[n]; }; return x; }
-   function is(v, m) {
-      if (v && v.__proto__ && v.__proto__.constructor === m) { return true; }
-      if (v && v.prototype && v.prototype.constructor === m) { return true; }
-      if (v && v.constructor && v.constructor === m) { return true; }
-      return ((typeof(v) || '').toString().toLowerCase() === (m || '').toString().trim().toLowerCase());
-   }
-
-   /*** Application ***/
-   function Application(root) {
-      var application = this;
-      var container = window.Application.extend.register.clone();
-      Object.defineProperty(this, 'root', { value: root || document, configurable: false, enumerable: true });
-
-      // Application offers dependency resolution and extension integration
-      Object.defineProperty(this, 'register', {value: {
-         instance: function(name, value) { container.instance(name, value); },
-         perApp: function(name, constructor) { container.perApp(name, constructor); },
-         perScope: function(name, constructor) { container.perScope(name, constructor); },
-         perResolve: function(name, constructor) { container.perResolve(name, constructor); },
-         dependencies: function(constructor) { return container.dependencies(constructor); }
-      }, configurable: false, enumerable: true });
-      Object.freeze(application.register);
-
-      Object.defineProperty(this, 'resolve', { value: function(item, overrides) {
-         var scope = copy(overrides || {});
-         scope.application = application;
-         return container.resolve(item, scope);
-      }, configurable: false, enumerable: true });
-
-      for (var i = 0; i < extensions.length; i++) {
-         container.resolve(extensions[i], {application: application});
-      }
-      Object.freeze(application);
-   }
-
-   /*** Dependency Injection ***/
-   function InjectionContainer(instances, singletons, scoped, transients) {
-      var container = this;
-
-      var instances = copy(instances || {}); // Pre-constructed
-      container.instance = function(name, value) { instances[name] = value; };
-
-      var singletons = copy(singletons || {}); // Per instance of application
-      container.perApp = function(name, constructor) { singletons[name] = constructor; };
-
-      var scoped = copy(scoped || {}); // Per resolution chain/scope
-      container.perScope = function(name, constructor) { scoped[name] = constructor; };
-
-      var transients = copy(transients || {}); // New instance every time
-      container.perResolve = function(name, constructor) { transients[name] = constructor; };
-
-      container.registered = function(name) { return (name in instances || name in singletons || name in scoped || name in transients); };
-      function get(name) { return singletons[name] || scoped[name] || transients[name]; }
-
-      container.dependencies = function(constructor) { return params(constructor); }
-
-      // Creates a proxy constructor effectively allowing "apply" on a constructor
-      function construct(ctr, values) {
-         ctr = is(ctr, Array) ? ctr[ctr.length - 1] : ctr;
-         function dependency(values) { ctr.apply(this, values); }
-         dependency.prototype = ctr.prototype;
-         return new dependency(values);
-      }
-
-      // Constructors can be functions or arrays.
-      // If array then pull dependencies from the strings in the array
-      // (dependencies are determined by "name")
-      function params(ctr) {
-         if (is(ctr, Array)) {
-            var items = [];
-            for (var v = 0; v < ctr.length && is(ctr[v], String); v++) {
-               items.push(ctr[v].trim());
-            } return items;
-         } return parse(ctr);
-      }
-      // Parses a function constructor and extracts parameter names to be
-      // used for dependency resolution
-      function parse(ctr) {
-         var values = (/^function[^\(]*\(([^\)]+)\)/gi).exec(ctr.toString());
-         if (!values) { return []; }
-         var items = values[1].split(',');
-         for (var i = 0; i < items.length; i++) { items[i] = items[i].trim(); }
-         return items;
-      }
-
-      // Resolves a registered dependency by name
-      function resolveName(name, scope) {
-         if (!container.registered(name)) { return nothing; }
-         if (name in instances) { return instances[name]; }
-         if (name in singletons) {
-            instances[name] = resolve(singletons[name], scope);
-            return instances[name];
-         }
-         return resolve(scoped[name] || transients[name], scope);
-      }
-
-      // Resolves a constructor
-      function resolve(ctr, scope) {
-         var reqs = params(ctr);
-         var values = [];
-         for (var i = 0; i < reqs.length; i++) {
-            var name = reqs[i];
-            if (name in scope) { values.push(scope[name]); }
-            else if (name in transients) {
-               values.push(resolveName(name, scope));
-            } else {
-               scope[name] = resolveName(name, scope);
-               values.push(scope[name]);
-            }
-         }
-         return construct(ctr, values);
-      }
-
-      container.resolve = function(item, overrides) {
-         var scope = copy(overrides || {});
-         if (is(item, String)) { return resolveName(item, scope); }
-         else { return resolve(item, scope); }
-      };
-
-      container.clone = function() {
-         return new InjectionContainer(instances, singletons, scoped, transients);
-      }
-
-      container.dispose = function() {
-         if (container === window.Application.extend.register) { throw "Can't dispose global container"; }
-         instances = nothing; singletons = nothing; scoped = nothing; transients = nothing;
-      }
-      Object.freeze(container);
-   }
-})()
+Curvy.Bindings = {};
+Curvy.Services = {};
+Curvy.Modules = {};
 ;
 
-// Common application utilities. "Observable" stuff is done here
-(function() {
-   var nothing = (function(v) { return v; })(); // Always undefined
-
-   window.Application.extend.register.perApp('utilities', ['application', function(app) {
-      var utilities = this;
-      // NOTHING is always undefined
-      utilities.nothing = nothing;
-      // IS will match a value by constructor or type
-      utilities.is = function(value, type) {
-         if (value && value.__proto__ && value.__proto__.constructor === type) { return true; }
-         if (value && value.prototype && value.prototype.constructor === type) { return true; }
-         if (value && value.constructor && value.constructor === type) { return true; }
-         return ((typeof(value) || '').toString().toLowerCase() === (type || '').toString().trim().toLowerCase());
-      };
-      // READONLY creates a reaonly property with a getter function
-      utilities.readonly = function(target, member, func) { Object.defineProperty(target, member, {
-         get: func, configurable: false, enumerable: true
-      });};
-      // CONSTANT creates a locked-down readonly property value
-      utilities.constant = function(target, member, value) { Object.defineProperty(target, member, {
-         value: value, configurable: false, enumerable: true
-      });};
-      // PATH navigates a dot(.) path from a source object. (undefined on fail)
-      utilities.path = function(source, path) {
-         var parts = (path.split('.') || []);
-         while (source != nothing && parts.length) { source = source[parts.shift()]; }
-         return source;
-      };
-      // WATCH will listen to a path of observable members
-      utilities.watch = function(target, path, callback) {
-         var parts = (path || '').split('.'); if (!parts.length) { return function() {}; }
-         var member = parts.shift(); if (!member) { return function() {}; }
-         var childpath = parts.join('.');
-         function watchchild(child) { return (utilities.is(child, app.Observable))
-            ? child.watch(childpath, callback)
-            : function() {};
-         }
-         var disposechild = watchchild(target[member]);
-         var observer = function(name) { if (name === member) {
-            disposechild();
-            disposechild = watchchild(target[member]);
-            callback.call(target, member);
-         } };
-         target.observe(observer);
-         return function() {
-            target.unobserve(observer); disposechild();
-         }
-      };
-      // COPY creates a shallow copy of an object
-      utilities.copy = function(obj) {
-         var shallow = {};
-         for (var m in obj) { shallow[m] = obj[m]; }
-         return shallow;
-      };
-      // MERGE will create a shallow merge of two objects
-      utilities.merge = function(from, to) {
-         var result = {};
-         for (var m in from) { result[m] = from[m]; }
-         for (var m in to) { result[m] = to[m]; }
-         return result;
-      };
-      // TOARRAY attempts to create an array from an array-like object
-      utilities.toarray = function(items) {
-         var array = [];
-         if ('length' in items) {
-            for (var i = 0; i < items.length; i++) { array.push(items[i]); }
-         } else {
-            for (var i = 0; i in items; i++) { array.push(items[i]); }
-         }
-         return array;
-      };
-      // DISTINCT filters out duplicate references
-      utilities.distinct = function(items) {
-         for (var i = 0; i < items.length; i++) {
-            for (var j = i + 1; j < items.length; j++) {
-               if (items[i] === items[j]) {
-                  items.splice(j--, 1);
-               }
-            }
-         }
-      };
-      // DOMDEPTH counts how deeply nested a node is from the document root
-      utilities.domdepth = function(node, offset) {
-         offset = offset || 0;
-         if (!node) { return offset; };
-         return utilities.domdepth(node.parentNode, offset + 1);
-      };
-      // DOMSORT sorts a collection of nodes by their nested depth in the document
-      utilities.domsort = function(nodes) {
-         nodes = utilities.toarray(nodes);
-         for (var i = 0; i < nodes.length; i++) {
-            nodes[i] = {n: nodes[i], d: utilities.domdepth(nodes[i]) };
-         }
-         nodes.sort(function(a, b) { return a.d - b.d; });
-         for (var i = 0; i < nodes.length; i++) {
-            nodes[i] = nodes[i].n;
-         }
-         return nodes;
-      };
-      // DOMQUERY applies a query selector to the node and its decendants
-      utilities.domquery = function(node, selector) {
-         var nodes = [];
-         if (node.matches && node.matches(selector)) { nodes.push(node); }
-         var matches = node.querySelectorAll ? node.querySelectorAll(selector) : [];
-         for (var i = 0; i < matches.length; i++) { nodes.push(matches[i]); }
-         return utilities.domsort(nodes);
-      };
-      // INDOM determines if the element belongs to the application root node
-      utilities.indom = function(element) {
-         var searcher = (!!app.root.body && !!app.root.body.contains) ? app.root.body : app.root;
-         return !searcher.contains || searcher.contains(element);
-      };
-      Object.freeze(utilities);
-   }]);
-
-   /*** Compat Fixes ***/
-   Element.prototype.matches = Element.prototype.matches
-                        || Element.prototype.matchesSelector
-                        || function(selector) {
-                           if (!this || !this.parentNode || !this.parentNode.querySelectorAll) { return; };
-                           var matches = this.parentNode.querySelectorAll(selector);
-                           for (var i = 0; matches && i < matches.length; i++) {
-                              if (matches[i] === this) { return true; }
-                           }
-                           return false;
-                        };
-})();
+Curvy.Configuration = {
+   lifecycle: ['init', 'load'],
+   nodedata: ' _Curvy Node Data_ '
+}
 ;
 
-Application.extend(['application', 'utilities', function(app, utils) {
-
-   app.Observable = function(constructor) {
-      var dependencies = app.register.dependencies(constructor);
-      for (var i = 0; i < dependencies.length; i++) {
-         dependencies[i] = app.resolve(dependencies[i]);
-      }
-      constructor = utils.is(constructor, Array) ? constructor.pop() : constructor;
-      constructor.apply(this, dependencies);
-      writeObserver(this);
-      writeProperties(this);
-      Object.freeze(this);
-   }
-
-   app.Observable.convert = function(model) {
-      model.__proto__ = {constructor: app.Observable};
-      writeObserver(model);
-      writeProperties(model);
-      Object.freeze(model);
-      return model;
-   }
-   app.Observable.surrogate = function(model, surrogate) {
-      surrogate = surrogate || {};
-      surrogate.__proto__ = {constructor: app.Observable};
-      writeObserver(surrogate);
-      proxyProperties(model, surrogate);
-      Object.freeze(surrogate);
-      return surrogate;
-   }
-   Object.freeze(app.Observable);
-
-   function writeObserver(obj) {
+(function() {
+   Curvy.Observable = function(target) {
+      var observable = this;
       var observers = [];
-      // NOTIFY called when a property change occurs (will call an existing notify function if one exists)
-      override(obj, 'notify', function(member) {
+      var interceptors = [];
+
+      Object.defineProperty(observable, 'notify', { enumerable: true, configurable: false, value: function(member) {
+         observable.notifyIntercept('notify', arguments);
          for (var i = 0; i < observers.length; i++) { observers[i](member); }
-      });
-      // OBSERVE adds a callback handler to the observable (will call an existing "observe" function if one exists)
-      override(obj, 'observe', function(callback) {
-         observers.push(callback);
-      });
-      // UNOBSERVE removes a previously added callback (will call an existing "unobserve" function if one exists)
-      override(obj, 'unobserve', function(callback) {
+      }});
+
+      Object.defineProperty(observable, 'observe', { enumerable: true, configurable: false, value: function(callback) {
+         observable.notifyIntercept('observe', arguments);
+         if (typeof(callback) === 'function') { observers.push(callback); }
+      }});
+
+      Object.defineProperty(observable, 'unobserve', { enumerable: true, configurable: false, value: function(callback) {
+         observable.notifyIntercept('unobserve', arguments);
          observers = observers.filter(function(o) { return o !== callback; });
-      });
-      // PATH returns the remote value of the specified dot(.) path
-      utils.constant(obj, 'path', function(path) {
-         return utils.path(obj, path);
-      });
-      // WATCH sets a watch on the specified dot(.) path
-      if (!locked(obj, 'watch')) {
-         utils.constant(obj, 'watch', function(path, callback) {
-            return utils.watch(obj, path, callback);
-         });
+      }});
+
+      Object.defineProperty(observable, 'intercept', { enumerable: true, configurable: false, value: function(callback) {
+         observable.notifyIntercept('intercept', arguments);
+         if (typeof(callback) === 'function') { interceptors.push(callback); }
+      }});
+
+      Object.defineProperty(observable, 'release', { enumerable: true, configurable: false, value: function(callback) {
+         observable.notifyIntercept('release', arguments);
+         interceptors = interceptors.filter(function(i) { return i !== callback; });
+      }});
+
+      Object.defineProperty(observable, 'notifyIntercept', { enumerable: true, configurable: false, value: function(member, args) {
+         for (var i = 0; i < interceptors.length; i++) { interceptors[i](member, args); }
+      }});
+
+      Object.defineProperty(observable, 'destroy', { enumerable: true, configurable: false, value: function() {
+         observable.notifyIntercept('destroy', arguments);
+         var nothing = (function() {})();
+         interceptors = nothing;
+         observable = nothing;
+         observers = nothing;
+         target = nothing;
+      }});
+
+      Object.defineProperty(observable, 'seal', { enumerable: true, configurable: false, value: function() {
+         observable.notifyIntercept('seal', arguments);
+         if (target) { return proxy(target, observable); }
+         target = {};
+         for (member in observable) {
+            if (member in Curvy.Observable.prototype) { continue; }
+            else if (locked(observable, member)) { continue; }
+            target[member] = observable[member];
+         };
+         return proxy(target, observable, observers);
+      }});
+   };
+
+   Object.defineProperty(Curvy.Observable.prototype, 'path', { enumerable: true, configurable: false, value: function(path) {
+      var value = this;
+      var parts = (path.split('.') || []);
+      while (typeof(value) !== 'undefined' && parts.length) { value = value[parts.shift()]; }
+      return value;
+   }});
+
+   function defaultDispose() {};
+
+   function pathInfo(path) {
+      var parts = (path || '').split('.');
+      if (!parts.length) { return false; }
+      var member = parts.shift();
+      if (!member) { return false; }
+      return {path: path, member: member, child: parts.join('.')};
+   }
+
+   function watchChild(child, path, callback) {
+      return (child instanceof Curvy.Observable) ? child.watch(path, callback) : defaultDispose;
+   }
+
+   Object.defineProperty(Curvy.Observable.prototype, 'watch', { enumerable: true, configurable: false, value: function(path, callback) {
+      if (!(this instanceof Curvy.Observable)) { return defaultDispose; }
+      var observable = this;
+      path = pathInfo(path);
+      if (!path) { return defaultDispose; }
+
+      var disposechild = watchChild(observable[path.member], path.child, callback);
+      var observer = function(name) {
+         if (name === path.member) {
+            disposechild();
+            disposechild = watchChild(observable[path.member], path.child, callback);
+            callback.call(observable, path.member);
+         }
+      };
+      observable.observe(observer);
+      return function() {
+         observable.unobserve(observer); disposechild();
+      };
+   }});
+
+   function proxy(target, surrogate) {
+      for (var member in target) {
+         delete surrogate[member];
+         proxyMember(member, target, surrogate);
       }
-      // DISPOSE removes reference to all callbacks
-      override(obj, 'dispose', function() { observers = nothing; });
+      Object.freeze(surrogate);
    }
 
-   function writeProperties(model) {
-      for (var member in model) {
-         if (locked(model, member)) { continue; }
-         observe(model, member);
-      }
-   }
-
-   function proxyProperties(model, surrogate) {
-      for (var member in model) {
-         if (locked(surrogate, member)) { continue; }
-         proxy(surrogate, model, member);
-      }
-   }
-
-   function observe(model, member) {
-      var value = model[member]; delete model[member];
-      Object.defineProperty(model, member, {
-         get: function() { return value; },
-         set: function(v) { value = v; model.notify(member); },
-         configurable: false, enumerable: true
-      });
-   }
-
-   function proxy(model, source, member) {
-      Object.defineProperty(model, member, {
-         get: function() { return source[member]; },
-         set: function(v) { source[member] = v; model.notify(member); },
-         configurable: false, enumerable: true
-      });
-   }
-
-   function override(model, member, func) {
-      var source = model[member];
-      Object.defineProperty(model, member, {
-         value: function() { func.apply(this, arguments); if (source) { source.apply(this, arguments); } },
-         configurable: false, enumerable: true
+   function proxyMember(member, target, surrogate) {
+      Object.defineProperty(surrogate, member, { enumerable: true, configurable: false,
+         get: function() {
+            if (typeof(target[member]) === 'function') {
+               return (function(func) { return function() {
+                  surrogate.notifyIntercept(member, arguments);
+                  func.apply(surrogate, arguments);
+               };})(target[member]);
+            }
+            return target[member];
+         },
+         set: function(v) {
+            target[member] = v;
+            surrogate.notify(member);
+         }
       });
    }
 
    function locked(model, member) { return !(Object.getOwnPropertyDescriptor(model, member) || {configurable: true}).configurable; }
+   Object.freeze(Curvy.Observable.prototype);
+})();
+;
 
-}]);
+// Ultimately I would like to not need a utilities as more things become native to JS
+(function() {
+   var styleblock = false;
+   var cssrules = [];
+   var parser = document.createElement('div');
+
+   Curvy.Services.utilities = {
+      style: function(selector, rule) {
+         if (!styleblock) {
+            styleblock = document.createElement('style');
+            var container = document.querySelectorAll('head')[0] || document.body;
+            container.insertBefore(styleblock, container.firstChild);
+         }
+         selector = (selector || '').trim().toLowerCase();
+         if (!selector) { return; }
+         rule = selector + ' { ' + (rule || '') + ' }';
+         if (cssrules.some(function(r) { r === rule; })) { return; }
+         cssrules.push(rule);
+         styleblock.sheet.insertRule(rule, styleblock.sheet.rules.length);
+      },
+
+      encode: function(content) {
+         if (content.indexOf('"') < 0 && content.indexOf("'") < 0 && content.indexOf('<') < 0 && content.indexOf('>') < 0) { return content; }
+         return (content || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      },
+
+      parse: function(html) {
+         parser.innerHTML = html;
+         var content = [];
+         while (parser.firstChild) {
+            content.push(parser.firstChild);
+            parser.removeChild(parser.firstChild);
+         }
+         return (content.length > 1) ? content : content[0];
+      },
+
+      parseUri: function(uri) {
+         uri = (uri || '').replace(/^#+/g, '');
+         var parts = uri.split('?');
+         var uri = (parts[0] || '').toLowerCase();
+         var params = parts[1] || '';
+         var data = Curvy.Services.utilities.parseQuery(parts[1] || '');
+         var info = {uri: uri, params: params, data: data};
+         Object.freeze(info);
+         return info;
+      },
+
+      parseQuery: function(params) {
+         var result = {};
+         var items = (params || '').replace(/^\?+|^\&+|\&+$/g, '').split('&');
+         for (var i = 0; i < items.length; i++) {
+            var parts = items[i].split('=');
+            if (parts.length !== 2) { continue; }
+            var key = decodeURIComponent(parts[0] || '');
+            var value = decodeURIComponent(parts[1] || '');
+            if (typeof(result[key]) === 'string') { result[key] = [result[key], value]; }
+            else if (key in result) { result[key].push(value); }
+            else { result[key] = value; }
+         }
+         return result;
+      },
+
+      formatUri: function(uri, params) {
+         if (!params) { return uri; }
+         if (typeof(params) !== 'string') { params = Curvy.Services.utilities.formatParameters(params); }
+         params = params.replace(/^[&?]+/g, '');
+         var final = uri.indexOf('?') >= 0
+            ? uri + '&' + params
+            : uri + '?' + params;
+         return final.trim().replace(/\?$|&$/gi, '');
+      },
+
+      formatParameters: function(obj) {
+         if (typeof(obj) === 'string') { return obj; }
+         var params = [];
+         for (var name in obj) {
+            var values = (obj[name] instanceof Array) ? obj[name] : [obj[name]];
+            for (var i = 0; i < values.length; i++) {
+               var value = (typeof(values[i]) === 'undefined' ? '' : values[i]);
+               params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
+            }
+         }
+         return params.join('&');
+      }
+   };
+})();
+;
+
+(function() {
+   function register() {
+      var root = new Curvy.Services.Injector();
+      Curvy.register = {
+         instance: root.register.instance,
+         singleton: root.register.singleton,
+         contextual: root.register.contextual,
+         transient: root.register.transient,
+         service: function(names, dependencies, constructor) {
+            names = strings(names).filter(function(n) { return n !== 'services'; }).concat(['services']);
+            root.register.singleton(names, dependencies, constructor);
+         },
+         module: function(names, dependencies, constructor) {
+            names = strings(names).filter(function(n) { return n !== 'modules'; }).concat(['modules']);
+            root.register.singleton(names, dependencies, constructor);
+         }
+      };
+      root.register.instance('configuration', Curvy.Configuration);
+
+      Curvy.create = function() {
+         var scope = root.branch();
+         var app = scope.resolve(['configuration', Curvy]);
+         scope.register.instance('application', app);
+         Object.defineProperty(app, 'dependencies', { enumerable: true, configurable: false, value: scope });
+
+         var modules = scope.resolve.all('modules').filter(function(m) { return !!m; });
+         var stages = (app.configuration || {}).lifecycle || [];
+         for (var s = 0; s < stages.length; s++) {
+            var stage = stages[s];
+            for (var m = 0; m < modules.length; m++) {
+               var module = modules[m];
+               if (typeof(module[stage]) === 'function') { module[stage](); }
+            }
+         }
+         return app;
+      }
+   }
+
+   Curvy.Services.Injector = function() {
+      var injector = this;
+
+      var registry = {};
+
+      injector.register = {
+         instance: function(names, instance) { register(names, {
+            instance: instance,
+            singleton: true,
+            transient: false,
+         });},
+         singleton: function(names, dependencies, constructor) { register(names, {
+            builder: builder(dependencies, constructor),
+            singleton: true,
+            transient: false,
+         });},
+         contextual: function(names, dependencies, constructor) { register(names, {
+            builder: builder(dependencies, constructor),
+            singleton: false,
+            transient: false,
+         });},
+         transient: function(names, dependencies, constructor) { register(names, {
+            builder: builder(dependencies, constructor),
+            singleton: false,
+            transient: true,
+         });}
+      };
+      Object.freeze(injector.register);
+
+      injector.resolve = function(item, overrides) {
+         return resolve(item, overrides);
+      };
+      injector.resolve.all = function(item, overrides) {
+         var resolution = resolve(item, overrides);
+         return (resolution instanceof Array) ? resolution : [resolution];
+      };
+      Object.freeze(injector.resolve);
+
+      injector.branch = function() {
+         var child = new Curvy.Services.Injector();
+         itterate(function(names, info) {
+            if (info.singleton && ('instance' in info)) { child.register.instance(names, info.instance); }
+            else if (info.singleton) { child.register.singleton(names, info.dependencies, info.constructor); }
+            else if (info.transient) { child.register.transient(names, info.dependencies, info.constructor); }
+            else { child.register.contextual(names, info.dependencies, info.constructor); }
+         });
+         return child;
+      };
+      Object.freeze(injector);
+
+      function resolve(item, overrides) {
+         overrides = clone(overrides || {});
+         overrides.dependencies = injector;
+
+         var scope = {};
+         itterate(function(names, info) {
+            for (var i = 0; i < names.length; i++) {
+               var name = names[i];
+               scope[name] = scope[name] || [];
+               if (info.singleton) { scope[name].push(info); }
+               else {
+                  scope[name].push({
+                     dependencies: info.dependencies,
+                     constructor: info.constructor,
+                     singleton: info.singleton,
+                     transient: info.transient
+                  });
+               }
+            }
+         });
+         if (typeof(item) === 'string') { return resolveName(item, scope, overrides); }
+         if (typeof(item) === 'function') { return resolveConstructor([item], scope, overrides); }
+         if (item instanceof Array) { return resolveConstructor(item, scope, overrides); }
+         throw('Unable to resolve ' + typeof(item));
+      }
+
+      function resolveName(name, scope, overrides) {
+         if (name in overrides) { return overrides[name]; }
+         if (!(name in scope)) { return; }
+
+         var resolutions = [];
+         var registration = scope[name];
+         for (var i = 0; i < registration.length; i++) {
+            var info = registration[i];
+            if ('instance' in info) { resolutions.push(info.instance); }
+            else {
+               var resolution = resolveConstructor(info.dependencies.concat([info.constructor]), scope, overrides);
+               if (!info.transient) { info.instance = resolution; }
+               resolutions.push(resolution);
+            }
+         }
+         return resolutions.length < 2 ? resolutions[0] : resolutions;
+      }
+
+      function resolveConstructor(constructor, scope, overrides) {
+         var dependencies = constructor.filter(function(n) { return typeof(n) === 'string'; });
+         constructor = constructor.filter(function(n) { return typeof(n) === 'function'; })[0];
+         if (!constructor) { throw('Invalid constructor'); }
+
+         for (var i = 0; i < dependencies.length; i++) {
+            dependencies[i] = resolveName(dependencies[i], scope, overrides);
+         }
+
+         function Dependency() { constructor.apply(this, dependencies); }
+         Dependency.prototype = constructor.prototype;
+         return new Dependency();
+      }
+
+      function itterate(callback) {
+         var reginfos = [];
+         for (var name in registry) {
+            var registration = registry[name];
+            for (var i = 0; i < registration.length; i++) {
+               var info = registration[i];
+               var reginfo = reginfos.filter(function(r) { return r.info === info; })[0];
+               if (!reginfo) {
+                  reginfo = { info: info, names: [] };
+                  reginfos.push(reginfo);
+               }
+               reginfo.names.push(name);
+            }
+         }
+         for (var i = 0; i < reginfos.length; i++) {
+            var reginfo = reginfos[i];
+            callback(reginfo.names, reginfo.info);
+         }
+      }
+
+      function register(names, info) {
+         names = strings(names);
+         if (info.builder) {
+            info.constructor = info.builder.pop();
+            info.dependencies = info.builder;
+            delete info.builder;
+         }
+         for (var i = 0; i < names.length; i++) {
+            var name = names[i];
+            registry[name] = registry[name] || [];
+            registry[name].push(info);
+         }
+      }
+
+      function builder(deps, ctr) {
+         ctr = typeof(ctr) === 'function' ? ctr
+            : (typeof(deps) === 'function' ? deps
+            : (!!deps && (deps instanceof Array)) ? deps.pop()
+            : false);
+         if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
+
+         deps = strings(deps);
+         return deps.concat([ctr]);
+      }
+   };
+
+   function strings(items) {
+      return (items instanceof Array)
+         ? items.filter(function(s) { return typeof(s) === 'string'; })
+         : (typeof(items) === 'string' ? [items] : []);
+   }
+
+   function clone(obj) {
+      var dupe = {};
+      for (var name in obj) { dupe[name] = obj[name]; }
+      return dupe;
+   }
+
+   register();
+})();
 ;
 
 // Singleton service that manages global broadcasts
-Application.extend.register.perApp('broadcast', function() {
+Curvy.Services.Broadcast = function() {
    var service = this;
    var subscriptions = {};
    service.subscribe = function(key, callback) {
@@ -406,206 +465,103 @@ Application.extend.register.perApp('broadcast', function() {
    };
 
    Object.freeze(service);
-});
+};
+Curvy.register.service('broadcast', Curvy.Services.Broadcast);
+;
+
+Curvy.Services.DomWatcher = function() {
+   var watcher = this;
+
+   var listeners = [];
+   watcher.listen = function(listener) {
+      if (typeof(listener) === 'function') { listeners.push(listener); }
+   };
+   watcher.cancel = function(listener) {
+      listeners = listeners.filter(function(l) { return l !== listener; });
+   };
+   Object.freeze(watcher);
+
+   function broadcast(reports) {
+      var info = {
+         added: [],
+         removed: []
+      };
+      for (var r = 0; r < reports.length; r++) {
+         pushall(info.added, reports[r].addedNodes);
+         pushall(info.removed, reports[r].removedNodes);
+      }
+
+      info.removed = reduce(info.removed);
+      info.added = reduce(info.added);
+      for (var i = 0; i < listeners.length; i++) {
+         listeners[i](info);
+      }
+   }
+
+   // reduce filters out nodes that are children of others in the array
+   function reduce(nodes) {
+      var results = [];
+      for (var n = 0; n < nodes.length; n++) {
+         var node = nodes[n];
+         if (results.some(function(r) { return r === node; })) { continue; }
+         var ancestor = node.parentNode;
+         while (ancestor && !nodes.some(function(a) { return a === ancestor; })) {
+            ancestor = ancestor.parentNode;
+         }
+         if (ancestor) { continue; }
+         results.push(node);
+      }
+      return results;
+   }
+
+   var observer;
+   if(!window.MutationObserver && document.addEventListener) {
+      observer = function() {
+         document.addEventListener('DOMNodeInserted', function(e) {
+            observer.added.push(e.target);
+            if (observer.timeout) { clearTimeout(observer.timeout); }
+            observer.timeout = setTimeout(observer.broadcast);
+         });
+         document.addEventListener('DOMNodeRemoved', function(e) {
+            observer.removed.push(e.target);
+            if (observer.timeout) { clearTimeout(observer.timeout); }
+            observer.timeout = setTimeout(observer.broadcast);
+         });
+         pushall(observer.added, document.querySelectorAll('*'));
+         observer.broadcast();
+      };
+      observer.added = []; observer.removed = [];
+      observer.broadcast = function() {
+         var info = { addedNodes: observer.added, removedNodes: observer.removed };
+         observer.added = []; observer.removed = [];
+         broadcast([info]);
+      };
+      if (document.readyState === 'complete') { observer(); }
+      else {
+         document.onreadystatechange = function() {
+            if (this.readyState === 'complete') { observer(); }
+         }
+      }
+   } else {
+      observer = new MutationObserver(broadcast);
+      observer.observe(document, {childList: true, subtree: true});
+   }
+
+   // pushall itterates from a non-array collection into an array
+   function pushall(arr, from) { for (var i = 0; !!from && i < from.length; i++) { arr.push(from[i]); } }
+};
+Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
 ;
 
 (function() {
-   var memberName = ' View ';
+   var utils = Curvy.Services.utilities;
 
-   var globals = {};
-   Object.defineProperty(Application.extend, 'binding', { value:
-      function(name, constructor, prescan) { globals[name] = { ctr: constructor, prescan: prescan}; },
-      configurable: false, enumerable: true
-   });
-
-   // Application extension that tracks DOM changes and manages DOM bindings
-   // TLDR: This manages/tracks data-attributes and keeps them wired to code
-   Application.extend(['application', 'utilities', 'broadcast', function(app, utils, bcast) {
-
-      View = function(element) { // View constructor
-         if (memberName in element) { return; }
-         var parent = getParent(element);
-         if (parent && !parent.bound) { return; }
-
-         var view = this;
-         element[memberName] = view;
-
-         var application = app;
-         utils.readonly(view, 'application', function() { return application; });
-         utils.readonly(view, 'element', function() { return element; });
-         utils.readonly(view, 'root', function() { return (function(v) { while(getParent(v.element)) { v = getParent(v.element); } return v; })(view); });
-         utils.readonly(view, 'parent', function() { return getParent(element); });
-         utils.readonly(view, 'children', function() { return getChildren(view); });
-
-         var bound = false; // Will not be bound until all bindings and parent bindings are "ready"
-         utils.readonly(view, 'bound', function() { return bound; });
-
-         // Subscribes to a broadcast and will auto-unsubscribe when the view is disposed
-         view.listen = function(channel, callback) {
-            bcast.subscribe(channel, callback);
-            view.dispose = function() { bcast.unsubscribe(callback); };
-         }
-
-         // Marks this view as "bound" which will block further bindings to this element.
-         function setbound() {
-            bound = true;
-            attach([element]);
-         }
-
-         function dispose() {
-            delete element[memberName];
-            application = utils.nothing;
-            element = utils.nothing;
-            view = utils.nothing;
-         };
-         // "Setting" dispose on the view will add to the disposal chain intead of replacing it
-         Object.defineProperty(view, 'dispose', {
-            get: function() { return dispose; },
-            set: function(d) {
-               if (!utils.is(d, 'function')) { throw 'dispose must be a function'; }
-               dispose = (function(orig) { return function() { d(); orig(); }; })(dispose);
-            },
-            configurable: false, enumerable: true
-         });
-
-         // Injection scope for views is based on their ancestors
-         var scope = { view: view };
-         utils.readonly(view, 'scope', function() {
-            return !view.parent ? utils.copy(scope) : utils.merge(view.parent.scope, scope);
-         });
-
-         // Scans this element and all of its child elements for bindings that need to be made
-         view.scan = function() {
-            if (bound) { return; } // Taken care of in a previous scan
-            if (view.parent && !view.parent.bound) { return; }
-            var names = {};
-            for (b in bindings) {
-               if (element.matches && element.matches('[' + b + ']')) {
-                  names[b] = bindings[b];
-               }
-            }
-            for (var b in names) {
-               if ( bindings[b].prescan && bindings[b].prescan(view) === false ) {
-                  bound = false; return;
-               }
-            }
-            for (var b in names) {
-               bind(app.resolve(bindings[b].ctr, view.scope));
-            }
-            setbound();
-         };
-
-         function bind(binding) {
-            if ('scope' in binding) {
-               for (name in binding.scope) {
-                  if (!(name in scope)) { scope[name] = binding.scope[name]; }
-               }
-            }
-            if ('dispose' in binding) { view.dispose = binding.dispose; }
-         }
-
-         Object.freeze(view);
-         view.scan();
-      }
-      function getParent(e) {
-         e = ('element' in e) ? e.element : e;
-         while (e.parentNode && !(memberName in e.parentNode)) { e = e.parentNode; }
-         return !e.parentNode ? utils.nothing : e.parentNode[memberName];
-      };
-      function getChildren(v) {
-         var element = ('element' in v) ? v.element : v;
-         var candidates = utils.toarray(element.querySelectorAll('*'));
-         return candidates.filter(function(c) { return c[memberName].parent === element[memberName]; });
-      };
-      function disposeView(e) {
-         var view = (memberName in e) ? e[memberName] : e;
-         if (!view || !view.dispose) { return; }
-         view.dispose();
-      };
-
-      var bindings = utils.copy(globals);
-      var observer = new DomWatcher(app.root, attach, detach, utils);
-
-      function detach(nodes) { // Views will be disposed when their nodes are removed.
-         for (var n = 0; n < nodes.length; n++) {
-            var elem = nodes[n];
-            if (!elem.querySelectorAll) { continue; }
-            var desc = utils.toarray(elem.querySelectorAll('*'))
-               .filter(function(c) { return !!c[memberName]; });
-            disposeView(elem);
-            for (var d = 0; d < desc.length; d++) {
-               disposeView(desc[d]);
-            }
-         }
-      }
-
-      function attach(nodes) { // Handle configuring elements newly added to the DOM
-         var elements = searchBindings(nodes);
-         for (var e = 0; e < elements.length; e++) {
-            new View(elements[e]);
-         }
-      }
-
-      function searchBindings(elements) { // Find elements with bindings
-         var all = [];
-         for (var e = 0; e < elements.length; e++) {
-            if (!elements[e].querySelectorAll) { continue; }
-            for (var binding in bindings) {
-               all = all.concat(utils.domquery(elements[e], '[' + binding + ']'));
-            }
-         }
-         utils.distinct(all);
-         return utils.domsort(all);
-      }
-
-      attach([app.root]);
-   }]);
-
-   /*** DomWatcher (IE9+) ***/
-   function DomWatcher(root, add, remove, utils) { // Responds to dom mutations
-      function handler(reports) {
-         var added = [];
-         var removed = [];
-         for (var r = 0; r < reports.length; r++) {
-            pushall(added, reports[r].addedNodes);
-            pushall(removed, reports[r].removedNodes);
-         }
-         utils.distinct(removed); remove(removed);
-         utils.distinct(added); add(added);
-      }
-      if (!window.MutationObserver && document.addEventListener) {
-         function wireup() {
-            root.addEventListener('DOMNodeInserted', function(e) {
-               handler([{addedNodes: [e.target]}]);
-            });
-            root.addEventListener('DOMNodeRemoved', function(e) {
-               handler([{removedNodes: [e.target]}]);
-            });
-            handler([{addedNodes: [root]}]);
-         }
-         if (document.readyState === 'complete') { wireup(); }
-         else {
-            document.onreadystatechange = function() {
-               if (this.readyState === 'complete') { wireup(); }
-            }
-         }
-      } else {
-         (new MutationObserver(handler)).observe(root, { childList: true, subtree: true });
-      }
-      function pushall(arr, from) { for (var i = 0; !!from && i < from.length; i++) { arr.push(from[i]); } }
-   }
-})();
-;
-
-// General AJAX wrapper that provides global and session request configurations
-Application.extend(['application', function(app) { // Wrapping like this will make global configuration become per-application
    var globalHeaders = {};
    var globalConfig = {};
    var globalParams = {};
    var globalQuery = {};
 
-   // Not singleton. Allows a service to configure its own common headers/parameters without affecting other services
-   app.register.perResolve('http', ['html', function(html) {
+   Curvy.Services.Http = function() {
       var persistHeaders = {};
       var persistConfig = {};
       var persistParams = {}; // body or query
@@ -648,27 +604,28 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 
       // REST methods
       this.get = function(uri, params, success, error, headers, config) {
-         return send('get', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
+         return send('get', utils.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
       };
 
       this.delete = function(uri, params, success, error, headers, config) {
-         return send('delete', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
+         return send('delete', utils.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
       };
 
       this.post = function(uri, body, success, error, headers, config) {
-         return send('post', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+         return send('post', utils.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
       };
 
       this.patch = function(uri, body, success, error, headers, config) {
-         return send('patch', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+         return send('patch', utils.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
       };
 
       this.put = function(uri, body, success, error, headers, config) {
-         return send('put', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+         return send('put', utils.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
       };
 
       Object.freeze(this);
-   }]);
+   };
+   Curvy.register.transient(['http', 'services'], Curvy.Services.Http);
 
    function send(method, uri, success, error, body, headers, config) {
       body = body ? JSON.stringify(body) : false;
@@ -725,610 +682,465 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
    function tryparse(content) {
       try { return JSON.parse(content); } catch(error) { console.log(content); return { parseError: error } }
    }
-}]);
-;
-
-// Common HTML related utilities available for injection
-(function() {
-   var parser = document.createElement('div');
-   var styleblock = document.createElement('style');
-   document.head.appendChild(styleblock);
-   var styles = {};
-
-   Application.extend.register.perApp('html', ['utilities', 'application', function(utils, app) {
-      var service = this;
-
-      // ENCODE: encodes HTML so that it can be displayed
-      service.encode = function(str) {
-         if (str.indexOf('"') < 0 && str.indexOf("'") < 0 && str.indexOf('<') < 0 && str.indexOf('>') < 0) { return str; }
-         return (str || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      };
-
-      // PARSE: parses html into DOM nodes
-      service.parse = function(str) {
-         var nodes = [];
-         try { parser.innerHTML = str; } catch(error) { return false; }
-         while (parser.firstChild) { nodes.push(parser.firstChild); parser.removeChild(parser.firstChild); }
-         return nodes;
-      };
-
-      // GETINPUTVALUE: tries to determine an input type and get an appropriate value
-      service.getInputValue = function(element) {
-         if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
-            return element.checked;
-         }
-         if (element.matches('select')) {
-            var values = [];
-            for (var i = 0; i < element.options.length; i++) {
-               if (element.options[i].selected) { values.push(element.options[i].value); }
-            }
-            return values.length > 1 ? values : values[0];
-         }
-         if ('value' in element) { return element.value; }
-         return element.innerHTML || '';
-      };
-
-      // SETINPUTVALUE: tries to determine an input type and set an appropriate value
-      service.setInputValue = function(element, value) {
-         if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
-            element.checked = !!value;
-            return;
-         }
-         if (element.matches('select')) {
-            if (!utils.is(value, Array)) { value = [value]; }
-            for (var o = 0; o < element.options.length; o++) {
-               element.options[o].selected = false;
-               for (var v = 0; v < value.length; v++) {
-                  if (element.options[o].value !== value[v]) { continue; }
-                  element.options[o].selected = true;
-               }
-            }
-            return;
-         }
-         if ('value' in element) { element.value = value; return; }
-         element.innerHTML = service.encode((value || '').toString());
-      };
-
-      // SETSTYLE: Adds a styling rule to the page
-      service.setStyle = function(selector, style) {
-         if (selector in styles) { return; }
-         styles[selector] = style;
-
-         var concat = '';
-         for (var key in styles) {
-            concat = concat + key + ' ' + styles[key] + '\r\n';
-         }
-         styleblock.innerHTML = concat;
-      };
-
-      // REMOVECLASS: removes a class from the element
-      service.removeClass = function(element, cls) {
-         cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
-         var value = element.getAttribute('class') || '';
-         value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
-         element.setAttribute('class', value.trim());
-      };
-
-      // ADDCLASS: adds a class to the element
-      service.addClass = function(element, cls) {
-         cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
-         var value = element.getAttribute('class') || '';
-         value = value.replace(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'), '');
-         value = value + ' ' + cls;
-         element.setAttribute('class', value.trim());
-      };
-
-      // HASCLASS: determines if a class exists
-      service.hasClass = function(element, cls) {
-         cls = cls.replace(/[^a-z0-9\-_]+/gi, '');
-         var value = element.getAttribute('class') || '';
-         return !!value.match(new RegExp('(\\s|^)' + cls + '(\\s|$)', 'gi'));
-      };
-
-      // TOGGLECLASS: toggles a class on the element
-      service.toggleClass = function(element, cls) {
-         if (service.hasClass(element, cls)) { service.removeClass(element, cls); }
-         else { service.addClass(element, cls); }
-      };
-
-      // INDOM: See utilities
-      service.indom = function(element) {
-         return utils.indom(element);
-      }
-
-      // FORMATPARAMETERS: converts an object to a uri query string
-      service.formatParameters = function(obj) {
-         if (typeof(obj) === 'string') { return obj; }
-         var params = [];
-         for (var name in obj) {
-            var values = utils.is(obj[name], Array) ? obj[name] : [obj[name]];
-            for (var i = 0; i < values.length; i++) {
-               var value = (values[i] === utils.nothing ? '' : values[i]);
-               params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
-            }
-         }
-         return params.join('&');
-      }
-
-      // FORMATURI: concats a uri with a query object or string
-      service.formatUri = function(uri, params) {
-         if (!params) { return uri; }
-         if (!utils.is(params, 'string')) { params = service.formatParameters(params); }
-         params = params.replace(/^[&?]+/g, '');
-         return uri.indexOf('?') >= 0
-            ? uri + '&' + params
-            : uri + '?' + params;
-      }
-
-      // PARSEQUERY: converts a query string into an object
-      service.parseQuery = function(params) {
-         var result = {};
-         var items = (params || '').replace(/^\?+|^\&+|\&+$/g, '').split('&');
-         for (var i = 0; i < items.length; i++) {
-            var parts = items[i].split('=');
-            if (parts.length !== 2) { continue; }
-            var key = decodeURIComponent(parts[0] || '');
-            var value = decodeURIComponent(parts[1] || '');
-            if (typeof(result[key]) === 'string') { result[key] = [result[key], value]; }
-            else if (key in result) { result[key].push(value); }
-            else { result[key] = value; }
-         }
-         return result;
-      }
-
-      Object.freeze(service);
-   }]);
 })();
 ;
 
 // Route Service manages and syncs application hash navigations and state.
-Application.extend.register.perApp('route', ['utilities', 'html', 'broadcast', function(utils, html, bcast) {
-   var service = this;
-   service.channel = 'Route.Updated'; // This broadcast channel will be alerted to hash location updates
-
-   service.parse = function(uri) {
-      uri = (uri || '').replace(/^#+/g, '');
-      var parts = uri.split('?');
-      var uri = (parts[0] || '').toLowerCase();
-      var params = parts[1] || '';
-      var data = html.parseQuery(parts[1] || '');
-      var info = {uri: uri, params: params, data: data};
-      Object.freeze(info);
-      return info;
-   }
-
-   // CURRENT: will contain the current location data
-   utils.readonly(service, 'current', function() { return service.parse(window.location.hash); });
-   var previous = service.current;
-
-   // ROUTES: the currently configured views
-   var views = {};
-   utils.readonly(service, 'routes', function() { return utils.copy(views); });
-   service.register = function(uri, view) {
-      views[service.parse(uri).uri] = view;
-   };
-
-   // SUBSCRIBE/UNSUBSCRIBE: listens for route changes
-   var general = [];
-   var subscriptions = {};
-   service.subscribe = function(subscription, uri) {
-      if (uri === utils.nothing) { general.push(subscription); return; }
-      subscriptions[uri] = subscription[uri] || [];
-      subscriptions[uri].push(subscription);
-   };
-   service.unsubscribe = function(subscription) {
-      for (var name in subscriptions) {
-         subscriptions[name] = subscriptions[name]
-         .filter(function(s) { return s !== subscription; });
-      }
-      general = general.filter(function(s) { return s !== subscription; });
-   };
-
-   // NAVIGATE: pushes a hash path
-   service.navigate = function(uri, params) {
-      if (window.history && window.history.pushState) {
-         window.history.pushState(null, null, '#' + html.formatUri(uri, params));
-         onstate();
-      } else {
-         window.location.hash = html.formatUri(uri, params);
-      }
-   }
-
-   function onstate() {
-      var prev = previous;
-      previous = service.current;
-      var curr = service.current;
-      var handlers = subscriptions[curr.uri] || [];
-      for (var i = 0; i < 2; i++) {
-         for (var h = 0; h < handlers.length; h++) {
-            handlers[h](curr, prev);
-         }
-         handlers = general;
-      }
-      bcast.send(service.channel, curr);
-   }
-
-   if (window.onpopstate) { window.onpopstate = onstate; }
-   else { window.addEventListener('hashchange', onstate); }
-
-   Object.freeze(service);
-}]);
-;
-
-// Responds to routing changes and loads content into the element.
-Application.extend.binding('data-routed', ['view', 'route', function(view, route) {
-   var update = function(current, previous) {
-      if (previous && current.uri === previous.uri) { return; } // only trigger on path changes
-      var uri = route.routes[current.uri];
-      if (!uri) { view.element.innerHTML = ''; return; }
-      var request = new XMLHttpRequest();
-      request.open('get', uri, true);
-      request.onreadystatechange = function() {
-         if (this.readyState !== 4) { return; }
-         if (this.status < 200 || this.status >= 400) {
-            view.element.innerHTML = '';
-         }
-         else {
-            view.element.innerHTML = this.responseText;
-         }
-      }
-      request.send();
-   };
-   route.subscribe(update);
-   update(route.current);
-}]);
-;
-
 (function() {
-   var memberName = ' Template Model '
+   var nothing = (function() { })();
+   var utils = Curvy.Services.utilities;
 
-   Application.extend.binding('data-template', ['view', 'viewmodel manager', function(view, vmgr) {
-      var model = view.element[memberName];
-      var viewmodel = vmgr.surrogate(view, model);
-      this.scope = { viewmodel: viewmodel };
-      delete view.element[memberName];
-      view.element.removeAttribute('data-template');
-   }], function(view) {
-      if (memberName in view.element) { return true; }
+   Curvy.Services.Route = function(bcast) {
+      var service = this;
+      this.channel = 'Route.Updated';
+      Object.defineProperty(service, 'channel', { configurable: false, enumerable: true, value: 'Route.Updated'});
 
-      var html = view.application.resolve('html');
-      var utils = view.application.resolve('utilities');
-      var viewmodel = view.scope.viewmodel;
+      var previous = false;
+      Object.defineProperty(service, 'current', {configurable: false, enumerable: true, get: function() {
+         return utils.parseUri(window.location.hash);
+      }});
 
-      var element = view.element;
-      var path = element.getAttribute('data-template');
-      element.setAttribute('data-template', '');
-      element.removeAttribute('view-model');
+      var views = {};
+      Object.defineProperty(service, 'routes', {configurable: false, enumerable: true, get: function() {
+         var clone = {};
+         for (var name in views) { clone[name] = views[name]; }
+         return clone;
+      }});
+      Object.defineProperty(service, 'register', {configurable: false, enumerable: true, value: function(uri, view) {
+         views[utils.parseUri(uri).uri] = view;
+      }});
 
-      var template = element.outerHTML;
-      var marker = document.createComment('Template Content');
-      element.parentNode.insertBefore(marker, element);
-      element.parentNode.removeChild(element);
+      var general = [];
+      var subscriptions = {};
+      Object.defineProperty(service, 'subscribe', {configurable: false, enumerable: true, value: function(subscription, uri) {
+         var handler = typeof(subscription) === 'function' ? subscription
+            : (typeof(uri) === 'function' ? uri
+            : false);
+         if (!handler) { throw 'Invalid Subscription'; }
 
-      function create(model, insert) { // Applies the model to the template and inserts a new copy at "insert"
-         var e = html.parse(template)[0];
-         e[memberName] = model;
-         marker.parentNode.insertBefore(e, insert || marker);
-         return { model: model, element: e };
+         var uri = typeof(uri) === 'string' ? uri
+            : (typeof(subscription) === 'string' ? subscription
+            : false);
+         if (!uri) { general.push(handler); return; }
+         subscriptions[uri] = subscription[uri] || [];
+         subscriptions[uri].push(handler);
+      }});
+
+      Object.defineProperty(service, 'unsubscribe', {configurable: false, enumerable: true, value: function(subscription) {
+         for (var name in subscriptions) {
+            subscriptions[name] = subscriptions[name]
+            .filter(function(s) { return s !== subscription; });
+         }
+         general = general.filter(function(s) { return s !== subscription; });
+      }});
+
+      Object.defineProperty(service, 'navigate', {configurable: false, enumerable: true, value: function(uri, params) {
+         if (window.history && window.history.pushState) {
+            window.history.pushState(null, null, '#' + utils.formatUri(uri, params));
+            onstate();
+         } else {
+            window.location.hash = utils.formatUri(uri, params);
+         }
+      }});
+
+      function onstate() {
+         var prev = previous;
+         previous = service.current;
+         var curr = service.current;
+         var handlers = subscriptions[curr.uri] || [];
+         for (var i = 0; i < 2; i++) {
+            for (var h = 0; h < handlers.length; h++) {
+               handlers[h](curr, prev);
+            }
+            handlers = general;
+         }
+         bcast.send(service.channel, curr);
       }
 
-      var templateItems = [];
-      var update = function() { // Keeps the view synced with the item(s) watched on the viewmodel
-         var value = viewmodel.path(path);
-         if (!utils.is(value, Array)) { value = [value]; }
+      if (window.onpopstate) { window.onpopstate = onstate; }
+      else { window.addEventListener('hashchange', onstate); }
 
-         var i = 0; do {
-            while (i < templateItems.length && templateItems[i].model !== value[i]) {
-               var elem = templateItems.splice(i, 1)[0].element;
-               elem.parentNode.removeChild(elem);
-            }
-            if (i >= templateItems.length && i < value.length) {
-               templateItems.push(create(value[i]));
-            }
-         } while (++i < value.length);
-      }
-      // Sets a watch on the "path" on the view model
-      viewmodel.watch(path, update);
-      update();
+      Object.freeze(service);
+   };
 
-      return false;
-   });
+   Curvy.register.service('route', ['broadcast'], Curvy.Services.Route);
 })();
 ;
 
-// Blocks other bindings on this element and replaces this element with the view at the specified URI
-Application.extend.binding('data-view', ['html', function(html) {
-   throw 'view cannot be instantiated';
-}], function(view) {
-   var html = view.application.resolve('html');
-   var element = view.element;
-   var url = element.getAttribute('data-view');
-   var utils = view.application.resolve('utilities');
-
-   var request = new XMLHttpRequest();
-   request.onreadystatechange = function() {
-      if (this.readyState !== 4) { return; }
-
-      if (!html.indom(element)) { return; }
-      var marker = document.createComment('view: ' + url);
-      element.parentNode.insertBefore(marker, element);
-      element.parentNode.removeChild(element);
-      var elements = html.parse(this.responseText);
-      if (!elements) { return; }
-      for (var i = 0; i < elements.length; i++) { marker.parentNode.insertBefore(elements[i], marker); }
-   }
-   request.open('get', url);
-   request.send();
-   return false;
-});
-;
-
-// Extends the application to support ViewModels
 (function() {
-   var bindingName = 'view-model';
-   var memberName = ' ViewModel ';
+   var registry = {};
+   function register() {
+      Curvy.register.binding = function(name, dependencies, constructor) {
+         createRegistration(registry, name, dependencies, constructor);
+      };
+      Curvy.register.module('binding-manager', ['dependencies', 'dom-watcher', 'application', 'configuration'], Curvy.Modules.BindingManager)
+   }
 
-   // Pre-registration
-   var preRegistration = {};
-   Object.defineProperty(Application.extend, 'viewmodel', { value:
-      function(name, constructor) { preRegistration[name] = { ctr: constructor }; },
-      configurable: false, enumerable: true
-   });
+   function createRegistration(reg, name, deps, ctr) {
+      if (!name) { throw 'Invalid Binding Name'; }
+      if (!name.match(/^[a-zA-Z]/gi)) { throw 'Binding name must start with a letter'; }
+      if (name.match(/[^a-zA-Z0-9\-\_]/gi)) { throw 'Binding names can only contain alpha-numeric characters, "-", and "_".'; }
+      name = name.toLowerCase();
 
-   // Post-registration
-   Application.extend(['viewmodel manager', 'application', function(mgr, app) {
-      app.viewmodel = function(name, constructor) { mgr.register(name, constructor); }
-      Object.freeze(app.viewmodel);
-   }]);
+      ctr = typeof(ctr) === 'function' ? ctr
+         : (typeof(deps) === 'function' ? deps
+         : (deps instanceof Array ? deps.pop()
+         : false));
+      if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
 
-   Application.extend.register.perApp('viewmodel manager', ['utilities', 'application', function(utils, app) {
-      var manager = this;
-      var registrations = utils.copy(preRegistration);
-      function registered(name) { return (name in registrations); }
-      function exists(name) { return registered(name) && !!registrations[name].ctr; }
+      deps = deps || [];
+      deps = (deps instanceof Array) ? deps : [];
 
-      manager.register = function(name, constructor) {
-         if (exists(name)) { throw 'View Model "' + name + '" already exists'; }
-         if (!registered(name)) { registrations[name] = {}; }
-         registrations[name].ctr = constructor;
-         while (registrations[name].postponed && registrations[name].postponed.length) {
-            registrations[name].postponed.shift()();
+      reg[name] = deps.concat([ctr]);
+      return name;
+   }
+
+   Curvy.Modules.BindingManager = function(injector, dom, app, config) {
+      var binder = this;
+      var bindings = {};
+      config = config || app.configuration || Curvy.Configuration;
+
+      Object.defineProperty(binder, 'init', { enumerable: false, configurable: false, value: function() {
+         for (var name in registry) { bindings[name] = registry[name]; }
+         Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
+            name = createRegistration(bindings, name, dependencies, constructor);
+            scan([document.body], [name]);
+         }});
+      }});
+
+      Object.defineProperty(binder, 'load', { enumerable: false, configurable: false, value: function() {
+         var suspendCircuit = false;
+         dom.listen(function(info) {
+            try {
+               if (suspendCircuit) { return; }
+               unload(info.removed);
+               scan(info.added);
+            } catch (error) {
+               suspendCircuit = true;
+               setTimeout(function() { suspendCircuit = false; }, 250)
+               if (console && console.log) { console.log('Circuit breaker tripped.'); }
+               throw error;
+            }
+         });
+         if (document.body) { scan([document.body]); }
+      }});
+
+      Object.defineProperty(binder, 'override', { enumerable: true, configurable: false, value: function(element, name, value) {
+         var data = initNode(element);
+         data.registrations[name] = value;
+      }});
+
+      Object.defineProperty(binder, 'dispose', { enumerable: true, configurable: false, value: function(element, disposal) {
+         var data = initNode(element);
+         data.disposals.push(disposal);
+      }});
+
+      function scan(nodes, names) {
+         nodes = nodes.filter(function(n) { return !isSuspended(n); });
+         names = names || getNames(bindings);
+         for (var n = 0; n < nodes.length; n++) {
+            var results = domSearch(nodes[n], names);
+            for (var r = 0; r < results.length; r++) { bind(results[r]); }
          }
-      };
-
-      manager.prescan = function(name, view) {
-         if (!exists(name)) {
-            if (!registered(name)) { registrations[name] = { postponed: [] }; }
-            registrations[name].postponed.push(view.scan);
-            return false;
-         }
-         return true;
-      };
-
-      manager.init = function(name, view) {
-         if (!exists(name)) { throw 'View Model "' + name + '" not found'; }
-         var model = app.resolve(registrations[name].ctr, view.scope);
-         return model;
-      };
-
-      manager.convert = function(view, model) {
-         write(view, model);
-         app.Observable.convert(model);
-         return model;
-      };
-
-      manager.surrogate = function(view, model) {
-         var surrogate = {};
-         write(view, surrogate);
-         app.Observable.surrogate(model, surrogate);
-         return surrogate;
       }
 
-      function write(view, vm) {
-         var element = view.element;
-         element[memberName] = vm;
-
-         utils.readonly(vm, 'view', function() { return view; });
-
-         utils.readonly(vm, 'parent', function() { return (function(elem) {
-            while (elem.parentNode && elem.parentNode !== app.root && !(memberName in elem)) {
-               elem = elem.parentNode;
-            } return !elem.parentNode ? false : (elem.parentNode[memberName] || false);
-         })(element); });
-
-         utils.readonly(vm, 'children', function() {
-            var nodes = utils.toarray(element.querySelectorAll('*'))
-               .filter(function(n) {
-                  return (memberName in n) && n[memberName].parent === vm;
+      function unload(nodes) {
+         for (var n = 0; n < nodes.length; n++) {
+            var node = nodes[n];
+            if (!('getElementsByTagName' in node)) { continue; } // faster than queryselectorall
+            [node].concat(node.getElementsByTagName('*'))
+               .forEach(function(n) { 
+                  if (config.nodedata in n) { dispose(n); }
                });
-            var models = [];
-            while (nodes.length) { models.push(nodes.pop()[memberName]); }
-            return models;
-         });
+         }
+      }
 
-         var watches = [];
-         utils.constant(vm, 'watch', function(path, callback) {
-            var disposal = utils.watch(vm, path, callback);
-            var watch = function() {
-               watches = watches.filter(function(w) { return w !== watch; });
-               disposal();
-            };
-            watches.push(watch);
-            return watch;
-         });
+      function bind(node) {
+         var data = initNode(node);
+         for (var name in bindings) {
+            if (isSuspended(node)) { break; }
+            if (name in data.bindings) { continue; }
+            if (!node.matches || !node.matches(getAttribute(name))) { continue; }
 
-         view.dispose = function() {
-            while (watches.length) { watches.pop()(); }
-            watches = utils.nothing;
-            element = utils.nothing;
-            view = utils.nothing;
-            vm = utils.nothing;
+            var overrides = getOverrides(node);
+            var dependencies = bindings[name].slice(0);
+            var constructor = dependencies.pop();
+            var Binding = function() {
+               configureContext(this, node);
+               constructor.apply(this, arguments);
+            }
+            Binding.prototype = constructor.prototype;
+            var instance = injector.resolve(dependencies.concat([Binding]), overrides);
+            data.bindings[name] = instance;
+         }
+      }
+
+      function dispose(node) {
+         var data = getData(node);
+         if (!data) { return; }
+         for (var d = 0; d < data.disposals.length; d++) {
+            data.disposals[d]();
+         }
+         for (var name in data.bindings) { delete data.bindings[name]; }
+         for (var name in data.registrations) { delete data.registrations[name]; }
+         while (data.disposals.length) { data.disposals.pop(); }
+         delete data.bindings;
+         delete data.registrations;
+         delete data.suspended;
+         delete data.disposals;
+         delete node[config.nodedata];
+      }
+
+      function initNode(node) {
+         node[config.nodedata] = node[config.nodedata] || {
+            bindings: {},
+            registrations: {},
+            suspended: false,
+            disposals: []
          };
-      };
-   }]);
+         return getData(node);
+      }
 
-   Application.extend.binding(bindingName, ['viewmodel manager', 'view', function(mgr, view) {
-      var name = view.element.getAttribute(bindingName);
-      var model = mgr.init(name, view);
-      mgr.convert(view, model);
-      this.scope = { viewmodel: model };
-   }], function(view) {
-      var name = view.element.getAttribute(bindingName);
-      var mgr = view.application.resolve('viewmodel manager');
-      return mgr.prescan(name, view);
-   });
+      function configureContext(context, node) {
+         Object.defineProperty(context, 'element', {enumerable: true, configurable: false, value: node});
+         Object.defineProperty(context, 'suspend', {enumerable: true, configurable: false, value: function() {
+            var data = getData(node);
+            data.suspended = true;
+            return function() {
+               data.suspended = false;
+               scan([node]);
+            };
+         }});
+         Object.defineProperty(context, 'register', {enumerable: true, configurable: false, value: function(name, value) {
+            var data = getData(node);
+            data.registrations[name] = value;
+         }});
+         Object.defineProperty(context, 'dispose', {enumerable: true, configurable: false, value: function(disposal) {
+            var data = getData(node);
+            data.disposals.push(disposal);
+         }});
+      }
 
+      function isSuspended(node) {
+         var ancestor = node;
+         while(ancestor) {
+            var data = getData(ancestor);
+            if (data && data.suspended) { return true; }
+            ancestor = ancestor.parentNode;
+         }
+         return false;
+      }
+
+      function formatAttribute(name) { return '[' + name + ']'; }
+
+      function domSearch(node, names) {
+         if (!node || !node.matches) { return []; }
+         names = names.slice(0);
+         for (var n = 0; n < names.length; n++) { names[n] = getAttribute(names[n]); }
+         var query = names.join(', ');
+         if (!query || !query.length) { return []; }
+         var results = node.matches(query) ? [{node: node, depth: domDepth(node)}] : [];
+         var search = node.querySelectorAll(query);
+         for (var r = 0; r < search.length; r++) { results.push({node: search[r], depth: domDepth(search[r])}); };
+         results.sort(function(a, b) { return a.depth < b.depth ? -1 : (a.depth > b.depth ? 1 : 0); });
+         for (var r = 0; r < results.length; r++) { results[r] = results[r].node; }
+         return results;
+      }
+
+      function domDepth(node, start) { return (!node.parentNode) ? (start || 0) : domDepth(node.parentNode, (start || 0) + 1); }
+
+      function getNames(obj) {
+         var names = [];
+         for (var name in obj) { names.push(name); }
+         return names;
+      }
+
+      function getData(node) {
+         return node[config.nodedata];
+      }
+
+      function getOverrides(node) {
+         var overrides = {};
+         var ancestor = node;
+         while (ancestor) {
+            var data = getData(ancestor);
+            if (data) {
+               for (var name in data.registrations) {
+                  if (name in overrides) { continue; }
+                  overrides[name] = data.registrations[name];
+               }
+            }
+            ancestor = ancestor.parentNode;
+         }
+         return overrides;
+      }
+
+      function getAttribute(name) {
+         return '[' + name + ']'
+      }
+   };
+   register();
 })();
 ;
 
-// Binds the innerTEXT of this element to the multi-value formatted text specified
-// use double-curly-brackets: "My value is {{member.something.value}}"
-Application.extend.binding('data-format', ['view', 'viewmodel', 'utilities', 'html', function(view, viewmodel, utilities, html) {
-   var format = view.element.getAttribute('data-format') || '';
-   var members = format.match(/\{\{[^\}]+\}\}/g);
-   if (!members) { return; }
-
-   function trim(member) { return member.replace(/^\{\{|\}\}$/g, ''); }
-   function callback() {
-      var phrase = format;
-      for (var i = 0; i < members.length; i++) {
-         var member = members[i];
-         var value = viewmodel.path(trim(member));
-         value = value === utilities.nothing ? '' : value;
-         while (phrase.indexOf(member) >= 0) { phrase = phrase.replace(member, value); }
-      }
-      if (value in view.element) { view.element.value = phrase; }
-      else { view.element.innerHTML = html.encode(phrase); }
+(function() {
+   var registry = {};
+   function register() {
+      Curvy.register.viewmodel = function(name, dependencies, constructor) {
+         if (!name) { throw 'Invalid Name'; }
+         registry[name] = builder(dependencies, constructor);
+      };
+      Curvy.register.module('viewmodel-manager', ['dependencies', 'application'], Curvy.Modules.ViewModels);
+   }
+   function builder(deps, ctr) {
+      deps = (deps instanceof Array) ? deps.slice(0) : (deps || []);
+      ctr = typeof(ctr) === 'function' ? ctr
+         : (typeof(deps) === 'function' ? deps
+         : (deps instanceof Array ? deps.pop()
+         : false));
+      if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
+      deps = (deps instanceof Array) ? deps : [];
+      deps.push(ctr);
+      return deps;
    }
 
-   for (var m = 0; m < members.length; m++) {
-      viewmodel.watch(trim(members[m]), callback);
-   }
-   callback();
-}]);
+   Curvy.Modules.ViewModels = function(injector, app) {
+      var manager = this;
+      var viewmodels = {};
+      var postponed = {};
+
+      Object.defineProperty(manager, 'init', { configurable: false, enumerable: false, value: function() {
+         for (var name in registry) { viewmodels[name] = registry[name]; }
+         Object.defineProperty(app, 'viewmodel', { configurable: false, enumerable: true, value: function(name, dependencies, constructor) {
+            manager.register(name, dependencies, constructor);
+         }});
+      }});
+
+      Object.defineProperty(manager, 'register', { configurable: false, enumerable: true, value: function(name, dependencies, constructor) {
+         if (!name) { throw 'Invalid Name'; }
+         viewmodels[name] = builder(dependencies, constructor);
+         if (name in postponed) {
+            for (var i = 0; i < postponed[name].length; i++) { postponed[name][i](); }
+            delete postponed[name];
+         }
+      }});
+
+      Object.defineProperty(manager, 'postpone', { configurable: false, enumerable: true, value: function(name, action) {
+         postponed[name] = postponed[name] || [];
+         postponed[name].push(action);
+      }});
+
+      Object.defineProperty(manager, 'resolve', { configurable: false, enumerable: true, value: function(name, parent, binding) {
+         if (!(name in viewmodels)) { return false; }
+         return manager.create(viewmodels[name].slice(0), parent, binding);
+      }});
+
+      Object.defineProperty(manager, 'create', { configurable: false, enumerable: true, value: function(constructor, parent, binding) {
+         if (!(constructor instanceof Array)) { throw 'Invalid Constructor'; }
+         var deps = constructor.slice(0);
+         var ctr = deps.pop();
+         if (typeof(ctr) !== 'function') { throw 'Invalid Constructor'; }
+         function ViewModel() {
+            var vm = this;
+            Curvy.Observable.call(vm);
+            Object.defineProperty(vm, 'view', {configurable: false, enumerable: true, value: binding.element});
+            Object.defineProperty(vm, 'parent', {configurable: false, enumerable: true, value: parent});
+            Object.defineProperty(vm, 'dispose', {configurable: false, enumerable: true, value: function(disposal) {
+               binding.dispose(disposal);
+            }});
+            ctr.apply(vm, arguments);
+            vm.seal();
+         }
+         ViewModel.prototype = Curvy.Observable.prototype;
+         return injector.resolve(deps.concat([ViewModel]));
+      }});
+   };
+
+   register();
+})();
 ;
 
 // Binds an input's value to the ViewModel
-Application.extend.binding('data-bind', ['view', 'viewmodel', 'utilities', 'html', function(view, viewmodel, utilities, html) {
-   var uri = view.element.getAttribute('data-bind') || false;
-   if (!uri) { throw 'data-bind must be set to a property / path to watch' }
+(function() {
+   Curvy.register.binding('data-bind', ['viewmodel'], function(viewmodel) {
+      var binding = this;
+      var uri = binding.element.getAttribute('data-bind') || false;
+      if (!uri) { throw 'data-bind must be set to a property / path to watch' }
 
-   var parts = uri.split('.');
-   var memberName = parts.pop();
-   var modelPath = parts.join('.');
-   if (!memberName) { return; }
+      var parts = uri.split('.');
+      var memberName = parts.pop();
+      var modelPath = parts.join('.');
+      if (!memberName) { return; }
 
-   var toModel = false;
-   var toView = false;
+      var toModel = false;
+      var toView = false;
 
-   var events = ['click', 'keyup', 'change'];
-   for (var i = 0; i < events.length; i++) { try {
-      view.element.addEventListener(events[i], function() {
-         if (toView) { return; }
-         toModel = true; toView = false;
+      var events = ['click', 'keyup', 'change'];
+      for (var i = 0; i < events.length; i++) { try {
+         binding.element.addEventListener(events[i], function() {
+            if (toView) { return; }
+            toModel = true; toView = false;
 
-         var model = !modelPath ? viewmodel : viewmodel.path(modelPath);
-         model[memberName] = html.getInputValue(view.element);
-         toModel = false;
-      });
-   } catch (error) { } }
+            var model = !modelPath ? viewmodel : viewmodel.path(modelPath);
+            model[memberName] = getInput(binding.element);
+            toModel = false;
+         });
+      } catch (error) { } }
 
-   function writeView() {
-      if (toModel) { return; }
-      toView = true; toModel = false;
+      function writeView() {
+         if (toModel) { return; }
+         toView = true; toModel = false;
 
-      var value = viewmodel.path(uri);
-      html.setInputValue(view.element, value === utilities.nothing ? '' : value);
-      toView = false;
+         var value = viewmodel.path(uri);
+         setInput(binding.element, typeof(value) === 'undefined' ? '' : value);
+         toView = false;
+      }
+
+      viewmodel.watch(uri, writeView);
+      writeView();
+   });
+
+   function getInput(element) {
+      if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
+         return element.checked;
+      }
+      if (element.matches('select')) {
+         var values = [];
+         for (var i = 0; i < element.options.length; i++) {
+            if (element.options[i].selected) { values.push(element.options[i].value); }
+         }
+         return values.length > 1 ? values : values[0];
+      }
+      if ('value' in element) { return element.value; }
+      return element.innerHTML || '';
    }
 
-   viewmodel.watch(uri, writeView);
-   writeView();
-}]);
-;
-
-// Binds the innerHTML of this element to the ViewModel
-Application.extend.binding('data-html', ['view', 'viewmodel', 'html', 'utilities', function(view, viewmodel, html, utilities) {
-   var path = view.element.getAttribute('data-html') || '';
-
-   function update() {
-      var value = viewmodel.path(path);
-      value = value === utilities.nothing ? '' : value;
-      view.element.innerHTML = value;
+   function setInput(element, value) {
+      if (element.matches('input[type=radio]') || element.matches('input[type=checkbox]')) {
+         element.checked = !!value;
+         return;
+      }
+      if (element.matches('select')) {
+         if (!(value instanceof Array)) { value = [value]; }
+         for (var o = 0; o < element.options.length; o++) {
+            element.options[o].selected = false;
+            for (var v = 0; v < value.length; v++) {
+               if (element.options[o].value !== value[v]) { continue; }
+               element.options[o].selected = true;
+            }
+         }
+         return;
+      }
+      if ('value' in element) { element.value = value; return; }
+      element.innerHTML = service.encode((value || '').toString());
    }
-   viewmodel.watch(path, update);
-   update();
-}]);
-;
-
-// Binds the "SRC" attribute to the ViewModel
-Application.extend.binding('data-src', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   var path = view.element.getAttribute('data-src');
-   var update = function() {
-      var value = viewmodel.path(path) || '';
-      view.element.setAttribute('src', value);
-   };
-   viewmodel.watch(path, update);
-   update();
-}]);
-;
-
-// Binds the HREF attribute of this element to the ViewModel
-Application.extend.binding('data-href', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   var path = view.element.getAttribute('data-href');
-   var update = function() {
-      var value = viewmodel.path(path) || '';
-      view.element.setAttribute('href', value);
-   };
-   viewmodel.watch(path, update);
-   update();
-}]);
-;
-
-// Binds this element's "TITLE" attribute to a value on the ViewModel
-Application.extend.binding('data-title', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   var path = view.element.getAttribute('data-title');
-   var update = function() {
-      var value = viewmodel.path(path) || '';
-      view.element.setAttribute('title', value);
-   };
-   viewmodel.watch(path, update);
-   update();
-}]);
-;
-
-// Binds a "true/false-ish" value and shows/hides this element using an injected style/class
-Application.extend.binding('data-show', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   html.setStyle('.data-hide', "{ display: none !important; }");
-
-   var path = view.element.getAttribute('data-show');
-   var update = function() {
-      if (viewmodel.path(path)) { html.removeClass(view.element, 'data-hide'); }
-      else { html.addClass(view.element, 'data-hide'); }
-   };
-   viewmodel.watch(path, update);
-   update();
-}]);
-;
-
-// Binds a "true/false-ish" value on the ViewModel and shows/hides this element using an injected class/style
-Application.extend.binding('data-hide', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   html.setStyle('.data-hide', "{ display: none !important; }");
-
-   var path = view.element.getAttribute('data-hide');
-   var update = function() {
-      if (!viewmodel.path(path)) { html.removeClass(view.element, 'data-hide'); }
-      else { html.addClass(view.element, 'data-hide'); }
-   };
-   viewmodel.watch(path, update);
-   update();
-}]);
+})();
 ;
 
 // Binds one or more classes on this element to the state of members on the ViewModel (See documentation)
-Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   var value = view.element.getAttribute('data-class') || '';
+Curvy.register.binding('data-class', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var value = this.element.getAttribute('data-class') || '';
    var member = value.indexOf('{') >= 0 ? false : value;
    var config = value.indexOf('{') < 0 ? false : value.replace(/^\{+|\}+$/g, '');
 
@@ -1337,12 +1149,10 @@ Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(
       var classes = {};
 
       var update = function(path) {
-         if (classes[path] !== false) { html.removeClass(view.element); }
-         var newclass = viewmodel.path(path);
-         classes[path] = (!newclass || html.hasClass(view.element, newclass))
-            ? false : newclass;
-         if (classes[path] === false) { return; }
-         html.addClass(newclass);
+         if (classes[path] !== false) { binding.element.classList.remove(classes[path]); }
+         classes[path] = validate(viewmodel.path(path));
+         if (!classes[path]) { return; }
+         binding.element.classList.add(classes[path]);
       };
 
       for (var i = 0; i < paths.length; i++) {
@@ -1355,40 +1165,291 @@ Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(
       for (var i = 0; i < settings.length; i++) {
          var parts = settings[i].split(':');
          settings[i] = {
-            class: parts[0].trim(),
+            class: validate(parts[0].trim()),
             path: parts[1].trim()
          };
+         if (!settings[i].class) { throw 'Invalid Class Name'; }
+
          settings[i].update = (function(setting) { return function() {
             var value = viewmodel.path(setting.path);
-            if (value) { html.addClass(view.element, setting.class); }
-            else { html.removeClass(view.element, setting.class); }
+            binding.element.classList.remove(setting.class);
+            if (value) { binding.element.classList.add(setting.class); }
          };})(settings[i]);
          viewmodel.watch(settings[i].path, settings[i].update);
          settings[i].update();
       }
    }
-}]);
-;
 
-// Traps the "submit" event on a form and calls a command on the ViewModel
-Application.extend.binding('data-submit', ['view', 'viewmodel', 'utilities', function(view, viewmodel, utilities) {
-   var path = view.element.getAttribute('data-submit');
-   view.element.addEventListener('submit', function(e) {
-      e.preventDefault();
-      var method = viewmodel.path(path);
-      if (!utilities.is(method, 'function')) { return; }
-      method.apply(viewmodel, arguments);
-      return false;
-   });
-}]);
+   function validate(name) {
+      if (typeof(name) !== 'string' || name.length < 1) { return false; }
+      if (/[^a-zA-Z0-9\-_]/.test(name)) { return false; }
+      return name.toLowerCase();
+   }
+});
 ;
 
 // Binds this element's click event to a command handler on the ViewModel
-Application.extend.binding('data-click', ['view', 'viewmodel', 'utilities', function(view, viewmodel, utilities) {
-   var path = view.element.getAttribute('data-click');
-   view.element.addEventListener('click', function() {
+Curvy.register.binding('data-click', ['viewmodel'], function(viewmodel) {
+   var path = this.element.getAttribute('data-click');
+   this.element.addEventListener('click', function() {
       var method = viewmodel.path(path);
-      if (!utilities.is(method, 'function')) { return; }
+      if (typeof(method) !== 'function') { return; }
       method.apply(viewmodel, arguments);
    });
-}]);
+});
+;
+
+// Binds the innerTEXT of this element to the multi-value formatted text specified
+// use double-curly-brackets: "My value is {{member.something.value}}"
+Curvy.register.binding('data-format', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var format = binding.element.getAttribute('data-format') || '';
+   var members = format.match(/\{\{[^\}]+\}\}/g);
+   if (!members) { return; }
+
+   function trim(member) { return member.replace(/^\{\{|\}\}$/g, ''); }
+   function callback() {
+      var phrase = format;
+      for (var i = 0; i < members.length; i++) {
+         var member = members[i];
+         var value = viewmodel.path(trim(member));
+         value = typeof(value) === 'undefined' ? '' : value;
+         while (phrase.indexOf(member) >= 0) { phrase = phrase.replace(member, value); }
+      }
+      if (value in binding.element) { binding.element.value = phrase; }
+      else { binding.element.innerHTML = Curvy.Services.utilities.encode(phrase); }
+   }
+
+   for (var m = 0; m < members.length; m++) {
+      viewmodel.watch(trim(members[m]), callback);
+   }
+   callback();
+});
+;
+
+// Binds a "true/false-ish" value on the ViewModel and shows/hides this element using an injected class/style
+Curvy.register.binding('data-hide', ['viewmodel'], function(viewmodel) {
+   Curvy.Services.utilities.style('.data-hide', "display: none !important;");
+   var binding = this;
+   var path = binding.element.getAttribute('data-hide');
+   var update = function() {
+      if (!viewmodel.path(path)) { binding.element.classList.remove('data-hide'); }
+      else { binding.element.classList.add('data-hide'); }
+   };
+   viewmodel.watch(path, update);
+   update();
+});
+;
+
+// Binds the HREF attribute of this element to the ViewModel
+Curvy.register.binding('data-href', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var path = binding.element.getAttribute('data-href');
+   var update = function() {
+      var value = viewmodel.path(path) || '';
+      binding.element.setAttribute('href', value);
+   }
+   viewmodel.watch(path, update);
+   update();
+});
+;
+
+// Binds the innerHTML of this element to the ViewModel
+Curvy.register.binding('data-html', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var path = binding.element.getAttribute('data-html') || '';
+   function update() {
+      var value = viewmodel.path(path) || '';
+      binding.element.innerHTML = value;
+   }
+   viewmodel.watch(path, update);
+   update();
+});
+;
+
+// Responds to routing changes and loads content into the element.
+Curvy.register.binding('data-routed', ['route'], function(route) {
+   var binding = this;
+   function update(current, previous) {
+      if (previous && current.uri === previous.uri) { return; }
+      var uri = route.routes[current.uri];
+      if (!uri) { binding.element.innerHTML = ''; return; }
+      var request = new XMLHttpRequest();
+      request.open('get', uri, true);
+      request.onreadystatechange = function() {
+         if (this.readyState !== 4) { return; }
+         if (this.status < 200 || this.status >= 400) {
+            binding.element.innerHTML = '';
+         } else {
+            binding.element.innerHTML = this.responseText;
+         }
+      }
+      request.send();
+   }
+   route.subscribe(update);
+   binding.dispose(function() { route.unsubscribe(update); });
+   update(route.current);
+});
+;
+
+// Binds a "true/false-ish" value on the ViewModel and shows/hides this element using an injected class/style
+Curvy.register.binding('data-show', ['viewmodel'], function(viewmodel) {
+   Curvy.Services.utilities.style('.data-hide', "display: none !important;");
+   var binding = this;
+   var path = binding.element.getAttribute('data-show');
+   var update = function() {
+      if (viewmodel.path(path)) { binding.element.classList.remove('data-hide'); }
+      else { binding.element.classList.add('data-hide'); }
+   };
+   viewmodel.watch(path, update);
+   update();
+});
+;
+
+// Binds the "SRC" attribute to the ViewModel
+Curvy.register.binding('data-src', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var path = binding.element.getAttribute('data-src');
+   function update() {
+      var value = viewmodel.path(path) || '';
+      binding.element.setAttribute('src', value);
+   }
+   viewmodel.watch(path, update);
+   update();
+});
+;
+
+// Traps the "submit" event on a form and calls a command on the ViewModel
+Curvy.register.binding('data-submit', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var path = binding.element.getAttribute('data-submit');
+   binding.element.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var method = viewmodel.path(path);
+      if (typeof(method) !== 'function') { return; }
+      method.apply(viewmodel, arguments);
+      return false;
+   });
+});
+;
+
+(function() {
+   Curvy.register.binding('data-template', ['viewmodel', 'binding-manager'], function(viewmodel, manager) {
+      this.suspend();
+      var element = this.element;
+      var marker = document.createComment('Template Content');
+      var path = element.getAttribute('data-template');
+
+      element.removeAttribute('data-template');
+      var template = element.outerHTML;
+      element.parentNode.insertBefore(marker, element);
+      element.parentNode.removeChild(element);
+
+      var items = [];
+      function update() {
+         var models = viewmodel.path(path);
+         models = ((models instanceof Array) ? models.slice(0) : [models])
+            .filter(function(m) { return typeof(m) === 'object'; });
+
+         var buffer = [];
+         while (models.length) {
+            var model = models.shift();
+            while (items[0] && items[0].model !== model) {
+               var item = items.shift();
+               item.element.parentNode.removeChild(item.element);
+            }
+            if (items[0] && items[0].model === model) { buffer.push(items.shift()); }
+            else {
+               var element = Curvy.Services.utilities.parse(template);
+               var datamodel = createDataModel(element, manager, viewmodel, model);
+               manager.override(element, 'viewmodel', datamodel);
+               var target = !items[0] ? marker : items[0].element;
+               target.parentNode.insertBefore(element, target);
+               buffer.push({model: model, element: element});
+            }
+         }
+         items = buffer;
+      }
+      viewmodel.watch(path, update);
+      update();
+   });
+
+   function createDataModel(element, manager, viewmodel, model) {
+      var observable = new Curvy.Observable(model);
+      Object.defineProperty(observable, 'view', {configurable: false, enumerable: true, value: viewmodel.view});
+      Object.defineProperty(observable, 'parent', {configurable: false, enumerable: true, value: viewmodel});
+      Object.defineProperty(observable, 'dispose', {configurable: false, enumerable: true, value: function(disposal) {
+         manager.dispose(element, disposal);
+      }});
+      manager.dispose(function() {observable.destroy();});
+      observable.seal();
+      return observable;
+   }
+})();
+;
+
+// Binds this element's "TITLE" attribute to a value on the ViewModel
+Curvy.register.binding('data-title', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var path = binding.element.getAttribute('data-title');
+   function update() {
+      var value = viewmodel.path(path) || '';
+      binding.element.setAttribute('title', value);
+   }
+   viewmodel.watch(path, update);
+   update();
+});
+;
+
+// Blocks other bindings on this element and replaces this element with the view at the specified URI
+Curvy.register.binding('data-view', function() {
+   this.suspend();
+   var element = this.element;
+   var url = element.getAttribute('data-view');
+   var marker = document.createComment('view: ' + url);
+   element.parentNode.insertBefore(marker, element);
+   element.parentNode.removeChild(element);
+
+   var request = new XMLHttpRequest();
+   request.onreadystatechange = function() {
+      if (this.readyState !== 4) { return; }
+      if (typeof(this.responseText) !== 'string') { return; }
+      var ancestor = marker.parentNode;
+      while (ancestor && ancestor !== document) { ancestor = ancestor.parentNode; }
+      if (!ancestor) { return; }
+      var content = Curvy.Services.utilities.parse(this.responseText);
+      content = (content instanceof Array) ? content : [content];
+      for (var i = 0; i < content.length; i++) {
+         marker.parentNode.insertBefore(content[i], marker);
+      }
+   };
+   request.open('get', url);
+   request.send();
+});
+;
+
+(function() {
+   Curvy.Bindings.ViewModel = function(manager, parent) {
+      var binding = this;
+      var name = binding.element.getAttribute('view-model');
+      if (!name) { throw 'Invalid ViewModel'; }
+
+      var viewmodel = manager.resolve(name, parent, binding);
+      if (!viewmodel) {
+         var resume = binding.suspend();
+         manager.postpone(name, function() {
+            register(binding, manager.resolve(name, parent, binding));
+            resume();
+         });
+      } else {
+         register(binding, viewmodel);
+      }
+   };
+
+   function register(binding, viewmodel) {
+      binding.register('viewmodel', viewmodel);
+      binding.dispose(function() { viewmodel.destroy(); });
+   }
+
+   Curvy.register.binding('view-model', ['viewmodel-manager', 'viewmodel'], Curvy.Bindings.ViewModel);
+})();

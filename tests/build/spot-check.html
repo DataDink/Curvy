@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Curvy</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../builds/curvy.js"></script>
+   </head>
+   <body>
+      <div view-model="test">
+         <div id="tester" data-title="value"></div>
+      </div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         QUnit.test('Curvy', function(ass) {
+            Curvy.register.viewmodel('test', function() {
+               this.value = 'test';
+            });
+            Curvy.create();
+
+            var div = document.querySelector('#tester');
+            ass.ok(div.getAttribute('title') === 'test');
+         });
+      </script>
+   </body>
+</html>

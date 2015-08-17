@@ -13,7 +13,12 @@ module.exports = function(grunt) {
                'src/Observable.js',
 
                // services
-               'src/services/*.js',
+               'src/services/utilities.js',
+               'src/services/Injector.js',
+               'src/services/Broadcast.js',
+               'src/services/DomWatcher.js',
+               'src/services/Http.js',
+               'src/services/Route.js',
 
                // modules
                'src/modules/*.js',
