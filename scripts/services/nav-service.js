@@ -1,4 +1,4 @@
-Application.extend.register.perApp('nav-service', ['route', function(route) {
+Curvy.register.service('nav-service', ['route', function(route) {
    var service = this;
    service.navs = {
       '': [

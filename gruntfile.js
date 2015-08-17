@@ -12,7 +12,6 @@ module.exports = function(grunt) {
          options: { separator: ';\r\n\r\n' },
          curvy: {
             src: [
-               'builds/curvy.js',
                'scripts/services/*.js',
                'scripts/viewmodels/*.js'
             ],

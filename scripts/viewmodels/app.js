@@ -1,4 +1,4 @@
-Application.extend.viewmodel('app', ['nav-service', function(nav) {
+Curvy.register.viewmodel('app', ['nav-service', function(nav) {
    var viewmodel = this;
 
    viewmodel.navs = {main: [], left: []};
@@ -13,4 +13,4 @@ Application.extend.viewmodel('app', ['nav-service', function(nav) {
       }
    }
 }]);
-var myApp = new Application();
+Curvy.create();
