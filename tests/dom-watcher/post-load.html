@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Post-Load</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Configuration.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+      <script>
+      </script>
+   </head>
+   <body>
+      <div id="pre-rendered"><div id="pre-inner"></div></div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         setTimeout(function() {
+            var dependencies = Curvy.create().dependencies;
+            var watcher = dependencies.resolve('dom-watcher');
+
+            var added = [];
+            var removed = [];
+            watcher.listen(function(info) {
+               added = added.concat(info.added);
+               removed = removed.concat(info.removed);
+            });
+
+            QUnit.test('Pre-Render', function(ass) {
+               var bodyUndetected = added.filter(function(e) { return e === document.body; }).length === 0;
+               ass.ok(bodyUndetected, 'Body Undetected');
+
+               var preDiv = document.querySelector('#pre-rendered');
+               var preDivUndetected = added.filter(function(e) { return e === preDiv; }).length === 0;
+               ass.ok(preDivUndetected, 'Pre-Div Undetected');
+
+               var preInner = document.querySelector('#pre-inner');
+               var preInnerUndetected = added.filter(function(e) { return e === preInner; }).length === 0;
+               ass.ok(preInnerUndetected, 'Pre-Inner Undetected');
+
+               added = []; removed = [];
+               preDiv.parentElement.removeChild(preDiv);
+               var appended = document.createElement('div');
+               appended.innerHTML = '<div></div>';
+               var appendedChild = appended.childNodes[0];
+               document.body.appendChild(appended);
+
+
+               setTimeout(function() {
+                  QUnit.test('Post-Render', function(ass) {
+                     var appendedDetected = added.filter(function(e) { return e === appended; }).length === 1;
+                     ass.ok(appendedDetected, 'Appended Node Detected');
+                     var appendedChildUndetected = added.filter(function(e) { return e === appendedChild; }).length === 0;
+                     ass.ok(appendedChildUndetected, 'Appended Child Undetected');
+
+                     var preDivRemoved = removed.filter(function(e) { return e === preDiv; }).length === 1;
+                     ass.ok(preDivRemoved, 'Pre-Div Removal');
+                     var preInnerRemoved = removed.filter(function(e) { return e === preInner; }).length === 1;
+                     ass.ok(!preInnerRemoved, 'Pre-Inner Removal');
+
+                     added = []; removed = [];
+                     var raw = document.createElement('div');
+                     document.body.appendChild(raw);
+
+                     setTimeout(function() {
+                        var rawDetected = added.filter(function(e) { return e === raw; }).length === 1;
+                        ass.ok(rawDetected, 'Raw Detected');
+
+                        added = []; removed = [];
+                        raw.innerHTML = '<div></div>';
+                        var parsed = raw.childNodes[0];
+
+                        setTimeout(function() {
+                           var parsedDetected = added.filter(function(e) { return e === parsed; }).length === 1;
+                           ass.ok(parsedDetected, 'Parsed Detected');
+
+                           added = []; removed = [];
+                           raw.innerHTML = '';
+
+                           setTimeout(function() {
+                              var parsedRemoved = removed.filter(function(e) { return e === parsed; }).length === 1;
+                              ass.ok(parsedRemoved, 'Parsed Removed');
+                           }, 100);
+                        }, 100);
+                     }, 100);
+                  });
+               }, 100);
+            });
+         });
+      </script>
+   </body>
+</html>

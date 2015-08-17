@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>data-routed</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/polyfills/matches.js"></script>
+      <script src="../../src/polyfills/classlist.js"></script>
+
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+      <script src="../../src/Configuration.js"></script>
+
+      <script src="../../src/services/utilities.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+      <script src="../../src/services/Broadcast.js"></script>
+      <script src="../../src/services/Route.js"></script>
+
+      <script src="../../src/modules/BindingManager.js"></script>
+
+      <script src="../../src/bindings/data-routed.js"></script>
+   </head>
+   <body>
+      <div data-routed></div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         QUnit.test('Tests', function(ass) {
+            var content = false;
+            var request = false;
+            var element = document.querySelector('[data-routed]');
+            var routes = Curvy.create().dependencies.resolve('route');
+            routes.register('test1', 'view1');
+            routes.register('test2', 'view2');
+            XMLHttpRequest = function() {
+               this.open = function(method, uri) { request = uri; }
+               this.send = function() { this.onreadystatechange.apply({
+                  readyState : 4,
+                  status : 200,
+                  responseText : content
+               });}
+            };
+
+            content = 'value1';
+            routes.navigate('test1');
+            ass.ok(element.innerHTML === 'value1');
+            ass.ok(request === 'view1');
+
+            content = 'value2';
+            routes.navigate('test2');
+            ass.ok(element.innerHTML === 'value2');
+            ass.ok(request === 'view2');
+         });
+
+
+      </script>
+   </body>
+</html>

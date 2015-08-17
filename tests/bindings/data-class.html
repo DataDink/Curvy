@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>data-class</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/polyfills/matches.js"></script>
+      <script src="../../src/polyfills/classlist.js"></script>
+
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+      <script src="../../src/Configuration.js"></script>
+
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+
+      <script src="../../src/modules/BindingManager.js"></script>
+      <script src="../../src/modules/ViewModelManager.js"></script>
+
+      <script src="../../src/bindings/view-model.js"></script>
+      <script src="../../src/bindings/data-class.js"></script>
+   </head>
+   <body>
+      <div view-model="test">
+         <div id="configured" data-class="{one: toggle, two: child.toggle}"></div>
+         <div id="variable" data-class="value child.value"></div>
+      </div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         QUnit.test('Tests', function(ass) {
+            var configured = document.getElementById('configured');
+            var variable = document.getElementById('variable');
+            var viewmodel = false;
+
+            Curvy.register.viewmodel('test', function() {
+               viewmodel = this;
+               var child = new Curvy.Observable();
+               child.toggle = false;
+               child.value = 'four';
+               child.seal();
+               viewmodel.toggle = false;
+               viewmodel.value = 'three';
+               viewmodel.child = child;
+            });
+            Curvy.create();
+
+            // These would be better written to not require specific ordering of classes.
+            ass.ok(!configured.className);
+            ass.ok(variable.className === 'three four');
+            viewmodel.toggle = true;
+            ass.ok(configured.className === 'one');
+            viewmodel.child.toggle = true;
+            ass.ok(configured.className === 'one two');
+            viewmodel.toggle = false;
+            ass.ok(configured.className === 'two');
+            viewmodel.child.toggle = false;
+            ass.ok(!configured.className);
+            configured.className = 'test';
+            viewmodel.toggle = true;
+            ass.ok(configured.className === 'test one');
+            configured.className = '';
+            ass.ok(!configured.className);
+            viewmodel.child.toggle = true;
+            ass.ok(configured.className === 'two');
+
+            viewmodel.value = 'three-test';
+            ass.ok(variable.className === 'four three-test');
+            viewmodel.child.value = 'four-test';
+            ass.ok(variable.className === 'three-test four-test');
+         });
+
+
+      </script>
+   </body>
+</html>

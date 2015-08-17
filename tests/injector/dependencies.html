@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Dependencies</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Configuration.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         QUnit.test('Resolutions', function(ass) {
+            var scope = new Curvy.Services.Injector();
+            var dep1 = function() {};
+            var dep2 = function() {};
+            var svc1 = function(d1, d2) {
+               this.d1 = d1;
+               this.d2 = d2;
+            };
+            var svc2 = function(d1, d2, s1) {
+               this.d1 = d1;
+               this.d2 = d2;
+               this.s1 = s1;
+            };
+
+            scope.register.transient('dep1', [], dep1);
+            scope.register.contextual('dep2', [], dep2);
+            scope.register.singleton('svc1', ['dep1', 'dep2'], svc1);
+            scope.register.transient('svc2', ['dep1', 'dep2', 'svc1'], svc2);
+
+            var r1 = scope.resolve('svc2');
+            var r2 = scope.resolve('svc1');
+            var r3 = scope.resolve('svc2');
+
+            ass.ok(r1 !== r3, 'Transient Svc OK');
+            ass.ok(r1.s1 === r2, 'Singleton Svc OK');
+            ass.ok(r1.s1.d1 !== r1.d1, 'Transient Dep OK');
+            ass.ok(r1.s1.d2 === r1.d2, 'Contextual Dep OK 1');
+            ass.ok(r3.d2 !== r1.d2, 'Contextal Dep OK 2');
+
+            ass.ok(r1 instanceof svc2, 'Svc2 Type Match');
+            ass.ok(r2 instanceof svc1, 'Svc1 Type Match');
+            ass.ok(r1.d1 instanceof dep1, 'Dep1 Type Match');
+            ass.ok(r1.d2 instanceof dep2, 'Dep2 Type Match');
+         });
+
+         QUnit.test('Overrides', function(ass) {
+            var scope = new Curvy.Services.Injector();
+
+            var dep1 = function() {};
+            scope.register.singleton('dep1', [], dep1);
+            var dep2 = function() {};
+            scope.register.transient('dep2', [], dep2);
+            var dep3 = {};
+            scope.register.instance('dep3', [], dep3);
+
+            var overrides = {dep1: {}, dep3: {}};
+            var svc = scope.resolve(['dep1', 'dep2', 'dep3', function(d1, d2, d3) {
+               this.d1 = d1;
+               this.d2 = d2;
+               this.d3 = d3;
+            }], overrides);
+
+            ass.ok(svc.d1 === overrides.dep1, 'Dep1 Overriden');
+            ass.ok(svc.d2 instanceof dep2, 'Dep2 Resolved');
+            ass.ok(svc.d3 === overrides.dep3, 'Dep3 Overriden');
+         });
+
+         QUnit.test('Branching', function(ass) {
+            var scope = new Curvy.Services.Injector();
+
+            var dep1 = {};
+            scope.register.instance('dep1', dep1);
+            var dep2 = function() {};
+            scope.register.singleton('dep2', [], dep2);
+            var dep3 = function() {};
+            scope.register.singleton('dep3', [], dep3);
+            var dep4 = function() {};
+            scope.register.contextual('dep4', [], dep4);
+            var dep5 = function() {};
+            scope.register.transient('dep5', [], dep5);
+
+            var pre3 = scope.resolve('dep3');
+            var pre4 = scope.resolve('dep4');
+            var pre5 = scope.resolve('dep5');
+            var child = scope.branch();
+
+            ass.ok(dep1 === child.resolve('dep1'), 'Instance Persisted');
+            ass.ok(!!child.resolve('dep2'), 'Singleton Fresh');
+            ass.ok(pre3 === child.resolve('dep3'), 'Singleton Persisted');
+            ass.ok(pre4 !== child.resolve('dep4'), 'Contextual Fresh');
+            ass.ok(pre5 !== child.resolve('dep5'), 'Transient Fresh');
+
+         });
+      </script>
+   </body>
+</html>

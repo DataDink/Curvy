@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Route</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+      <script src="../../src/Configuration.js"></script>
+
+      <script src="../../src/services/utilities.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/Broadcast.js"></script>
+      <script src="../../src/services/Route.js"></script>
+
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         QUnit.test('Registration', function(ass) {
+            var navs = [];
+            var app = Curvy.create();
+            var service = app.dependencies.resolve('route');
+
+            service.register('valid', 'test');
+            ass.ok(service.routes.valid === 'test', 'Registration');
+
+            service.subscribe('valid', function(info) {
+               navs.push(info);
+            });
+
+            window.location.hash = 'valid';
+
+            setTimeout(function() {
+               QUnit.test('Detection', function(ass) {
+                  ass.ok(navs.length === 1, 'Nav Detected');
+               });
+
+               window.location.hash = 'invalid';
+
+               setTimeout(function() {
+                  QUnit.test('Non-Detection', function(ass) {
+                     ass.ok(navs.length === 1, 'Nav Ignored');
+                  });
+               }, 10)
+            }, 10);
+
+         });
+
+
+      </script>
+   </body>
+</html>

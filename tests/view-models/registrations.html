@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Registrations</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/polyfills/matches.js"></script>
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+      <script src="../../src/Configuration.js"></script>
+
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+
+      <script src="../../src/modules/BindingManager.js"></script>
+      <script src="../../src/modules/ViewModelManager.js"></script>
+
+      <script src="../../src/bindings/view-model.js"></script>
+   </head>
+   <body>
+
+      <div id="A" view-model="pre"></div>
+
+      <div id="B" view-model="post"><div id="C" view-model="pre"></div></div>
+
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         QUnit.test('Pre Registration', function(ass) {
+            var dependency = {};
+            Curvy.register.instance('dep', dependency);
+
+            var prevms = [];
+            var predeps = [];
+
+            Curvy.register.viewmodel('pre', ['dep'], function(dep) {
+               prevms.push(this);
+               predeps.push(dep);
+            });
+
+            var app = Curvy.create();
+
+            ass.ok(prevms.length === 1, 'Run Once');
+            ass.ok(prevms[0] instanceof Curvy.Observable, 'Is Observable');
+            ass.ok(predeps[0] === dependency, 'Received Dependency');
+            ass.ok(!prevms[0].parent, 'No Parent');
+            ass.ok(prevms[0].view === document.getElementById('A'), 'Correct View');
+
+            QUnit.test('Post Registration', function(ass) {
+
+               var postvms = [];
+
+               app.viewmodel('post', function() {
+                  postvms.push(this);
+               });
+
+               ass.ok(postvms.length === 1, 'Activated');
+               ass.ok(!postvms[0].parent, 'No Parent');
+               ass.ok(postvms[0].view === document.getElementById('B'), 'Correct View');
+
+               QUnit.test('Post Child', function(ass) {
+                  ass.ok(prevms.length === 2, 'Activated');
+                  ass.ok(prevms[1].parent === postvms[0], 'Correct Parent');
+                  ass.ok(prevms[1].view === document.getElementById('C'), 'Correct View');
+               });
+            });
+         });
+      </script>
+   </body>
+</html>

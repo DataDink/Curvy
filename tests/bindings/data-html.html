@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>data-html</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/polyfills/matches.js"></script>
+      <script src="../../src/polyfills/classlist.js"></script>
+
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+      <script src="../../src/Configuration.js"></script>
+
+      <script src="../../src/services/utilities.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+
+      <script src="../../src/modules/BindingManager.js"></script>
+      <script src="../../src/modules/ViewModelManager.js"></script>
+
+      <script src="../../src/bindings/view-model.js"></script>
+      <script src="../../src/bindings/data-html.js"></script>
+   </head>
+   <body>
+      <div view-model="test">
+         <div data-html="value"></div>
+      </div>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+
+         QUnit.test('Tests', function(ass) {
+            var viewmodel = false;
+            Curvy.register.viewmodel('test', function() {
+               viewmodel = this;
+               viewmodel.value = 'test';
+            });
+            Curvy.create();
+
+            var div = document.querySelector('[data-html]');
+            ass.ok(div.innerHTML === 'test');
+            viewmodel.value = 'test2';
+            ass.ok(div.innerHTML === 'test2');
+         });
+
+
+      </script>
+   </body>
+</html>

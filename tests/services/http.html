@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Http</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+
+      <script src="../../src/services/utilities.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/Http.js"></script>
+
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         var method = false;
+         var uri = false;
+         var data = false;
+         var headers = [];
+         var content = '{"value":"test"}';
+
+         XMLHttpRequest = function() {
+            this.open = function(m, u) {
+               method = m; uri = u;
+            };
+
+            this.send = function(body) {
+               data = body;
+               this.onreadystatechange.apply({
+                  readyState: 4,
+                  status: 200,
+                  responseText: content
+               });
+            };
+
+            this.setRequestHeader = function(name, value) {
+               headers.push({name: name, value: value});
+            }
+
+            this.overrideMimeType = function() {}
+         }
+
+         QUnit.test('Tests', function(ass) {
+            var http = new Curvy.Services.Http();
+
+            http.get('http:get', {a: 'a'}, function(d) {
+               ass.ok(method === 'get');
+               ass.ok(uri === 'http:get?a=a');
+               ass.ok(!data);
+               ass.ok(d.value === 'test');
+            });
+            http.post('http:post', {a: 'a'}, function(d) {
+               ass.ok(method === 'post');
+               ass.ok(uri === 'http:post');
+               ass.ok(data === '{"a":"a"}');
+               ass.ok(d.value === 'test');
+            });
+            http.put('http:put', {a: 'a'}, function(d) {
+               ass.ok(method === 'put');
+               ass.ok(uri === 'http:put');
+               ass.ok(data === '{"a":"a"}');
+               ass.ok(d.value === 'test');
+            });
+            http.patch('http:patch', {a: 'a'}, function(d) {
+               ass.ok(method === 'patch');
+               ass.ok(uri === 'http:patch');
+               ass.ok(data === '{"a":"a"}');
+               ass.ok(d.value === 'test');
+            });
+            http.delete('http:delete', {a: 'a'}, function(d) {
+               ass.ok(method === 'delete');
+               ass.ok(uri === 'http:delete?a=a');
+               ass.ok(!data);
+               ass.ok(d.value === 'test');
+            });
+         });
+
+
+      </script>
+   </body>
+</html>

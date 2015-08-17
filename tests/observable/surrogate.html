@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Surrogates</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Observable.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         var observed = false;
+         var observer = function() { observed = true; };
+         var intercepted = false;
+         var interceptor = function() { intercepted = true; };
+
+         QUnit.test('Basic', function(ass) {
+            var target = {};
+            observable = new Curvy.Observable(target);
+            ass.ok(observable instanceof Curvy.Observable, 'Valid');
+
+            observable.observe(observer);
+            observable.intercept(interceptor);
+
+            QUnit.test('Pre-Seal', function(ass) {
+               observable.value = 'test';
+               ass.ok(observable.value === 'test', 'Pre-Seal Writable');
+               ass.ok(!('value' in target), 'Pre-Seal Unset')
+
+               observed = false;
+               observable.value = 'asdf';
+               ass.ok(!observed, 'Pre-Seal Observer');
+
+               intercepted = false;
+               observable.value = function() {};
+               observable.value();
+               ass.ok(!intercepted, 'Pre-Seal Interceptor');
+
+               intercepted = false;
+               observed = false;
+               observable.notify('test');
+               ass.ok(observed && intercepted, 'Pre-Seal Triggers');
+
+               QUnit.test('Post-Seal', function(ass) {
+                  intercepted = false;
+                  observed = false;
+                  target.value = 'target-value';
+                  observable.seal();
+                  ass.ok(intercepted && !observed, 'Seal-Triggered');
+                  ass.ok('value' in target && target.value === 'target-value', 'Seal Target OK');
+                  ass.ok('value' in observable && observable.value === 'target-value', 'Seal Observable OK');
+
+                  observed = false;
+                  observable.value = 'observable-value';
+                  ass.ok(observed, 'Post-Seal Observed');
+                  ass.ok(observable.value === 'observable-value', 'Post-Seal value ok');
+                  ass.ok(target.value === 'observable-value', 'Post-Seal value set');
+
+                  observed = false;
+                  var context = false;
+                  target.value = function() { context = this; };
+                  ass.ok(!observed, 'Post-Seal target unobserved');
+                  intercepted = false;
+                  target.value();
+                  ass.ok(!intercepted, 'Target unintercepted');
+                  ass.ok(context === target, 'Target Context');
+                  observable.value();
+                  ass.ok(intercepted, 'Observable intercepted');
+                  ass.ok(context === observable, 'Observable Context');
+               });
+            });
+
+         });
+
+
+      </script>
+   </body>
+</html>

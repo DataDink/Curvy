@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Constructors</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Configuration.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         QUnit.test('Resolutions', function(ass) {
+            var injector = new Curvy.Services.Injector();
+            var dependency = {};
+
+            var func = false;
+            var both = false;
+            var combo = false;
+
+            injector.register.instance('dependency', dependency);
+            injector.register.transient('func', function() { func = true; });
+            injector.register.transient('both', ['dependency'], function(dep) { both = dep === dependency; });
+            injector.register.transient('combo', ['dependency', function(dep) { combo = dep === dependency; }]);
+
+            injector.resolve('func');
+            ass.ok(func, 'Function Only');
+
+            injector.resolve('both');
+            ass.ok(both, 'Dependencies And Function');
+
+            injector.resolve('combo');
+            ass.ok(combo, 'Combination');
+         });
+      </script>
+   </body>
+</html>

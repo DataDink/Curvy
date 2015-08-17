@@ -1,6 +1,7 @@
 // Binds one or more classes on this element to the state of members on the ViewModel (See documentation)
-Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(view, viewmodel, html) {
-   var value = view.element.getAttribute('data-class') || '';
+Curvy.register.binding('data-class', ['viewmodel'], function(viewmodel) {
+   var binding = this;
+   var value = this.element.getAttribute('data-class') || '';
    var member = value.indexOf('{') >= 0 ? false : value;
    var config = value.indexOf('{') < 0 ? false : value.replace(/^\{+|\}+$/g, '');
 
@@ -9,12 +10,10 @@ Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(
       var classes = {};
 
       var update = function(path) {
-         if (classes[path] !== false) { html.removeClass(view.element); }
-         var newclass = viewmodel.path(path);
-         classes[path] = (!newclass || html.hasClass(view.element, newclass))
-            ? false : newclass;
-         if (classes[path] === false) { return; }
-         html.addClass(newclass);
+         if (classes[path] !== false) { binding.element.classList.remove(classes[path]); }
+         classes[path] = validate(viewmodel.path(path));
+         if (!classes[path]) { return; }
+         binding.element.classList.add(classes[path]);
       };
 
       for (var i = 0; i < paths.length; i++) {
@@ -27,16 +26,24 @@ Application.extend.binding('data-class', ['view', 'viewmodel', 'html', function(
       for (var i = 0; i < settings.length; i++) {
          var parts = settings[i].split(':');
          settings[i] = {
-            class: parts[0].trim(),
+            class: validate(parts[0].trim()),
             path: parts[1].trim()
          };
+         if (!settings[i].class) { throw 'Invalid Class Name'; }
+
          settings[i].update = (function(setting) { return function() {
             var value = viewmodel.path(setting.path);
-            if (value) { html.addClass(view.element, setting.class); }
-            else { html.removeClass(view.element, setting.class); }
+            binding.element.classList.remove(setting.class);
+            if (value) { binding.element.classList.add(setting.class); }
          };})(settings[i]);
          viewmodel.watch(settings[i].path, settings[i].update);
          settings[i].update();
       }
    }
-}]);
+
+   function validate(name) {
+      if (typeof(name) !== 'string' || name.length < 1) { return false; }
+      if (/[^a-zA-Z0-9\-_]/.test(name)) { return false; }
+      return name.toLowerCase();
+   }
+});

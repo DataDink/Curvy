@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>Nodes</title>
+      <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
+      <script src="../../src/polyfills/matches.js"></script>
+      <script src="../../src/Curvy.js"></script>
+      <script src="../../src/Configuration.js"></script>
+      <script src="../../src/services/Injector.js"></script>
+      <script src="../../src/services/DomWatcher.js"></script>
+      <script src="../../src/modules/BindingManager.js"></script>
+   </head>
+   <body>
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+      <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+      <script>
+         var override = false;
+         var dispose = false;
+
+         Curvy.register.binding('test', ['value'], function(value) {
+            override = value === true;
+         });
+         var manager = Curvy.create().dependencies.resolve('binding-manager');
+
+         var insert = document.createElement('div');
+         insert.setAttribute('test', '');
+         manager.override(insert, 'value', true);
+         manager.dispose(insert, function() { dispose = true; });
+
+         document.body.appendChild(insert);
+
+         setTimeout(function() {
+            QUnit.test('Insert Override', function(ass) {
+               ass.ok(override, 'Override Applied');
+
+               document.body.removeChild(insert);
+
+               setTimeout(function() {
+                  QUnit.test('Trigger Disposal', function(ass) {
+                     ass.ok(dispose, 'Disposal Triggered');
+                  });
+               });
+            });
+         });
+      </script>
+   </body>
+</html>
