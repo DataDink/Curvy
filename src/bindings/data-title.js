@@ -4,7 +4,7 @@ Curvy.register.binding('data-title', ['viewmodel'], function(viewmodel) {
    var path = this.element.getAttribute('data-title');
    var update = function() {
       var value = viewmodel.path(path) || '';
-      view.element.setAttribute('title', value);
+      binding.element.setAttribute('title', value);
    };
    viewmodel.watch(path, update);
    update();
