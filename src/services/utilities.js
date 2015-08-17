@@ -65,9 +65,10 @@
          if (!params) { return uri; }
          if (typeof(params) !== 'string') { params = Curvy.Services.utilities.formatParameters(params); }
          params = params.replace(/^[&?]+/g, '');
-         return uri.indexOf('?') >= 0
+         var final = uri.indexOf('?') >= 0
             ? uri + '&' + params
             : uri + '?' + params;
+         return final.trim().replace(/\?$|&$/gi, '');
       },
 
       formatParameters: function(obj) {
@@ -76,7 +77,7 @@
          for (var name in obj) {
             var values = (obj[name] instanceof Array) ? obj[name] : [obj[name]];
             for (var i = 0; i < values.length; i++) {
-               var value = (values[i] === nothing ? '' : values[i]);
+               var value = (typeof(values[i]) === 'undefined' ? '' : values[i]);
                params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
             }
          }
