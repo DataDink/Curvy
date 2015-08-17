@@ -1,12 +1,12 @@
-// General AJAX wrapper that provides global and session request configurations
-Application.extend(['application', function(app) { // Wrapping like this will make global configuration become per-application
+(function() {
+   var utils = Curvy.Services.utilities;
+
    var globalHeaders = {};
    var globalConfig = {};
    var globalParams = {};
    var globalQuery = {};
 
-   // Not singleton. Allows a service to configure its own common headers/parameters without affecting other services
-   app.register.perResolve('http', ['html', function(html) {
+   Curvy.Services.Http = function() {
       var persistHeaders = {};
       var persistConfig = {};
       var persistParams = {}; // body or query
@@ -49,27 +49,28 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
 
       // REST methods
       this.get = function(uri, params, success, error, headers, config) {
-         return send('get', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
+         return send('get', utils.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
       };
 
       this.delete = function(uri, params, success, error, headers, config) {
-         return send('delete', html.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
+         return send('delete', utils.formatUri(uri, applyQuery(applyParams(params))), success, error, false, applyHeaders(headers), applyConfig(config));
       };
 
       this.post = function(uri, body, success, error, headers, config) {
-         return send('post', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+         return send('post', utils.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
       };
 
       this.patch = function(uri, body, success, error, headers, config) {
-         return send('patch', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+         return send('patch', utils.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
       };
 
       this.put = function(uri, body, success, error, headers, config) {
-         return send('put', html.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
+         return send('put', utils.formatUri(uri, applyQuery({})), success, error, applyParams(body), applyHeaders(headers), applyConfig(config));
       };
 
       Object.freeze(this);
-   }]);
+   };
+   Curvy.register.transient(['http', 'services'], Curvy.Services.Http);
 
    function send(method, uri, success, error, body, headers, config) {
       body = body ? JSON.stringify(body) : false;
@@ -126,4 +127,4 @@ Application.extend(['application', function(app) { // Wrapping like this will ma
    function tryparse(content) {
       try { return JSON.parse(content); } catch(error) { console.log(content); return { parseError: error } }
    }
-}]);
+})();

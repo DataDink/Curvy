@@ -1,6 +1,7 @@
 // Route Service manages and syncs application hash navigations and state.
 (function() {
    var nothing = (function() { })();
+   var utils = Curvy.Services.utilities;
 
    Curvy.Services.Route = function(bcast) {
       var service = this;
@@ -9,7 +10,7 @@
 
       var previous = false;
       Object.defineProperty(service, 'current', {configurable: false, enumerable: true, get: function() {
-         return service.parse(window.location.hash);
+         return utils.parseUri(window.location.hash);
       }});
 
       var views = {};
@@ -19,7 +20,7 @@
          return clone;
       }});
       Object.defineProperty(service, 'register', {configurable: false, enumerable: true, value: function(uri, view) {
-         views[service.parse(uri).uri] = view;
+         views[utils.parseUri(uri).uri] = view;
       }});
 
       var general = [];
@@ -48,10 +49,10 @@
 
       Object.defineProperty(service, 'navigate', {configurable: false, enumerable: true, value: function(uri, params) {
          if (window.history && window.history.pushState) {
-            window.history.pushState(null, null, '#' + service.formatUri(uri, params));
+            window.history.pushState(null, null, '#' + utils.formatUri(uri, params));
             onstate();
          } else {
-            window.location.hash = service.formatUri(uri, params);
+            window.location.hash = utils.formatUri(uri, params);
          }
       }});
 
@@ -74,54 +75,6 @@
 
       Object.freeze(service);
    };
-
-   Object.defineProperty(Curvy.Services.Route.prototype, 'parse', { configurable: false, enumerable: true, value: function(uri) {
-      uri = (uri || '').replace(/^#+/g, '');
-      var parts = uri.split('?');
-      var uri = (parts[0] || '').toLowerCase();
-      var params = parts[1] || '';
-      var data = Curvy.Services.Route.prototype.parseQuery(parts[1] || '');
-      var info = {uri: uri, params: params, data: data};
-      Object.freeze(info);
-      return info;
-   }});
-
-   Object.defineProperty(Curvy.Services.Route.prototype, 'parseQuery', {configurable: false, enumerable: true, value: function parseQuery(params) {
-      var result = {};
-      var items = (params || '').replace(/^\?+|^\&+|\&+$/g, '').split('&');
-      for (var i = 0; i < items.length; i++) {
-         var parts = items[i].split('=');
-         if (parts.length !== 2) { continue; }
-         var key = decodeURIComponent(parts[0] || '');
-         var value = decodeURIComponent(parts[1] || '');
-         if (typeof(result[key]) === 'string') { result[key] = [result[key], value]; }
-         else if (key in result) { result[key].push(value); }
-         else { result[key] = value; }
-      }
-      return result;
-   }});
-
-   Object.defineProperty(Curvy.Services.Route.prototype, 'formatUri', {configurable: false, enumerable: true, value: function(uri, params) {
-      if (!params) { return uri; }
-      if (typeof(params) !== 'string') { params = Curvy.Services.Route.formatParameters(params); }
-      params = params.replace(/^[&?]+/g, '');
-      return uri.indexOf('?') >= 0
-         ? uri + '&' + params
-         : uri + '?' + params;
-   }});
-
-   Object.defineProperty(Curvy.Services.Route.prototype, 'formatParameters', {configurable: false, enumerable: true, value: function(obj) {
-      if (typeof(obj) === 'string') { return obj; }
-      var params = [];
-      for (var name in obj) {
-         var values = (obj[name] instanceof Array) ? obj[name] : [obj[name]];
-         for (var i = 0; i < values.length; i++) {
-            var value = (values[i] === nothing ? '' : values[i]);
-            params.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
-         }
-      }
-      return params.join('&');
-   }});
 
    Curvy.register.service('route', ['broadcast'], Curvy.Services.Route);
 })();
