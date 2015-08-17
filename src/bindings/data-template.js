@@ -1,5 +1,5 @@
 (function() {
-   Curvy.register.binding('data-template', ['viewmodel', binding-manager], function(viewmodel, manager) {
+   Curvy.register.binding('data-template', ['viewmodel', 'binding-manager'], function(viewmodel, manager) {
       this.suspend();
       var element = this.element;
       var marker = document.createComment('Template Content');
@@ -8,12 +8,13 @@
       element.removeAttribute('data-template');
       var template = element.outerHTML;
       element.parentNode.insertBefore(marker, element);
-      element.parentNode.removeChild(binding.element);
+      element.parentNode.removeChild(element);
 
       var items = [];
       function update() {
          var models = viewmodel.path(path);
-         models = (models instanceof Array) ? models.slice(0) : [models];
+         models = ((models instanceof Array) ? models.slice(0) : [models])
+            .filter(function(m) { return typeof(m) === 'object'; });
 
          var buffer = [];
          while (models.length) {
