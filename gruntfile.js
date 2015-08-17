@@ -8,22 +8,18 @@ module.exports = function(grunt) {
                'polyfills/*.js',
                'src/Curvy.js',
 
-               // namespaces
-               'src/modules/Modules.js',
-               'src/services/Services.js',
-               'src/bindings/Bindings.js',
-
                // lib
                'src/Configuration.js',
                'src/Observable.js',
 
                // services
-               'src/services/Injector.js',
-               'src/services/Utilities.js',
-               'src/services/DomWatcher.js',
+               'src/services/*.js',
 
                // modules
-               'src/modules/Bindings.js',
+               'src/modules/*.js',
+
+               // bindings
+               'src/bindings/*.js',
             ],
             dest: 'builds/curvy.js'
          }
