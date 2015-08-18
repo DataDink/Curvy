@@ -39,7 +39,9 @@
             Curvy.create();
 
             var div = document.querySelector('[data-click]');
-            div.dispatchEvent(new Event('click'));
+            var evt = !!document.createEvent ? document.createEvent('MouseEvents') : new Event('click');
+            if (document.createEvent) { evt.initEvent('click', true, true); }
+            div.dispatchEvent(evt);
             ass.ok(triggered);
          });
 

@@ -9,7 +9,7 @@
 
    function DOMTokenList(element) {
       this.element = element;
-      var classes = el.className.replace(/^\s+|\s+$/g,'').split(/\s+/);
+      var classes = element.className.replace(/^\s+|\s+$/g,'').split(/\s+/);
       for (var i = 0; i < classes.length; i++) {
          push.call(this, classes[i]);
       }
