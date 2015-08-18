@@ -75,6 +75,34 @@
 
          });
 
+         QUnit.test('Layered', function(ass) {
+            var inner = new Curvy.Observable();
+            inner.value = 'test';
+            inner.seal();
+            var outer = new Curvy.Observable(inner);
+            outer.seal();
+
+            ass.ok(outer.value === 'test');
+            outer.value = 'test2';
+            ass.ok(outer.value === 'test2');
+            ass.ok(inner.value === 'test2');
+            inner.value = 'test3';
+            ass.ok(outer.value === 'test3');
+            ass.ok(inner.value === 'test3');
+
+            var innerTriggered = false;
+            var outerTriggered = false;
+            outer.observe(function() {outerTriggered = true;});
+            inner.observe(function() {innerTriggered = true;});
+
+            inner.value = 'test4';
+            ass.ok(innerTriggered && !outerTriggered);
+
+            innerTriggered = false;
+            outer.value = 'test5';
+            ass.ok(innerTriggered && outerTriggered);
+         });
+
 
       </script>
    </body>

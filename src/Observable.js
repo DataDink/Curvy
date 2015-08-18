@@ -42,17 +42,15 @@
          target = nothing;
       }});
 
-      Object.defineProperty(observable, 'seal', { enumerable: true, configurable: false, value: function() {
+      function seal() {
+         seal = (function() {})();
          observable.notifyIntercept('seal', arguments);
-         if (target) { return proxy(target, observable); }
-         target = {};
-         for (member in observable) {
-            if (member in Curvy.Observable.prototype) { continue; }
-            else if (locked(observable, member)) { continue; }
-            target[member] = observable[member];
-         };
-         return proxy(target, observable, observers);
-      }});
+         return proxy(target || {}, observable);
+      }
+
+      Object.defineProperty(observable, 'seal', {enumerable: true, configurable: false, get: function() {
+         return seal;
+      }})
    };
 
    Object.defineProperty(Curvy.Observable.prototype, 'path', { enumerable: true, configurable: false, value: function(path) {
@@ -97,14 +95,17 @@
    }});
 
    function proxy(target, surrogate) {
-      for (var member in target) {
-         delete surrogate[member];
-         proxyMember(member, target, surrogate);
-      }
+      for (var member in target) { proxyMember(member, target, surrogate); }
+      for (var member in surrogate) { if (!(member in target)) { proxyMember(member, target, surrogate); }}
       Object.freeze(surrogate);
    }
 
    function proxyMember(member, target, surrogate) {
+      if (member in Curvy.Observable.prototype) { return; }
+      if (locked(surrogate, member)) { return; }
+      if (!(member in target)) { target[member] = surrogate[member]; }
+      delete surrogate[member];
+
       Object.defineProperty(surrogate, member, { enumerable: true, configurable: false,
          get: function() {
             if (typeof(target[member]) === 'function') {
