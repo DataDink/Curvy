@@ -22,11 +22,6 @@ Curvy.register.service('nav-service', ['route', function(route) {
          {name: 'http', uri: '#http', view: 'views/http.html'},
          {name: 'route', uri: '#route', view: 'views/route.html'}
       ],
-      'Utilities': [
-         {name: 'utilities', uri: '#utilities', view: 'views/utilities.html'},
-         {name: 'html', uri: '#html', view: 'views/html.html'},
-         {name: 'broadcast', uri: '#broadcast', view: 'views/broadcast.html'}
-      ],
       'Bindings': [
          {name: 'data-bind', uri: '#data-bind', view: 'views/data-bind.html'},
          {name: 'data-class', uri: '#data-class', view: 'views/data-class.html'},
