@@ -1,8 +1,7 @@
 <h3>ViewModels</h3>
 <p>
-   The view-model binding adds the specified view-model to the scope of the view
-   and its descendants. It will block all other bindings for the scope until
-   a view-model has been configured with a matching name.
+   Setting a view-model on an element will create an observable scope for that element
+   and its decendants. Bindings and child view-models will have access to this view-model.
 </p>
 <p>
    When configuring a view-model you should treat the view-model function as you
@@ -21,9 +20,9 @@
    like this:
 </p>
 <pre>
-   var myApp = new Application(document); // viewmodels are added to an application before or after its instantiated
+   var application = Curvy.create();
 
-   myApp.viewmodel('my-viewmodel', function() {
+   application.viewmodel('my-viewmodel', function() {
       this.value = 'initial value';
       this.update = function(e) {
          this.value = 'updated value';
@@ -47,19 +46,13 @@
 <p>
    <em class="col-sm-3">view</em>
    <span class="col-sm-9">
-      Provides access to the View this view-model belongs to.
+      Provides access to the element or "view" this view-model belongs to.
    </span>
 </p>
 <p>
    <em class="col-sm-3">parent</em>
    <span class="col-sm-9">
-      Finds the first ancestor view model.
-   </span>
-</p>
-<p>
-   <em class="col-sm-3">children</em>
-   <span class="col-sm-9">
-      Scans all descendant elements for child view models
+      References the parent viewmodel if one exists
    </span>
 </p>
 <p>
@@ -99,94 +92,17 @@
    </span>
 </p>
 <p>
-   <em class="col-sm-3">dispose()</em>
+   <em class="col-sm-3">destroy()</em>
    <span class="col-sm-9">
       This method cleans up potential leaky references held by the
       view model. This should never be called by your code.
    </span>
 </p>
 <p>
-   Because observable members are added after the view model has been constructed there
-   is no way for you to access these additional members in your construction code which
-   executes prior to instantiation. Instead of setting an observe callback you can
-   instead <em>override</em> the notify, observe, or unobserve methods.
-</p>
-<p>
-   Overriding these methods will not break their functionality. They will still operate
-   as normal making your method more of an <em>interceptor</em> than an override.
-</p>
-<pre>
-   myApp.viewmodel('my-viewmodel', function() {
-      this.notify = function(property) {
-         console.log('The ' + property + ' property has been set!');
-      };
-   });
-</pre>
-<p>
-   It is crucial when configuring your view-model that you do not lock any values down
-   using a property definition or by locking/freezing the object. This will be done for you
-   by the conversion process.
-</p>
-<p>
-   It is important to note that because Curvy operates by watching Observables intead of
-   triggering scans (as in other frameworks) that descendant members will not trigger
-   notification events when changed unless they are also observable.
-</p>
-<p>
-   For example:
-</p>
-<pre>
-   myApp.viewmodel('my-viewmodel', function() {
-      this.member = {};
-      this.member.member = 'value';
-      this.update = function() {
-         this.member.member = 'will not update UI';
-      };
-   });
-</pre>
-<p>
-   In this example the "update" function will not trigger a change in the UI because the
-   descendant "member" object is not observable.
-<p>
-<p>
-   In order to make changes to the descendant member trigger UI updates you must either
-   convert it to an observable or an observable surrogate.
-</p>
-<pre>
-   // Converts the "member" object into an observable
-   myApp.viewmodel('my-viewmodel', ['application', function(application) {
-      this.member = {};
-      this.member.member = 'value';
-      <strong>application.Observable.convert(this.member);</strong>
-      this.update = function() {
-         this.member.member = 'UI will update';
-      };
-   }]);
-</pre>
-<p>
-   When converting an object to an observable, like a view-model, it will be locked down
-   and no longer able to have additional properties or functions added to it. If you require
-   a less intrusive way of observing an object you can create a surrogate.
-</p>
-<pre>
-   // Creates an observable surrogate that proxies the "member" object
-   myApp.viewmodel('my-viewmodel', ['application', function(application) {
-      this.member = {};
-      this.member.member = 'value';
-      <strong>this.member = application.Observable.surrogate(this.member);</strong>
-      this.update = function() {
-         this.member.member = 'UI will update';
-      };
-   }]);
-</pre>
-<p>
-   When a surrogate is created a new observable object is created that will get and set
-   values on the original object instead of on itself. Remember that once a surrogate is
-   created its structure can't be altered. This means if you add a new field to the original
-   object after the surrogate is created that new field will not be available on the surrogate.
-</p>
-<p>
-   I don't know what will happen if you use either of these methods on an existing observable.
-   I simply recommend not doing so as this is not an intended functionality.
+   <em class="col-sm-3">dispose(function)</em>
+   <span class="col-sm-9">
+      Adds a function to be called when the viewmodel's element/view is removed from the
+      document.
+   </span>
 </p>
 <hr />
