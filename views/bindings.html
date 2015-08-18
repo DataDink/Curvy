@@ -1,147 +1,49 @@
 <h3>Bindings</h3>
 <p>
    Bindings connect the DOM to your code. As elements are added and removed
-   from the root element of your application they will be scanned by the framework
+   from the root element of your document they will be scanned by the framework
    and bound appropriately based on their attributes and location in the document.
 </p>
 <p>
-   New or custom bindings should be added before app creation directly on the Application
-   constructor's "Application.extend.binding(name, constructor, prescan)" function.
+   New or custom bindings should be added before app creation directly on the Curvy
+   constructor's "Curvy.register.binding(name, constructor)" function.
 </p>
 <pre>
 &lt;div my-binding="pew pew"&gt;&lt;/div&gt;
 </pre>
 <pre>
-Application.extend.binding('my-binding', ['view', function(view) {
-   console.log(view.element.getAttribute('my-binding'));
+Curvy.register.binding('my-binding', [function() {
+   console.log(this.element.getAttribute('my-binding'));
 }]);
 </pre>
-<h3>Views</h3>
-<p>
-   A binding can request the "view" as a dependency. View is a model that represents the
-   portion of the DOM that a binding is bound to. From the view you can navigate ancestor
-   and descendant views, access application functionality such as broadcasts, and manage
-   disposal events.
-</p>
 <p class="container-fluid">
-   <em class="col-sm-3">view.application</em>
+   <em class="col-sm-3">this.element</em>
    <span class="col-sm-9">
-      References the application this view belongs to.
+      The DOM Element the binding was located on.
    </span>
 </p>
 <p class="container-fluid">
-   <em class="col-sm-3">view.element</em>
+   <em class="col-sm-3">this.suspend()</em>
    <span class="col-sm-9">
-      The DOM Element this view represents. A view is typically created for any element
-      that has a binding on it when it is first added to the DOM. Views will not be
-      created for an element if a binding is added after the element has already been
-      processed. This means that bindings should always be added to an element before
-      they are added to the DOM.
+      The suspend function on a binding will halt further binding on the current element and
+      its decendants. This returns a "resume" function that when called will attempt to
+      re-bind the suspended element and its decendants.
    </span>
 </p>
 <p class="container-fluid">
-   <em class="col-sm-3">view.root</em>
+   <em class="col-sm-3">this.register(name, value)</em>
    <span class="col-sm-9">
-      Finds the most-root view of your application. This is typically the body of your document.
+      The register function on a binding will override dependency requests with the specified
+      value for this binding and its decendants. Any future binding on this element and its
+      decendants will receive this value instead of any service previously registered to
+      the specified name.
    </span>
 </p>
 <p class="container-fluid">
-   <em class="col-sm-3">view.parent</em>
+   <em class="col-sm-3">this.dispose(function)</em>
    <span class="col-sm-9">
-      Finds the first ancestor of the current view.
+      Registers a function that will be called when the binding's element is removed from
+      the document. This should be used to clean up resources referenced by your code that
+      might cause memory leaks in single-page applications.
    </span>
-</p>
-<p class="container-fluid">
-   <em class="col-sm-3">view.children</em>
-   <span class="col-sm-9">
-      Scans all descendant elements for children views.
-   </span>
-</p>
-<p class="container-fluid">
-   <em class="col-sm-3">view.bound</em>
-   <span class="col-sm-9">
-      This is typically set to true and means that all binding requirements have been
-      satisfied. When false this view was unable to bind during the latest attempt and
-      it and its descendant views have been suspended until the next triggering event.
-   </span>
-</p>
-<p class="container-fluid">
-   <em class="col-sm-3">view.listen()</em>
-   <span class="col-sm-9">
-      <strong>listen(channel, callback)</strong><br />
-      Adds a handler that will respond to global broadcasts
-      <em><small>(see <a href="#broadcast">broadcast service</a>)</small></em>.
-      The .listen function on the view will auto unsubscribe the listener when the view
-      is being disposed.
-   </span>
-</p>
-<p class="container-fluid">
-   <em class="col-sm-3">view.dispose</em>
-   <span class="col-sm-9">
-      This is a <em>set-only</em> property that will add a disposal function to be fired
-      when the View is disposed. The view is disposed when the element it represents in the DOM
-      is removed. Setting the .dispose property multiple times will add multiple disposal
-      functions instead of replacing them. This is weird, I know, and I plan on changing this
-      in the future.
-   </span>
-</p>
-<p class="container-fluid">
-   <em class="col-sm-3">view.scope</em>
-   <span class="col-sm-9">
-      Setting the scope to an object will add or override dependencies that descendant bindings
-      will have access to.
-   </span>
-</p>
-<div class="container-fluid">
-   <pre class="col-sm-9 col-sm-offset-3">
-&lt;div outer-binding&gt;
-   &lt;div inner-binding&gt;
-   &lt;/div&gt;
-&lt;/div&gt;
-   </pre>
-   <pre class="col-sm-9 col-sm-offset-3">
-Application.extend.binding('outer-binding', function(view) {
-   view.scope = { scopeValue: 123 };
-});
-
-Application.extend.bindign('inner-binding', function(scopeValue) {
-   console.log(scopeValue);
-});
-   </pre>
-<h3>Prescan</h3>
-<p>
-   In some rare cases a binding may need its view to postpone binding until a later time.
-   In this situation you can add a "prescan" function to your binding declaration.
-</p>
-<pre>
-Application.extend.binding('my-binding',
-   function() { /* binding constructor */ },
-   function(view) { /* binding prescan */ }
-);
-</pre>
-<p>
-   If a prescan returns false then all bindings for the current view and all
-   descendant views will be halted. This scope will remain halted until manually instructed
-   to rescan using the "scan()" method on the view. A manual rescan will continue to fail
-   until there are no longer any bindings on the view failing the prescan.
-</p>
-<pre>
-&lt;div data-blocker&gt;&lt;/div&gt;
-</pre>
-<pre>
-var canBind = false; // Some external something
-Application.extend.binding('data-blocker',
-   function() { console.log('Unblocked!'); },
-   function(view) {
-      if (!canBind) {
-         console.log('Blocked!');
-         setTimeout(function() { canBind = true; view.scan(); }, 5000);
-         return false;
-      }
-   });
-new Application();
-</pre>
-<p>
-   The prescan function is not dependency injected. If you need to resolve a dependency you must
-   resolve it off of the application reference on the view. <em>view.application.resolve('service')</em>
 </p>

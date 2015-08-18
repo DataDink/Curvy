@@ -4,83 +4,87 @@
    a little bit about how it is structured.
 </p>
 <p>
-   When adding Curvy to your page you are given a single global constructor: "Application".
-   The Application constructor allows you to pre-configure your application if you would
-   like or you can wait until after construction to load in your client code. The only thing
-   you are required to preload are your
-   custom bindings <small><em>(see <a href="#bindings">bindings</a>)</em></small>
-   and configurations.
+   Curvy, by itself, is a host for modules and services that come together to form an application.
+   Calling the <em>Curvy.create()</em> method will create a new instance of Curvy and attach itself
+   to your page.
+</p>
+<p>
+   Like Angular you can pre-load any services, bindings, and viewmodels required to run your
+   application. With Curvy, however, you can also load up additional functionality at any time.
 </p>
 <h3>Pre-Configuration</h3>
 <p>
-   Your application will likely be comprised of a number of <strong>configurations</strong>,
+   Your application will likely be comprised of a number of
    <strong>services</strong>, <strong>custom bindings</strong>, and <strong>view-models</strong>.
-   These can all be configured directly from the <em>extend</em> function on the
-   "Application" constructor.
-</p>
-<p class="container-fluid">
-   <strong class="col-sm-3">Configurations</strong>
-   <span class="col-sm-9">
-      <strong>Application.extend(<em>constructor</em>)</strong><br />
-      Accepts an injection constructor
-      that will be run when the "Application" is instantiated. You are provided normal injection
-      services for this constructor but the constructed configuration object will be inaccessible to
-      the rest of the application.
-   </span>
+   These can all be configured directly from the <em>register</em> function on the
+   "Curvy" constructor.
 </p>
 <p class="container-fluid">
    <strong class="col-sm-3">Services</strong>
    <span class="col-sm-9">
-      <strong>Application.extend.register...</strong><br />
-      Offers multiple methods for registering services as dependencies for your application.
+      <strong>Curvy.register.service(name, [dependencies], constructor)</strong><br />
+      Allows you to register a new service for your application.<br />
+      A service is a constructor that will be created only once per application and be made
+      available to any other part of your application by name.
    </span><br />
 </p>
 <div>
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>Injection Constructor</strong><br />
-      An injection constructor is a function which asks for dependencies by name. If a service
-      exists that matches a parameter name in the function's declaration it will be passed when
-      the injection constructor is being instantiated. Injection constructors are treated as
-      javascript class definitions and are constructed similar to using the "new" keyword. <br />
-      An injection constructor can also be wrapped in an array which precedes the constructor
-      function with dependency names as strings to avoid minification issues.
+      <strong>Injection Constructors</strong><br />
+      An injection constructor (as in Angular) is a regular javascript constructor at the end
+      of an array of strings that define the required injection values for a new object.<br />
+      Each string preceeding the constructor in the array defines a dependency by name that
+      will be passed to the constructor in the order specified.<br />
+      Unlike Angular, Curvy <em>requires</em> that dependencies be defined with strings instead of looking
+      at the parameter names in the constructor. This decision was made to avoid
+      issues commonly caused through processes like minification that will alter the names of
+      parameters in functions.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>Application.extend.register.instance(name, object)</strong><br />
+      <strong>Curvy.register.instance(name, object)</strong><br />
       Registers a pre-constructed object as a named dependency.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>Application.extend.register.perApp(name, constructor)</strong><br />
-      Registers an
-      injection constructor as a named dependency. This will not be constructed until it is needed
-      for the first time as a dependency in the application. PerApp dependencies are constructed
+      <strong>Curvy.register.singleton(name, constructor)</strong><br />
+      Registers an injection constructor as a named dependency.
+      This will not be constructed until it is needed for the first time as a dependency
+      in the application. Singleton dependencies are constructed
       once per application and re-used for all other dependency requirements.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>Application.extend.register.perScope(name, constructor)</strong><br />
-      Registers an
-      injection constructor as a named dependency. This will not be constructed until it is needed
-      for the first time as a dependency in the application. PerScope dependencies are constructed
-      once per resolution scope and re-used for all descendant dependency requirements.
+      <strong>Curvy.register.contextual(name, constructor)</strong><br />
+      Registers an injection constructor as a named dependency.
+      This will not be constructed until it is needed for the first time as a dependency
+      in the application. Contextual dependencies are constructed once per resolution scope
+      and re-used for all descendant dependency requirements.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>Application.extend.register.perResolve(name, constructor)</strong><br />
-      Registers an
-      injection constructor as a named dependency. This will not be constructed until it is needed
-      for the first time as a dependency in the application. PerResolve dependencies are always
+      <strong>Curvy.register.transient(name, constructor)</strong><br />
+      Registers an injection constructor as a named dependency.
+      This will not be constructed until it is needed for the first time as a dependency
+      in the application. Transient dependencies are always
       re-constructed every time they are required as a dependency.
    </p>
 </div>
 <p class="container-fluid">
+   <strong class="col-sm-3">Services</strong>
+   <span class="col-sm-9">
+      <strong>Curvy.register.service(name, constructor)</strong><br />
+      Provides a method to add custom service to your application. Registration of services
+      are similar to singleton services in that they are created only once and recycled each time
+      they are needed.
+   </span>
+</p>
+<p class="container-fluid">
    <strong class="col-sm-3">Bindings</strong>
    <span class="col-sm-9">
-      <strong>Application.extend.binding(attributeName, constructor)</strong><br />
+      <strong>Curvy.register.binding(attributeName, constructor)</strong><br />
       Provides a method to add custom bindings to your application. Registration of bindings
-      is similar to perResolve services in that they are newly created each time they are needed,
+      is similar to transient services in that they are newly created each time they are needed,
       but bindings can't be asked for as dependencies. Bindings are registered by their attribute
       name and will only be triggered with a matching attribute in the DOM.
    </span>
@@ -88,9 +92,9 @@
 <p class="container-fluid">
    <strong class="col-sm-3">View Models</strong>
    <span class="col-sm-9">
-      <strong>Application.extend.viewmodel(name, constructor)</strong><br />
+      <strong>Curvy.register.viewmodel(name, constructor)</strong><br />
       Provides a method to register view models for your application. Registration of view models
-      is similar to perResolve services, but like bindings can't be asked for as dependencies.
+      is similar to transient services, but like bindings can't be asked for as dependencies.
       View models can only be triggered when a "view-model" attribute is added to the DOM
       with a value matching the registered name.
    </span>
@@ -103,46 +107,46 @@
 <p class="container-fluid">
    <strong class="col-sm-3">Services</strong>
    <span class="col-sm-9">
-      The constructed application <em>(new Application())</em> provides instance, perApp, perScope,
-      and perResolve functions for late registration of services.
+      The constructed application <em>(Curvy.create())</em> provides instance, singleton, contextual,
+      and transient functions for late registration of services.
    </span>
 </p>
 <div>
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(new Application()).instance(name, object)</strong><br />
+      <strong>(Curvy.create()).dependencies.register.instance(name, object)</strong><br />
       registers a pre-constructed object as a named dependency.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(new Application()).perApp(name, constructor)</strong><br />
-      Registers an
-      injection constructor as a named dependency. This will not be constructed until it is needed
-      for the first time as a dependency in the application. PerApp dependencies are constructed
+      <strong>(Curvy.create()).register.singleton(name, constructor)</strong><br />
+      Registers an injection constructor as a named dependency.
+      This will not be constructed until it is needed for the first time as a dependency
+      in the application. Singleton dependencies are constructed
       once per application and re-used for all other dependency requirements.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(new Application()).perScope(name, constructor)</strong><br />
-      Registers an
-      injection constructor as a named dependency. This will not be constructed until it is needed
-      for the first time as a dependency in the application. PerScope dependencies are constructed
-      once per resolution scope and re-used for all descendant dependency requirements.
+      <strong>(Curvy.create()).register.contextual(name, constructor)</strong><br />
+      Registers an injection constructor as a named dependency.
+      This will not be constructed until it is needed for the first time as a dependency
+      in the application. Contextual dependencies are constructed once per resolution scope
+      and re-used for all descendant dependency requirements.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(new Application()).perResolve(name, constructor)</strong><br />
-      Registers an
-      injection constructor as a named dependency. This will not be constructed until it is needed
-      for the first time as a dependency in the application. PerResolve dependencies are always
+      <strong>(Curvy.create()).register.transient(name, constructor)</strong><br />
+      Registers an injection constructor as a named dependency.
+      This will not be constructed until it is needed for the first time as a dependency
+      in the application. Transient dependencies are always
       re-constructed every time they are required as a dependency.
    </p>
 </div>
 <p class="container-fluid">
    <strong class="col-sm-3">View Models</strong>
    <span class="col-sm-9">
-      <strong>(new Application()).viewmodel(name, constructor)</strong><br />
+      <strong>(Curvy.create()).viewmodel(name, constructor)</strong><br />
       Provides a method to register view models for your application. Registration of view models
-      is similar to perResolve services, but like bindings can't be asked for as dependencies.
+      is similar to transient services, but like bindings can't be asked for as dependencies.
       View models can only be triggered when a "view-model" attribute is added to the DOM
       with a value matching the registered name.
    </span>
