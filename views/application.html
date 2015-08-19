@@ -17,33 +17,54 @@
    Your application will likely be comprised of a number of
    <strong>services</strong>, <strong>custom bindings</strong>, and <strong>view-models</strong>.
    These can all be configured directly from the <em>register</em> function on the
-   "Curvy" constructor.
+   Curvy constructor.
+</p>
+<p class="container-fluid">
+   <strong class="col-sm-3">Constructors</strong>
+   <span class="col-sm-9">
+      Constructors in Curvy are similar to Angular. The class constructor function is wrapped in an array and preceeded with
+      the names of the dependencies required to construct the service. I have chosen to not read the parameter names of the
+      class constructor function since these names will be destroyed during processes like minification.
+   </span><br />
 </p>
 <p class="container-fluid">
    <strong class="col-sm-3">Services</strong>
    <span class="col-sm-9">
-      <strong>Curvy.register.service(name, [dependencies], constructor)</strong><br />
-      Allows you to register a new service for your application.<br />
-      A service is a constructor that will be created only once per application and be made
-      available to any other part of your application by name.
+      <strong>Curvy.register.service(name, constructor)</strong><br />
+      Provides a method to add custom services to your application. Registration of services
+      are singleton dependencies which are created only once and recycled each time
+      they are needed.
+   </span>
+</p>
+<p class="container-fluid">
+   <strong class="col-sm-3">Bindings</strong>
+   <span class="col-sm-9">
+      <strong>Curvy.register.binding(attributeName, constructor)</strong><br />
+      Provides a method to add custom bindings to your application. Registration of bindings
+      is similar to transient dependencies in that they are newly created each time they are needed,
+      but bindings can't be asked for as dependencies. Bindings are registered by their attribute
+      name and will only be triggered with a matching attribute in the DOM.
+   </span>
+</p>
+<p class="container-fluid">
+   <strong class="col-sm-3">View Models</strong>
+   <span class="col-sm-9">
+      <strong>Curvy.register.viewmodel(name, constructor)</strong><br />
+      Provides a method to register view models for your application. Registration of view models
+      is similar to transient dependencies, but like bindings can't be asked for as dependencies.
+      View models can only be triggered when a "view-model" attribute is added to the DOM
+      with a value matching the registered name.
+   </span>
+</p>
+<p class="container-fluid">
+   <strong class="col-sm-3">Dependencies</strong>
+   <span class="col-sm-9">
+      <strong>Curvy.register.instance(name, object)</strong><br />
+      Registers a pre-constructed object as a named dependency.
    </span><br />
 </p>
 <div>
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>Injection Constructors</strong><br />
-      An injection constructor (as in Angular) is a regular javascript constructor at the end
-      of an array of strings that define the required dependency values for a new object.<br />
-      Each string preceeding the constructor in the array defines a dependency by name that
-      will be passed to the constructor in the order specified.<br />
-      Unlike Angular, Curvy <em>requires</em> that dependencies be defined with strings instead of looking
-      at the parameter names in the constructor. This decision was made to avoid
-      issues commonly caused through processes like minification that will alter the names of
-      parameters in functions.
-   </p>
-
-   <p class="col-sm-9 col-sm-offset-3">
-      <strong>Curvy.register.instance(name, object)</strong><br />
-      Registers a pre-constructed object as a named dependency.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
@@ -70,55 +91,26 @@
       re-constructed every time they are required as a dependency.
    </p>
 </div>
-<p class="container-fluid">
-   <strong class="col-sm-3">Services</strong>
-   <span class="col-sm-9">
-      <strong>Curvy.register.service(name, constructor)</strong><br />
-      Provides a method to add custom service to your application. Registration of services
-      are similar to singleton services in that they are created only once and recycled each time
-      they are needed.
-   </span>
-</p>
-<p class="container-fluid">
-   <strong class="col-sm-3">Bindings</strong>
-   <span class="col-sm-9">
-      <strong>Curvy.register.binding(attributeName, constructor)</strong><br />
-      Provides a method to add custom bindings to your application. Registration of bindings
-      is similar to transient services in that they are newly created each time they are needed,
-      but bindings can't be asked for as dependencies. Bindings are registered by their attribute
-      name and will only be triggered with a matching attribute in the DOM.
-   </span>
-</p>
-<p class="container-fluid">
-   <strong class="col-sm-3">View Models</strong>
-   <span class="col-sm-9">
-      <strong>Curvy.register.viewmodel(name, constructor)</strong><br />
-      Provides a method to register view models for your application. Registration of view models
-      is similar to transient services, but like bindings can't be asked for as dependencies.
-      View models can only be triggered when a "view-model" attribute is added to the DOM
-      with a value matching the registered name.
-   </span>
-</p>
 <h3>Post-Configuration</h3>
 <p>
-   After the application has been instantiated it is still possible for additional services and
+   After the application has been instantiated it is still possible for additional dependencies and
    view models to be added to your application "on the fly".
 </p>
 <p class="container-fluid">
-   <strong class="col-sm-3">Services</strong>
+   <strong class="col-sm-3">Dependencies</strong>
    <span class="col-sm-9">
       The constructed application <em>(Curvy.create())</em> provides instance, singleton, contextual,
-      and transient functions for late registration of services.
+      and transient functions for late registration of dependencies.
    </span>
 </p>
 <div>
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(Curvy.create()).dependencies.register.instance(name, object)</strong><br />
+      <strong>.dependencies.register.instance(name, object)</strong><br />
       registers a pre-constructed object as a named dependency.
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(Curvy.create()).register.singleton(name, constructor)</strong><br />
+      <strong>.register.singleton(name, constructor)</strong><br />
       Registers an injection constructor as a named dependency.
       This will not be constructed until it is needed for the first time as a dependency
       in the application. Singleton dependencies are constructed
@@ -126,7 +118,7 @@
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(Curvy.create()).register.contextual(name, constructor)</strong><br />
+      <strong>.register.contextual(name, constructor)</strong><br />
       Registers an injection constructor as a named dependency.
       This will not be constructed until it is needed for the first time as a dependency
       in the application. Contextual dependencies are constructed once per resolution scope
@@ -134,7 +126,7 @@
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>(Curvy.create()).register.transient(name, constructor)</strong><br />
+      <strong>.register.transient(name, constructor)</strong><br />
       Registers an injection constructor as a named dependency.
       This will not be constructed until it is needed for the first time as a dependency
       in the application. Transient dependencies are always
@@ -144,9 +136,9 @@
 <p class="container-fluid">
    <strong class="col-sm-3">View Models</strong>
    <span class="col-sm-9">
-      <strong>(Curvy.create()).viewmodel(name, constructor)</strong><br />
+      <strong>.viewmodel(name, constructor)</strong><br />
       Provides a method to register view models for your application. Registration of view models
-      is similar to transient services, but like bindings can't be asked for as dependencies.
+      is similar to transient dependencies, but like bindings can't be asked for as dependencies.
       View models can only be triggered when a "view-model" attribute is added to the DOM
       with a value matching the registered name.
    </span>
