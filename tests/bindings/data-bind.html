@@ -6,6 +6,7 @@
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/polyfills/matches.js"></script>
       <script src="../../src/polyfills/classlist.js"></script>
+      <script src="../testutils.js"></script>
 
       <script src="../../src/Curvy.js"></script>
       <script src="../../src/Observable.js"></script>
@@ -69,15 +70,15 @@
             ass.ok(sel.options[2].selected);
 
             sel.options[0].selected = true;
-            sel.dispatchEvent(new Event('change'));
+            testutils.event(sel, 'change');
             ass.ok(viewmodel.select.length === 3);
 
             cbox.checked = false
-            cbox.dispatchEvent(new Event('click'));
+            testutils.event(cbox, 'change');
             ass.ok(!viewmodel.toggle);
 
             text.value = 'value';
-            text.dispatchEvent(new Event('change'));
+            testutils.event(text, 'change')
             ass.ok(viewmodel.text === 'value');
          });
 

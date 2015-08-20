@@ -2,10 +2,11 @@
 <html>
    <head>
       <meta charset="utf-8">
-      <title>data-src</title>
+      <title>data-submit</title>
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/polyfills/matches.js"></script>
       <script src="../../src/polyfills/classlist.js"></script>
+      <script src="../testutils.js"></script>
 
       <script src="../../src/Curvy.js"></script>
       <script src="../../src/Observable.js"></script>
@@ -45,7 +46,7 @@
             });
             Curvy.create();
 
-            form.dispatchEvent(new Event('submit'));
+            testutils.event(form, 'submit');
             ass.ok(evt.target === form);
             ass.ok(context === viewmodel);
          });

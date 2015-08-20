@@ -6,6 +6,7 @@
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/polyfills/matches.js"></script>
       <script src="../../src/polyfills/classlist.js"></script>
+      <script src="../testutils.js"></script>
 
       <script src="../../src/Curvy.js"></script>
       <script src="../../src/Observable.js"></script>
@@ -39,9 +40,7 @@
             Curvy.create();
 
             var div = document.querySelector('[data-click]');
-            var evt = !!document.createEvent ? document.createEvent('MouseEvents') : new Event('click');
-            if (document.createEvent) { evt.initEvent('click', true, true); }
-            div.dispatchEvent(evt);
+            testutils.event(div, 'click');
             ass.ok(triggered);
          });
 
