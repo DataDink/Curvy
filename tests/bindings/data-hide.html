@@ -40,10 +40,14 @@
 
             var div = document.querySelector('[data-hide]');
             ass.ok(div.className === 'data-hide');
-            var style = window.getComputedStyle(div);
-            ass.ok(style.display === 'none');
-            viewmodel.toggle = false;
-            ass.ok(style.display === 'block');
+            setTimeout(function() {
+               QUnit.test('Tests2', function(ass) {
+                  var style = window.getComputedStyle(div);
+                  ass.ok(style.display === 'none');
+                  viewmodel.toggle = false;
+                  ass.ok(style.display === 'block');
+               });
+            });
          });
 
 
