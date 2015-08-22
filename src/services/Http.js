@@ -1,3 +1,5 @@
+// A transient service that wraps AJAX functionality for simple/common usages
+// http://datadink.github.io/Curvy/#http
 (function() {
    var utils = Curvy.Services.utilities;
 

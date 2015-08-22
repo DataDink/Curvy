@@ -1,3 +1,6 @@
+// Works with the ViewModelManager to either resolve the specified
+// ViewModel or postpone additional binding until an appropriate
+// ViewModel has been registered.
 (function() {
    Curvy.Bindings.ViewModel = function(manager, parent) {
       var binding = this;

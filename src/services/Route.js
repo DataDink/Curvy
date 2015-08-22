@@ -1,4 +1,5 @@
 // Route Service manages and syncs application hash navigations and state.
+// http://datadink.github.io/Curvy/#route
 (function() {
    var nothing = (function() { })();
    var utils = Curvy.Services.utilities;

@@ -1,5 +1,7 @@
+// Manages the identification and syncronization of bindings in the document
+// http://datadink.github.io/Curvy/#bindings
 (function() {
-   var registry = {};
+   var registry = {}; // pre-application registration
    function register() {
       Curvy.register.binding = function(name, dependencies, constructor) {
          createRegistration(registry, name, dependencies, constructor);
@@ -31,6 +33,8 @@
       var bindings = {};
       config = config || app.configuration || Curvy.Configuration;
 
+      // Init phase copies bindings from the pre-application registry and
+      // adds the .binding(name, ctr) method to the application
       Object.defineProperty(binder, 'init', { enumerable: false, configurable: false, value: function() {
          for (var name in registry) { bindings[name] = registry[name]; }
          Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
@@ -39,8 +43,10 @@
          }});
       }});
 
+      // Initializes existing behaviors on the dom and begins listening
+      // for added / removed content in the DOM
       Object.defineProperty(binder, 'load', { enumerable: false, configurable: false, value: function() {
-         var suspendCircuit = false;
+         var suspendCircuit = false; // avoids situations caused by error handlers that add content to the DOM
          dom.listen(function(info) {
             try {
                if (suspendCircuit) { return; }
@@ -80,7 +86,7 @@
             var node = nodes[n];
             if (!('getElementsByTagName' in node)) { continue; } // faster than queryselectorall
             [node].concat(node.getElementsByTagName('*'))
-               .forEach(function(n) { 
+               .forEach(function(n) {
                   if (config.nodedata in n) { dispose(n); }
                });
          }

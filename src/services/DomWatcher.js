@@ -1,3 +1,4 @@
+// Monitors the addition and removal of nodes from the DOM
 Curvy.Services.DomWatcher = function() {
    var watcher = this;
 

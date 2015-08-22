@@ -1,4 +1,5 @@
 // Singleton service that manages global broadcasts
+// http://datadink.github.io/Curvy/#broadcast
 Curvy.Services.Broadcast = function() {
    var service = this;
    var subscriptions = {};

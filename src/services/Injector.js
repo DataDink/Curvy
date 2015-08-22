@@ -1,4 +1,8 @@
+// The injector service handles the resolution and construction
+// of all modules, services, and other dependencies
+
 (function() {
+   // Sets up global (pre-application) registrations
    function register() {
       var root = new Curvy.Services.Injector();
       Curvy.register = {
@@ -17,6 +21,8 @@
       };
       root.register.instance('configuration', Curvy.Configuration);
 
+      // Branches from the global dependency scope and constructs a new Curvy instance
+      // Also handles module initialization
       Curvy.create = function() {
          var scope = root.branch();
          var app = scope.resolve(['configuration', Curvy]);
@@ -36,6 +42,7 @@
       }
    }
 
+   // The injector service
    Curvy.Services.Injector = function() {
       var injector = this;
 
@@ -74,6 +81,7 @@
       };
       Object.freeze(injector.resolve);
 
+      // Creates a child injection scope.
       injector.branch = function() {
          var child = new Curvy.Services.Injector();
          itterate(function(names, info) {

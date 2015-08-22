@@ -1,3 +1,7 @@
+// Manages the creation of view models and the syncronization with other bindings
+// ViewModels are Observables that have "view", "parent", and "dispose" members
+// added to them. ViewModels are then made available to decendant bindings as
+// a dependency by the name of "viewmodel"
 (function() {
    var registry = {};
    function register() {

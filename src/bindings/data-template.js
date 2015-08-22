@@ -1,3 +1,10 @@
+// Binds a segment of the dom as a template to a path on the ViewModel.
+// Array values will render the template for each value while non-Array
+// values will only render once.
+
+// Each template rendering will override the owning ViewModel with a
+// surrogate ViewModel that proxies the data being represented by the
+// render.
 (function() {
    Curvy.register.binding('data-template', ['viewmodel', 'binding-manager'], function(viewmodel, manager) {
       this.suspend();

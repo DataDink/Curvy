@@ -1,3 +1,58 @@
+/*************************************************************
+*  Observable
+*  Can be used as a standalone object or surrogate of another
+*  object.
+*
+*  var standalone = new Curvy.Observable();
+*  var surrogate = new Curvy.Observable({some: 'object'});
+*
+*  .notify(member)
+*     Will broadcast to registered observer callbacks that
+*     a member value has been changed on the object
+*
+*  .observe(callback)
+*     Registers a function for callback by the .notify method
+*
+*  .unobserve(callback)
+*     Unregisters a previously registered observer callback
+*
+*  .notifyIntercept(member, args) -- Experimental
+*     Will broadcast to registered interceptors that a call
+*     to a function on the object has been made
+*
+*  .intercept(callback) -- Experimental
+*     Registers a function for callback by the .notifyIntercept
+*     method
+*
+*  .release(callback) -- Experimental
+*     Inregisters a previously registered interceptor callback
+*
+*  .destroy()
+*     Releases internal resource references used by the
+*     observable.
+*
+*  .seal()
+*     Standalone: Replaces all properties added to the
+*                 observable after construction with observed
+*                 properties.
+*     Surrogate:  Copies all properties from the proxied
+*                 object to the surrogate observable as
+*                 observed properties.
+*     Also locks the observable from having properties either
+*     added or removed from it.
+*
+*  .path(uri)
+*     Returns the value of a path starting from the observable
+*     following each child member of the dot '.' delimited
+*     uri of member names.
+*
+*  .watch(uri, callback)
+*     Alerts the callback each time a change is detected in
+*     the path value(s) specified by the uri.
+*     Returns a disposal function that will disengage the
+*     watch and any internal references made by it.
+*
+**************************************************************/
 (function() {
    Curvy.Observable = function(target) {
       var observable = this;
