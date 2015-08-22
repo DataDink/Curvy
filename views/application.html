@@ -110,7 +110,7 @@
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>.register.singleton(name, constructor)</strong><br />
+      <strong>.dependencies.register.singleton(name, constructor)</strong><br />
       Registers an injection constructor as a named dependency.
       This will not be constructed until it is needed for the first time as a dependency
       in the application. Singleton dependencies are constructed
@@ -118,7 +118,7 @@
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>.register.contextual(name, constructor)</strong><br />
+      <strong>.dependencies.register.contextual(name, constructor)</strong><br />
       Registers an injection constructor as a named dependency.
       This will not be constructed until it is needed for the first time as a dependency
       in the application. Contextual dependencies are constructed once per resolution scope
@@ -126,7 +126,7 @@
    </p>
 
    <p class="col-sm-9 col-sm-offset-3">
-      <strong>.register.transient(name, constructor)</strong><br />
+      <strong>.dependencies.register.transient(name, constructor)</strong><br />
       Registers an injection constructor as a named dependency.
       This will not be constructed until it is needed for the first time as a dependency
       in the application. Transient dependencies are always
@@ -142,4 +142,23 @@
       View models can only be triggered when a "view-model" attribute is added to the DOM
       with a value matching the registered name.
    </span>
+</p>
+<hr />
+<p>
+   <em>
+      <strong>Note:</strong>
+      In most cases the "(name, constructor)" signature can be replaced with any of the following:
+      <ul>
+         <li>([names], constructor)</li>
+         <li>(name, classConstructor)</li>
+         <li>([names], classConstructor)</li>
+         <li>(name, [dependencyNames], classConstructor)</li>
+         <li>([names], [dependencyNames], classConstructor)</li>
+      </ul>
+   </em>
+   <br />
+   <em>
+      Where brackets [] imply an array, classConstructor is a function, and constructor is an
+      array of dependency names and a last item of classConstructor.
+   </em>
 </p>
