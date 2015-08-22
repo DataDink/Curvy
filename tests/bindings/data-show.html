@@ -39,7 +39,7 @@
             Curvy.create();
 
             var div = document.querySelector('[data-show]');
-            ass.ok(div.className === 'data-hide');
+            ass.ok(div.className.trim() === 'data-hide');
 
             setTimeout(function() {
                QUnit.test('Tests2', function(ass) {

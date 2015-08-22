@@ -6,6 +6,7 @@
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/polyfills/matches.js"></script>
       <script src="../../src/polyfills/classlist.js"></script>
+      <script src="../testutils.js"></script>
 
       <script src="../../src/Curvy.js"></script>
       <script src="../../src/Observable.js"></script>
@@ -39,7 +40,7 @@
             Curvy.create();
 
             var div = document.querySelector('[data-hide]');
-            ass.ok(div.className === 'data-hide');
+            ass.ok(div.className.trim() === 'data-hide');
             setTimeout(function() {
                QUnit.test('Tests2', function(ass) {
                   var style = window.getComputedStyle(div);

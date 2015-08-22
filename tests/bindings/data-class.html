@@ -6,6 +6,7 @@
       <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.18.0.css">
       <script src="../../src/polyfills/matches.js"></script>
       <script src="../../src/polyfills/classlist.js"></script>
+      <script src="../testutils.js"></script>
 
       <script src="../../src/Curvy.js"></script>
       <script src="../../src/Observable.js"></script>
@@ -49,27 +50,27 @@
 
             // These would be better written to not require specific ordering of classes.
             ass.ok(!configured.className);
-            ass.ok(variable.className === 'three four');
+            ass.ok(variable.className.trim() === 'three four');
             viewmodel.toggle = true;
-            ass.ok(configured.className === 'one');
+            ass.ok(configured.className.trim() === 'one');
             viewmodel.child.toggle = true;
-            ass.ok(configured.className === 'one two');
+            ass.ok(configured.className.trim() === 'one two');
             viewmodel.toggle = false;
-            ass.ok(configured.className === 'two');
+            ass.ok(configured.className.trim() === 'two');
             viewmodel.child.toggle = false;
-            ass.ok(!configured.className);
+            ass.ok(!configured.className.trim());
             configured.className = 'test';
             viewmodel.toggle = true;
-            ass.ok(configured.className === 'test one');
+            ass.ok(configured.className.trim() === 'test one');
             configured.className = '';
-            ass.ok(!configured.className);
+            ass.ok(!configured.className.trim());
             viewmodel.child.toggle = true;
-            ass.ok(configured.className === 'two');
+            ass.ok(configured.className.trim() === 'two');
 
             viewmodel.value = 'three-test';
-            ass.ok(variable.className === 'four three-test');
+            ass.ok(variable.className.trim() === 'four three-test');
             viewmodel.child.value = 'four-test';
-            ass.ok(variable.className === 'three-test four-test');
+            ass.ok(variable.className.trim() === 'three-test four-test');
          });
 
 
