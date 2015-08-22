@@ -11,14 +11,9 @@ If you would like something changed send me a pull request.
 
 # Getting Started:
 
-First you'll need an application:
+First you'll need a view-model:
 ```javascript
-application = Curvy.create();
-```
-
-Next you'll need a view-model:
-```javascript
-application.viewmodel('my-viewmodel', function() {
+Curvy.register.viewmodel('my-viewmodel', function() {
   this.value = 0;
   this.update = function() {
     this.value++;
@@ -26,12 +21,17 @@ application.viewmodel('my-viewmodel', function() {
 });
 ```
 
-Lastly you'll need to wire it to your page:
+Next you'll need to wire it to your page:
 ```html
 <div view-model="my-viewmodel">
   <span data-format="There have been {{value}} clicks given"></span>
   <button data-click="update">Give clicks</button>
 </div>
+```
+
+Lastly you'll need start your application:
+```javascript
+Curvy.create();
 ```
 
 Please visit the docs or take a dive into the code for more info: https://DataDink.github.io/Curvy
@@ -44,6 +44,8 @@ Version: 0.1.1
 
 # Version Notes
 
+* 0.1.2
+   * Bug fixes and testing tweaked for browser compat
 * 0.1.1
    * Bug fixes and documentation now matches the new, cleaner Curvy.
 * 0.1.0
