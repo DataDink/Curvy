@@ -40,7 +40,7 @@ Please visit the docs or take a dive into the code for more info: https://DataDi
 
 Compat: IE9+, Chrome, FireFox, Opera, Safari
 
-Version: 0.1.1
+Version: 0.1.2
 
 # Version Notes
 
