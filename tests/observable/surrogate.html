@@ -14,96 +14,59 @@
       <script>
          var observed = false;
          var observer = function() { observed = true; };
-         var intercepted = false;
-         var interceptor = function() { intercepted = true; };
+         var proxy = {};
+         var surrogate = new Curvy.Observable(proxy);
+         surrogate.observe(observer);
 
-         QUnit.test('Basic', function(ass) {
-            var target = {};
-            observable = new Curvy.Observable(target);
-            ass.ok(observable instanceof Curvy.Observable, 'Valid');
+         QUnit.test('Pre-Seal', function(ass) {
+            proxy.pvalue = 'proxy';
+            surrogate.svalue = 'surrogate';
+            proxy.dvalue = 'proxy';
+            surrogate.dvalue = 'surrogate';
 
-            observable.observe(observer);
-            observable.intercept(interceptor);
+            ass.ok(observed === false, 'No Detections');
+            ass.ok(proxy.pvalue === 'proxy');
+            ass.ok(surrogate.svalue === 'surrogate');
+            ass.ok(proxy.dvalue === 'proxy');
+            ass.ok(surrogate.dvalue === 'surrogate');
 
-            QUnit.test('Pre-Seal', function(ass) {
-               observable.value = 'test';
-               ass.ok(observable.value === 'test', 'Pre-Seal Writable');
-               ass.ok(!('value' in target), 'Pre-Seal Unset')
+            QUnit.test('Post-Seal', function(ass) {
+               surrogate.seal();
+               ass.ok(observed === false, 'No Detections');
+
+               ass.ok(proxy.pvalue === 'proxy');
+               ass.ok(surrogate.pvalue === 'proxy');
+               ass.ok(!('svalue' in proxy));
+               ass.ok(surrogate.svalue === 'surrogate');
+               ass.ok(proxy.dvalue === 'surrogate');
+               ass.ok(surrogate.dvalue === 'surrogate');
+               ass.ok(observed === false, 'No Detections');
+
+               proxy.pvalue = 'test';
+               ass.ok(surrogate.pvalue === 'test');
+               proxy.svalue = 'test';
+               ass.ok(surrogate.svalue === 'surrogate');
+               proxy.dvalue = 'test';
+               ass.ok(surrogate.dvalue === 'test');
+               ass.ok(observed === false, 'No Detections');
+
+               surrogate.pvalue = 'asdf';
+               ass.ok(proxy.pvalue === 'asdf');
+               ass.ok(observed === true, 'Observed');
 
                observed = false;
-               observable.value = 'asdf';
-               ass.ok(!observed, 'Pre-Seal Observer');
+               surrogate.svalue = 'asdf';
+               ass.ok(proxy.svalue === 'test');
+               ass.ok(surrogate.svalue === 'asdf');
+               ass.ok(observed === true, 'Observed');
 
-               intercepted = false;
-               observable.value = function() {};
-               observable.value();
-               ass.ok(!intercepted, 'Pre-Seal Interceptor');
-
-               intercepted = false;
                observed = false;
-               observable.notify('test');
-               ass.ok(observed && intercepted, 'Pre-Seal Triggers');
-
-               QUnit.test('Post-Seal', function(ass) {
-                  intercepted = false;
-                  observed = false;
-                  target.value = 'target-value';
-                  observable.seal();
-                  ass.ok(intercepted && !observed, 'Seal-Triggered');
-                  ass.ok('value' in target && target.value === 'target-value', 'Seal Target OK');
-                  ass.ok('value' in observable && observable.value === 'target-value', 'Seal Observable OK');
-
-                  observed = false;
-                  observable.value = 'observable-value';
-                  ass.ok(observed, 'Post-Seal Observed');
-                  ass.ok(observable.value === 'observable-value', 'Post-Seal value ok');
-                  ass.ok(target.value === 'observable-value', 'Post-Seal value set');
-
-                  observed = false;
-                  var context = false;
-                  target.value = function() { context = this; };
-                  ass.ok(!observed, 'Post-Seal target unobserved');
-                  intercepted = false;
-                  target.value();
-                  ass.ok(!intercepted, 'Target unintercepted');
-                  ass.ok(context === target, 'Target Context');
-                  observable.value();
-                  ass.ok(intercepted, 'Observable intercepted');
-                  ass.ok(context === observable, 'Observable Context');
-               });
+               surrogate.dvalue = 'asdf';
+               ass.ok(proxy.dvalue === 'asdf');
+               ass.ok(surrogate.dvalue === 'asdf');
+               ass.ok(observed === true, 'Observed');
             });
-
          });
-
-         QUnit.test('Layered', function(ass) {
-            var inner = new Curvy.Observable();
-            inner.value = 'test';
-            inner.seal();
-            var outer = new Curvy.Observable(inner);
-            outer.seal();
-
-            ass.ok(outer.value === 'test');
-            outer.value = 'test2';
-            ass.ok(outer.value === 'test2');
-            ass.ok(inner.value === 'test2');
-            inner.value = 'test3';
-            ass.ok(outer.value === 'test3');
-            ass.ok(inner.value === 'test3');
-
-            var innerTriggered = false;
-            var outerTriggered = false;
-            outer.observe(function() {outerTriggered = true;});
-            inner.observe(function() {innerTriggered = true;});
-
-            inner.value = 'test4';
-            ass.ok(innerTriggered && !outerTriggered);
-
-            innerTriggered = false;
-            outer.value = 'test5';
-            ass.ok(innerTriggered && outerTriggered);
-         });
-
-
       </script>
    </body>
 </html>

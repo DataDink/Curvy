@@ -16,17 +16,6 @@
 *  .unobserve(callback)
 *     Unregisters a previously registered observer callback
 *
-*  .notifyIntercept(member, args) -- Experimental
-*     Will broadcast to registered interceptors that a call
-*     to a function on the object has been made
-*
-*  .intercept(callback) -- Experimental
-*     Registers a function for callback by the .notifyIntercept
-*     method
-*
-*  .release(callback) -- Experimental
-*     Inregisters a previously registered interceptor callback
-*
 *  .destroy()
 *     Releases internal resource references used by the
 *     observable.
@@ -57,41 +46,21 @@
    Curvy.Observable = function(target) {
       var observable = this;
       var observers = [];
-      var interceptors = [];
 
       Object.defineProperty(observable, 'notify', { enumerable: true, configurable: false, value: function(member) {
-         observable.notifyIntercept('notify', arguments);
          for (var i = 0; i < observers.length; i++) { observers[i](member); }
       }});
 
       Object.defineProperty(observable, 'observe', { enumerable: true, configurable: false, value: function(callback) {
-         observable.notifyIntercept('observe', arguments);
          if (typeof(callback) === 'function') { observers.push(callback); }
       }});
 
       Object.defineProperty(observable, 'unobserve', { enumerable: true, configurable: false, value: function(callback) {
-         observable.notifyIntercept('unobserve', arguments);
          observers = observers.filter(function(o) { return o !== callback; });
       }});
 
-      Object.defineProperty(observable, 'intercept', { enumerable: true, configurable: false, value: function(callback) {
-         observable.notifyIntercept('intercept', arguments);
-         if (typeof(callback) === 'function') { interceptors.push(callback); }
-      }});
-
-      Object.defineProperty(observable, 'release', { enumerable: true, configurable: false, value: function(callback) {
-         observable.notifyIntercept('release', arguments);
-         interceptors = interceptors.filter(function(i) { return i !== callback; });
-      }});
-
-      Object.defineProperty(observable, 'notifyIntercept', { enumerable: true, configurable: false, value: function(member, args) {
-         for (var i = 0; i < interceptors.length; i++) { interceptors[i](member, args); }
-      }});
-
       Object.defineProperty(observable, 'destroy', { enumerable: true, configurable: false, value: function() {
-         observable.notifyIntercept('destroy', arguments);
          var nothing = (function() {})();
-         interceptors = nothing;
          observable = nothing;
          observers = nothing;
          target = nothing;
@@ -99,8 +68,7 @@
 
       function seal() {
          seal = (function() {})();
-         observable.notifyIntercept('seal', arguments);
-         return proxy(target || {}, observable);
+         return ready(target, observable);
       }
 
       Object.defineProperty(observable, 'seal', {enumerable: true, configurable: false, get: function() {
@@ -149,33 +117,50 @@
       };
    }});
 
-   function proxy(target, surrogate) {
-      for (var member in target) { proxyMember(member, target, surrogate); }
-      for (var member in surrogate) { if (!(member in target)) { proxyMember(member, target, surrogate); }}
+   function ready(target, surrogate) {
+      back(target, surrogate);
+      proxy(target, surrogate);
       Object.freeze(surrogate);
    }
 
-   function proxyMember(member, target, surrogate) {
-      if (member in Curvy.Observable.prototype) { return; }
-      if (locked(surrogate, member)) { return; }
-      if (!(member in target)) { target[member] = surrogate[member]; }
-      delete surrogate[member];
+   function back(target, surrogate) {
+      for (var member in surrogate) {
+         if (target && (member in target)) { target[member] = surrogate[member]; }
+         else { backMember(member, surrogate); }
+      }
+   }
 
-      Object.defineProperty(surrogate, member, { enumerable: true, configurable: false,
-         get: function() {
-            if (typeof(target[member]) === 'function') {
-               return (function(func) { return function() {
-                  surrogate.notifyIntercept(member, arguments);
-                  func.apply(surrogate, arguments);
-               };})(target[member]);
-            }
-            return target[member];
-         },
-         set: function(v) {
+   function proxy(target, surrogate) {
+      if (!target) { return; }
+      for (var member in target) {
+         proxyMember(member, target, surrogate);
+      }
+   }
+
+   function backMember(member, surrogate) {
+      var value = surrogate[member];
+      writeMember(member, surrogate,
+         function() { return value; },
+         function(v) {
+            value = v;
+            surrogate.notify(member);
+         });
+   }
+
+   function proxyMember(member, target, surrogate) {
+      writeMember(member, surrogate,
+         function() { return target[member]; },
+         function(v) {
             target[member] = v;
             surrogate.notify(member);
-         }
-      });
+         });
+   }
+
+   function writeMember(member, surrogate, get, set) {
+      if (member in Curvy.Observable.prototype) { return; }
+      if (locked(surrogate, member)) { return; }
+      delete surrogate[member];
+      Object.defineProperty(surrogate, member, {enumerable: true, configurable: false, get: get, set: set});
    }
 
    function locked(model, member) { return !(Object.getOwnPropertyDescriptor(model, member) || {configurable: true}).configurable; }

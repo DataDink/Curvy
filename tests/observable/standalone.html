@@ -12,72 +12,48 @@
       <div id="qunit-fixture"></div>
       <script src="http://code.jquery.com/qunit/qunit-1.18.0.js"></script>
       <script>
-         var observable;
+         var observable = new Curvy.Observable();
          var observed = false;
          var observer = function() { observed = true; };
-         var intercepted = false;
-         var interceptor = function() { intercepted = true; };
 
-         QUnit.test('Basic', function(ass) {
-            ass.ok(typeof(Curvy.Observable) === 'function', 'Exists');
-            observable = new Curvy.Observable();
-            ass.ok(observable instanceof Curvy.Observable, 'Valid');
-
+         QUnit.test('Pre-Seal', function(ass) {
             observable.observe(observer);
-            observable.intercept(interceptor);
+            ass.ok(observed === false, 'Observer not triggered on assignment');
+            observable.notify('test');
+            ass.ok(observed === true, 'Notify works');
+            observed = false;
+            observable.test = 'test';
+            ass.ok(observed === false, 'Property not observed');
+            ass.ok(observable.test === 'test', 'Value get');
+            ass.ok(observed === false, 'Read not observed');
 
-            QUnit.test('Pre-Seal', function(ass) {
-               observable.value = 'test';
-               ass.ok(observable.value === 'test', 'Pre-Seal Writable');
+            QUnit.test('Post-Seal', function(ass) {
+               observable.seal();
+               ass.ok(!observable.seal, "Can't double-seal");
+               ass.ok(observed === false, 'Observer not triggered on seal');
+               ass.ok(observable.test === 'test', 'Value get');
+               ass.ok(observed === false, 'Read not observed');
+               observable.test = 'test2';
+               ass.ok(observed === true, 'Write observed');
 
-               observed = false;
-               observable.value = 'asdf';
-               ass.ok(!observed, 'Pre-Seal Observer');
-
-               intercepted = false;
-               observable.value = function() {};
-               observable.value();
-               ass.ok(!intercepted, 'Pre-Seal Interceptor');
-
-               intercepted = false;
-               observed = false;
-               observable.notify('test');
-               ass.ok(observed && intercepted, 'Pre-Seal Triggers');
-
-               QUnit.test('Post-Seal', function(ass) {
-                  intercepted = false;
+               QUnit.test('Disposal', function(ass) {
                   observed = false;
-                  observable.seal();
-                  ass.ok(intercepted && !observed, 'Seal-Triggered');
-
-                  intercepted = false;
-                  observable.value();
-                  ass.ok(intercepted, 'Pre-Seal Intercept');
-
-                  observed = false;
-                  var triggered = false;
-                  observable.value = function() { triggered = (this === observable); }
-                  ass.ok(observed, 'Post-Seal Observer');
-
-                  intercepted = false;
-                  observable.value();
-                  ass.ok(intercepted && triggered, 'Post-Seal Interceptor');
-
                   observable.unobserve(observer);
-                  observable.release(interceptor);
-                  observed = false;
-                  triggered = false;
-                  intercepted = false;
-                  observable.value = function() { triggered = true; }
-                  observable.value();
+                  observable.notify('test');
+                  ass.ok(observed === false, 'Unobserved');
 
-                  ass.ok(!observed && !intercepted && triggered, 'Responders removed');
+                  observable.observe(observer);
+                  observable.notify('test');
+                  ass.ok(observed === true, 'Observed');
+
+                  observed = false;
+                  observable.destroy();
+                  ass.ok(observed === false, 'Destroyed');
+                  observer.test = 'asdf';
+                  ass.ok(observed === false, 'Unobserved');
                });
             });
-
          });
-
-
       </script>
    </body>
 </html>
