@@ -68,7 +68,8 @@
 
       function seal() {
          seal = (function() {})();
-         return ready(target, observable);
+         ready(target, observable);
+         return observable;
       }
 
       Object.defineProperty(observable, 'seal', {enumerable: true, configurable: false, get: function() {
