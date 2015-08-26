@@ -1,3 +1,11 @@
+/*************************************************************
+*  Curvy
+*  An experimental MVVM framework inspired by Angular
+*  https://github.com/DataDink/Curvy
+**************************************************************/
+
+// Creates the root Curvy namespaces and application constructor
+// Curvy.create is defined in services/Injector.js
 var Curvy = function(config) {
    var application = this;
    Object.defineProperty(application, 'configuration', { enumerable: true, configurable: false, value: config });
@@ -14,6 +22,61 @@ Curvy.Configuration = {
 }
 ;
 
+/*************************************************************
+*  Observable
+*  Can be used as a standalone object or surrogate of another
+*  object.
+*
+*  var standalone = new Curvy.Observable();
+*  var surrogate = new Curvy.Observable({some: 'object'});
+*
+*  .notify(member)
+*     Will broadcast to registered observer callbacks that
+*     a member value has been changed on the object
+*
+*  .observe(callback)
+*     Registers a function for callback by the .notify method
+*
+*  .unobserve(callback)
+*     Unregisters a previously registered observer callback
+*
+*  .notifyIntercept(member, args) -- Experimental
+*     Will broadcast to registered interceptors that a call
+*     to a function on the object has been made
+*
+*  .intercept(callback) -- Experimental
+*     Registers a function for callback by the .notifyIntercept
+*     method
+*
+*  .release(callback) -- Experimental
+*     Inregisters a previously registered interceptor callback
+*
+*  .destroy()
+*     Releases internal resource references used by the
+*     observable.
+*
+*  .seal()
+*     Standalone: Replaces all properties added to the
+*                 observable after construction with observed
+*                 properties.
+*     Surrogate:  Copies all properties from the proxied
+*                 object to the surrogate observable as
+*                 observed properties.
+*     Also locks the observable from having properties either
+*     added or removed from it.
+*
+*  .path(uri)
+*     Returns the value of a path starting from the observable
+*     following each child member of the dot '.' delimited
+*     uri of member names.
+*
+*  .watch(uri, callback)
+*     Alerts the callback each time a change is detected in
+*     the path value(s) specified by the uri.
+*     Returns a disposal function that will disengage the
+*     watch and any internal references made by it.
+*
+**************************************************************/
 (function() {
    Curvy.Observable = function(target) {
       var observable = this;
@@ -233,7 +296,11 @@ Curvy.Configuration = {
 })();
 ;
 
+// The injector service handles the resolution and construction
+// of all modules, services, and other dependencies
+
 (function() {
+   // Sets up global (pre-application) registrations
    function register() {
       var root = new Curvy.Services.Injector();
       Curvy.register = {
@@ -252,6 +319,8 @@ Curvy.Configuration = {
       };
       root.register.instance('configuration', Curvy.Configuration);
 
+      // Branches from the global dependency scope and constructs a new Curvy instance
+      // Also handles module initialization
       Curvy.create = function() {
          var scope = root.branch();
          var app = scope.resolve(['configuration', Curvy]);
@@ -271,6 +340,7 @@ Curvy.Configuration = {
       }
    }
 
+   // The injector service
    Curvy.Services.Injector = function() {
       var injector = this;
 
@@ -309,6 +379,7 @@ Curvy.Configuration = {
       };
       Object.freeze(injector.resolve);
 
+      // Creates a child injection scope.
       injector.branch = function() {
          var child = new Curvy.Services.Injector();
          itterate(function(names, info) {
@@ -442,6 +513,7 @@ Curvy.Configuration = {
 ;
 
 // Singleton service that manages global broadcasts
+// http://datadink.github.io/Curvy/#broadcast
 Curvy.Services.Broadcast = function() {
    var service = this;
    var subscriptions = {};
@@ -470,6 +542,7 @@ Curvy.Services.Broadcast = function() {
 Curvy.register.service('broadcast', Curvy.Services.Broadcast);
 ;
 
+// Monitors the addition and removal of nodes from the DOM
 Curvy.Services.DomWatcher = function() {
    var watcher = this;
 
@@ -554,6 +627,8 @@ Curvy.Services.DomWatcher = function() {
 Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
 ;
 
+// A transient service that wraps AJAX functionality for simple/common usages
+// http://datadink.github.io/Curvy/#http
 (function() {
    var utils = Curvy.Services.utilities;
 
@@ -687,6 +762,7 @@ Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
 ;
 
 // Route Service manages and syncs application hash navigations and state.
+// http://datadink.github.io/Curvy/#route
 (function() {
    var nothing = (function() { })();
    var utils = Curvy.Services.utilities;
@@ -768,8 +844,10 @@ Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
 })();
 ;
 
+// Manages the identification and syncronization of bindings in the document
+// http://datadink.github.io/Curvy/#bindings
 (function() {
-   var registry = {};
+   var registry = {}; // pre-application registration
    function register() {
       Curvy.register.binding = function(name, dependencies, constructor) {
          createRegistration(registry, name, dependencies, constructor);
@@ -801,6 +879,8 @@ Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
       var bindings = {};
       config = config || app.configuration || Curvy.Configuration;
 
+      // Init phase copies bindings from the pre-application registry and
+      // adds the .binding(name, ctr) method to the application
       Object.defineProperty(binder, 'init', { enumerable: false, configurable: false, value: function() {
          for (var name in registry) { bindings[name] = registry[name]; }
          Object.defineProperty(app, 'binding', { enumerable: true, configurable: false, value: function(name, dependencies, constructor) {
@@ -809,8 +889,10 @@ Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
          }});
       }});
 
+      // Initializes existing behaviors on the dom and begins listening
+      // for added / removed content in the DOM
       Object.defineProperty(binder, 'load', { enumerable: false, configurable: false, value: function() {
-         var suspendCircuit = false;
+         var suspendCircuit = false; // avoids situations caused by error handlers that add content to the DOM
          dom.listen(function(info) {
             try {
                if (suspendCircuit) { return; }
@@ -850,7 +932,7 @@ Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
             var node = nodes[n];
             if (!('getElementsByTagName' in node)) { continue; } // faster than queryselectorall
             [node].concat(node.getElementsByTagName('*'))
-               .forEach(function(n) { 
+               .forEach(function(n) {
                   if (config.nodedata in n) { dispose(n); }
                });
          }
@@ -984,6 +1066,10 @@ Curvy.register.service('dom-watcher', [], Curvy.Services.DomWatcher);
 })();
 ;
 
+// Manages the creation of view models and the syncronization with other bindings
+// ViewModels are Observables that have "view", "parent", and "dispose" members
+// added to them. ViewModels are then made available to decendant bindings as
+// a dependency by the name of "viewmodel"
 (function() {
    var registry = {};
    function register() {
@@ -1334,6 +1420,13 @@ Curvy.register.binding('data-submit', ['viewmodel'], function(viewmodel) {
 });
 ;
 
+// Binds a segment of the dom as a template to a path on the ViewModel.
+// Array values will render the template for each value while non-Array
+// values will only render once.
+
+// Each template rendering will override the owning ViewModel with a
+// surrogate ViewModel that proxies the data being represented by the
+// render.
 (function() {
    Curvy.register.binding('data-template', ['viewmodel', 'binding-manager'], function(viewmodel, manager) {
       this.suspend();
@@ -1429,6 +1522,9 @@ Curvy.register.binding('data-view', function() {
 });
 ;
 
+// Works with the ViewModelManager to either resolve the specified
+// ViewModel or postpone additional binding until an appropriate
+// ViewModel has been registered.
 (function() {
    Curvy.Bindings.ViewModel = function(manager, parent) {
       var binding = this;
