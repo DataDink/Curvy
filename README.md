@@ -40,10 +40,12 @@ Please visit the docs or take a dive into the code for more info: https://DataDi
 
 Compat: IE9+, Chrome, FireFox, Opera, Safari
 
-Version: 0.1.2
+Version: 0.1.3
 
 # Version Notes
 
+* 0.1.3
+   * Fixed identified problems with observable->proxy
 * 0.1.2
    * Bug fixes and testing tweaked for browser compat
 * 0.1.1
