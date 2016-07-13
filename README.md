@@ -2,7 +2,7 @@
 An experimental micro MVVM framework inspired by AngularJS
 
 AS IF we need another framework. Curvy is small and simple and was a great learning experience made for the fun of making.
-There is SOME small amount of documentation available at http://DataDink.github.io/Curvy
+There is SOME small amount of documentation available at [http://DataDink.github.io/Curvy](http://DataDink.github.io/Curvy)
 
 Curious about Curvy?
 
